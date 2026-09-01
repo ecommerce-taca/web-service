@@ -1,0 +1,16 @@
+# Định định quyền sở hữu cho từng vùng code
+# Cú pháp: [đường dẫn] [người sở hữu]
+
+# Core / Configuration
+* @tech-lead
+
+# Shared Libraries
+/shared/ @core-team
+
+# Shell App
+/apps/shell/ @shell-team
+
+# Micro-Apps
+/apps/buyer/ @buyer-team
+/apps/seller/ @seller-team
+/apps/admin/ @admin-team

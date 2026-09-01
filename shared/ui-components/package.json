@@ -1,0 +1,15 @@
+{
+  "name": "@taca/ui-components",
+  "version": "1.0.0",
+  "main": "index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./tailwind-preset": "./tailwind-preset.js"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.10",
+    "lucide-react": "^0.435.0"
+  }
+}

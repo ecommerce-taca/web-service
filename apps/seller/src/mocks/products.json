@@ -1,0 +1,39 @@
+[
+  {
+    "id": 1,
+    "name": "Apple iPhone 16 Pro Max 256GB - Chính hãng VN/A",
+    "slug": "apple-iphone-16-pro-max-256gb",
+    "price": 29490000,
+    "originalPrice": 34990000,
+    "discount": 16,
+    "rating": 4.9,
+    "reviewCount": 1284,
+    "isOfficial": true,
+    "shop": {
+      "id": "shop1",
+      "name": "Taca Apple Flagship Store",
+      "avatar": "TA",
+      "rating": 4.9,
+      "followers": "100k"
+    },
+    "images": [
+      "/images/ip16-1.jpg",
+      "/images/ip16-2.jpg",
+      "/images/ip16-3.jpg",
+      "/images/ip16-4.jpg",
+      "/images/ip16-5.jpg"
+    ],
+    "variants": [
+      {
+        "type": "storage",
+        "options": ["256GB", "512GB", "1TB"]
+      },
+      {
+        "type": "color",
+        "options": ["Titan tự nhiên", "Titan đen", "Titan sa mạc"]
+      }
+    ],
+    "isFlashSale": true,
+    "description": "Nâng cấp mạnh mẽ với chip A18 Pro, thiết kế viền mỏng nhất từ trước đến nay, và hệ thống camera siêu phân giải..."
+  }
+]
