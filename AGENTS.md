@@ -113,32 +113,21 @@ First perform context recovery.
 
 ## Step 1 — Read project rules
 
-Read:
+Mỗi session:
+BẮT BUỘC
+├── MASTER_AGENT.md
+├── CURRENT_TASK.md
+└── NEXT_SESSION.md
 
-```text
-docs/AI_RULES.md
-docs/PROJECT_CONTEXT.md
-docs/CURRENT_TASK.md
-docs/NEXT_SESSION.md
-docs/IMPLEMENTATION_LOG.md
-```
+NẾU CẦN
+├── PROJECT_CONTEXT.md
+├── IMPLEMENTATION_LOG.md
+└── DAILY_LOG.md
 
-Then read the latest relevant section of:
+NẾU LÀ UI
+└── design/*
 
-```text
-docs/DAILY_LOG.md
-```
-
-For UI tasks also read:
-
-```text
-docs/design/DESIGN_SYSTEM.md
-docs/design/TOKENS.md
-docs/design/COMPONENTS.md
-docs/design/PAGES.md
-docs/design/RESPONSIVE.md
-docs/design/PENPOT_MAPPING.md
-```
+Như vậy Agent sẽ nhanh hơn, ít tốn context hơn, nhưng vẫn giữ được memory.
 
 ---
 
@@ -1642,3 +1631,106 @@ The most important rule is:
 DO NOT JUST WRITE CODE.
 
 UNDERSTAND → PLAN → IMPLEMENT → VERIFY → DOCUMENT → PLAN NEXT SESSION → CONTINUE.
+
+---
+
+# 46. MASTER PIPELINE
+
+Agent không được code ngay khi đưa task. Phải tuân thủ luồng:
+
+```text
+USER REQUEST
+      ↓
+UNDERSTAND
+      ↓
+CHECK MEMORY
+      ↓
+CHECK GIT
+      ↓
+CHECK PENPOT
+      ↓
+ANALYZE EXISTING CODE
+      ↓
+CREATE PLAN
+      ↓
+ASK APPROVAL IF HIGH-RISK
+      ↓
+IMPLEMENT
+      ↓
+CHECKPOINT
+      ↓
+TEST
+      ↓
+VISUAL QA
+      ↓
+COMMIT
+      ↓
+PUSH
+      ↓
+PR
+      ↓
+CI
+      ↓
+UPDATE MEMORY
+      ↓
+NEXT SESSION
+```
+
+---
+
+# 47. TASK CLASSIFICATION & PLANNING
+
+Before making significant changes, classify the task:
+
+**SMALL**
+- simple UI change
+- text change
+- styling adjustment
+- isolated bug fix
+
+**MEDIUM**
+- new component
+- new page
+- new API integration
+- multiple files
+
+**LARGE**
+- architecture change
+- authentication
+- database/API contract
+- state management redesign
+- CI/CD modification
+- dependency migration
+
+**Action Rule:**
+- For **SMALL** tasks: Proceed after analysis.
+- For **MEDIUM** tasks: Create a plan before implementation.
+- For **LARGE** tasks: Create a detailed plan and ask for user approval before implementation.
+
+This prevents small tasks from turning into project-wide refactors.
+
+---
+
+# 48. AUTHORITY HIERARCHY
+
+Quy định thứ tự authority (nguồn chân lý):
+
+1. User's explicit instruction
+        ↓
+2. MASTER_AGENT.md (AGENTS.md)
+        ↓
+3. AI_RULES.md
+        ↓
+4. PROJECT_CONTEXT.md
+        ↓
+5. CURRENT_TASK.md
+        ↓
+6. IMPLEMENTATION_LOG.md
+        ↓
+7. DAILY_LOG.md
+        ↓
+8. NEXT_SESSION.md
+
+Nếu DAILY_LOG.md nói một thứ nhưng code thực tế khác → code/repository hiện tại là sự thật, không phải log.
+
+Never trust documentation blindly. Verify important claims against the actual source code, Git state, CI status, and Penpot.
