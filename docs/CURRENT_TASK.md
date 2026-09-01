@@ -1,13 +1,13 @@
 # Current Task
 
 Task:
-Setup Project Memory (Master Agent OS)
+Account Details
 
 Status:
-DONE
+COMPLETED
 
 Branch:
-chore/setup-project-memory
+feature/account-details
 
 Started:
 2026-09-01
@@ -16,7 +16,8 @@ Progress:
 100%
 
 Current Work:
-Initialized documentation memory.
+Đã hoàn thành layout Account, Sidebar, và trang Profile & Address theo đúng thiết kế Penpot.
+Đã test linter thành công.
 
 Last Completed:
 Configured AGENTS.md with 45 OS rules.
