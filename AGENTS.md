@@ -583,14 +583,20 @@ develop
 
 Never directly develop on them.
 
-Normal workflow:
+Normal workflow (Multi-level Feature Branch):
 
 ```text
 develop
    ↓
-feature/*
+epic/* (nhánh tính năng tổng)
    ↓
-Pull Request
+feature/* (nhánh phụ)
+   ↓
+Pull Request (vào epic)
+   ↓
+epic/*
+   ↓
+Pull Request (vào develop)
    ↓
 develop
 ```
@@ -857,6 +863,8 @@ Normal flow:
 
 ```text
 feature/*
+     ↓
+epic/*
      ↓
 develop
 ```
