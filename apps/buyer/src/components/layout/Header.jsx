@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth/hooks/useAuth';
+import MegaMenu from './MegaMenu';
 
 const Header = () => {
   const { user, openAuthModal, logout } = useAuth();
@@ -68,11 +69,19 @@ const Header = () => {
       </div>
 
       {/* Category Navigation Bar - White background */}
-      <div className="bg-white border-b border-taca-border h-[42px]">
+      <div className="bg-white border-b border-taca-border h-[42px] relative z-40">
         <div className="max-w-[1440px] mx-auto h-full flex items-center px-[80px] gap-0">
-          <button className="bg-transparent border-none text-[11px] font-extrabold text-taca-text-main cursor-pointer hover:text-taca-primary transition-colors py-2 mr-12 flex items-center gap-1">
-            ☰  DANH MỤC SẢN PHẨM
-          </button>
+          <div 
+            className="relative h-full flex items-center mr-12"
+            onMouseEnter={() => setIsMegaMenuOpen(true)}
+            onMouseLeave={() => setIsMegaMenuOpen(false)}
+          >
+            <button className="bg-transparent border-none text-[11px] font-extrabold text-taca-text-main cursor-pointer hover:text-taca-primary transition-colors py-2 flex items-center gap-1">
+              ☰  DANH MỤC SẢN PHẨM
+            </button>
+            <MegaMenu isOpen={isMegaMenuOpen} />
+          </div>
+          
           <nav className="flex items-center">
             {['Điện thoại', 'Laptop', 'Nhà sách', 'Gia dụng', 'Làm đẹp', 'Thời trang', 'Voucher'].map((cat) => (
               <Link
