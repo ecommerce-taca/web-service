@@ -7,6 +7,7 @@ const Header = () => {
   const { user, openAuthModal, logout } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
 
   const handleSearch = (e) => {
     e.preventDefault();
