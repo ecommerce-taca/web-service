@@ -1,38 +1,10 @@
-# Current Task
+# 🎯 CURRENT TASK
 
-Task:
-Setup Project Memory (Master Agent OS)
+**Status**: COMPLETED (Auth) / PLANNING (Account Details)
 
-Status:
-DONE
+**Goal**: Bắt đầu xây dựng trang Chi tiết tài khoản sau khi hoàn thành Auth.
 
-Branch:
-chore/setup-project-memory
-
-Started:
-2026-09-01
-
-Progress:
-100%
-
-Current Work:
-Initialized documentation memory.
-
-Last Completed:
-Configured AGENTS.md with 45 OS rules.
-
-Current Problem:
-None.
-
-Important Decisions:
-Enforce the 45 rules strictly across all future sessions.
-
-Next Step:
-Switch back to Product Listing feature (or whatever user wants).
-
-Blockers:
-None.
-
-Related Files:
-- AGENTS.md
-- docs/CURRENT_TASK.md
+## Các bước tiếp theo:
+1. Tạo branch `feature/account-details` từ `develop`.
+2. Phân tích UI Account Details trên Penpot.
+3. Tạo Implementation Plan và tiến hành thực thi.

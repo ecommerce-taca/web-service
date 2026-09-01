@@ -1,14 +1,8 @@
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
-import SignInOverlay from '../../features/auth/components/SignInOverlay';
+import { useAuth } from '../../features/auth/hooks/useAuth';
 
 const Header = () => {
-  const [isSignInOpen, setIsSignInOpen] = useState(false);
-  const [user, setUser] = useState(null);
-
-  const handleLoginSuccess = (userData) => {
-    setUser(userData);
-  };
+  const { user, openAuthModal, logout } = useAuth();
 
   return (
     <header className="sticky top-0 z-50">
@@ -45,7 +39,7 @@ const Header = () => {
           {/* User */}
           <div
             className="flex items-center cursor-pointer text-white flex-shrink-0"
-            onClick={() => !user && setIsSignInOpen(true)}
+            onClick={() => user ? logout() : openAuthModal()}
           >
             <span className="text-[12px] font-bold">
               {user ? `♙  ${user.name}  ▾` : '♙  Đăng nhập'}
@@ -80,11 +74,6 @@ const Header = () => {
         </div>
       </div>
 
-      <SignInOverlay
-        isOpen={isSignInOpen}
-        onClose={() => setIsSignInOpen(false)}
-        onLoginSuccess={handleLoginSuccess}
-      />
     </header>
   );
 };
