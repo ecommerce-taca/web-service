@@ -1,11 +1,22 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 import MegaMenu from './MegaMenu';
 
 const Header = () => {
   const { user, openAuthModal, logout } = useAuth();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate(`/search`);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50">
@@ -19,16 +30,18 @@ const Header = () => {
 
           {/* Search Bar - 620px wide */}
           <div className="relative w-[620px] h-[44px] flex-shrink-0">
-            <div className="flex items-center bg-white h-full w-full">
+            <form onSubmit={handleSearch} className="flex items-center bg-white h-full w-full">
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="⌕  Bạn tìm gì hôm nay? (iPhone, Anker, Lock&Lock, Sách…)"
                 className="flex-1 h-full px-4 border-none outline-none text-[12px] font-normal text-gray-400 bg-transparent placeholder:text-gray-400"
               />
-              <button className="h-[36px] px-5 mx-1 bg-taca-primary text-white border-none text-[11px] font-extrabold cursor-pointer hover:bg-taca-primary-hover transition-colors">
+              <button type="submit" className="h-[36px] px-5 mx-1 bg-taca-primary text-white border-none text-[11px] font-extrabold cursor-pointer hover:bg-taca-primary-hover transition-colors">
                 Tìm kiếm
               </button>
-            </div>
+            </form>
           </div>
 
           {/* Delivery Location */}
