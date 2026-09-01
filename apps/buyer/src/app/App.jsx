@@ -6,6 +6,11 @@ import CategoryLandingPage from '../features/products/pages/CategoryLandingPage'
 import AccountLayout from '../features/account/layouts/AccountLayout';
 import ProfilePage from '../features/account/pages/ProfilePage';
 
+import OrdersPage from '../features/account/pages/OrdersPage';
+import ReviewsPage from '../features/account/pages/ReviewsPage';
+import VouchersPage from '../features/account/pages/VouchersPage';
+import WishlistPage from '../features/account/pages/WishlistPage';
+
 function App() {
   return (
     <BrowserRouter>
@@ -19,10 +24,10 @@ function App() {
             <Route index element={<Navigate to="profile" replace />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="overview" element={<div className="p-8">Tổng quan (Sắp ra mắt)</div>} />
-            <Route path="orders" element={<div className="p-8">Đơn mua (Sắp ra mắt)</div>} />
-            <Route path="reviews" element={<div className="p-8">Đánh giá (Sắp ra mắt)</div>} />
-            <Route path="vouchers" element={<div className="p-8">Voucher (Sắp ra mắt)</div>} />
-            <Route path="wishlist" element={<div className="p-8">Sản phẩm yêu thích (Sắp ra mắt)</div>} />
+            <Route path="orders" element={<OrdersPage />} />
+            <Route path="reviews" element={<ReviewsPage />} />
+            <Route path="vouchers" element={<VouchersPage />} />
+            <Route path="wishlist" element={<WishlistPage />} />
           </Route>
         </Route>
       </Routes>
