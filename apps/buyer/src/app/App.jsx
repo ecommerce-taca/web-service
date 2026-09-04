@@ -7,6 +7,7 @@ import { AuthProvider } from '../features/auth/contexts/AuthProvider';
 import AuthModal from '../features/auth/components/AuthModal';
 import SearchLayout from '../features/search/layouts/SearchLayout';
 import SearchPage from '../features/search/pages/SearchPage';
+import ShopPage from '../features/shops/pages/ShopPage';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/product/:id" element={<ProductDetailPage />} />
             <Route path="/category/:categorySlug?" element={<CategoryLandingPage />} />
+            <Route path="/shop/:id?" element={<ShopPage />} />
           </Route>
           <Route path="/search" element={<SearchLayout />}>
             <Route index element={<SearchPage />} />

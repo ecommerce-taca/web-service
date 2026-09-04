@@ -24,9 +24,11 @@ const Header = () => {
       <div className="bg-taca-primary h-[78px]">
         <div className="max-w-[1440px] mx-auto h-full flex items-center px-[80px] gap-6">
           {/* Logo */}
-          <h1 className="text-white text-[30px] font-extrabold leading-none m-0 flex-shrink-0">
-            taca
-          </h1>
+          <Link to="/" className="no-underline">
+            <h1 className="text-white text-[30px] font-extrabold leading-none m-0 flex-shrink-0 hover:opacity-90 transition-opacity">
+              TACA
+            </h1>
+          </Link>
 
           {/* Search Bar - 620px wide */}
           <div className="relative w-[620px] h-[44px] flex-shrink-0">
