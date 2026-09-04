@@ -24,13 +24,13 @@ const ProductCard = ({ id, image, name, price, originalPrice, discount, isOffici
 
       {/* Content Area */}
       <div className="flex flex-col flex-1 gap-2">
-        <h3 className="text-[14px] font-medium text-taca-text-main line-clamp-2 leading-snug group-hover:text-taca-primary transition-colors">
+        <h3 className="text-[14px] font-medium text-taca-text-taca-text-main line-clamp-2 leading-snug group-hover:text-taca-primary transition-colors">
           {name}
         </h3>
         
         <div className="mt-auto flex flex-col gap-1">
           {originalPrice && (
-            <span className="text-[12px] text-taca-text-muted line-through">
+            <span className="text-[12px] text-taca-text-taca-text-muted line-through">
               {originalPrice.toLocaleString('vi-VN')} ₫
             </span>
           )}
@@ -43,10 +43,10 @@ const ProductCard = ({ id, image, name, price, originalPrice, discount, isOffici
         {(rating || soldCount || (tags && tags.length > 0)) && (
           <div className="flex flex-col gap-1 mt-1">
             {(rating || soldCount) && (
-              <div className="flex items-center text-[11px] text-taca-text-muted">
+              <div className="flex items-center text-[11px] text-taca-text-taca-text-muted">
                 {rating && (
                   <span className="flex items-center text-[#faad14] mr-2">
-                    <span className="mr-1 tracking-[2px]">★★★★★</span> <span className="text-taca-text-muted font-medium">{rating}</span>
+                    <span className="mr-1 tracking-[2px]">★★★★★</span> <span className="text-taca-text-taca-text-muted font-medium">{rating}</span>
                   </span>
                 )}
                 {rating && soldCount && <span>·</span>}
@@ -54,7 +54,7 @@ const ProductCard = ({ id, image, name, price, originalPrice, discount, isOffici
               </div>
             )}
             {tags && tags.length > 0 && (
-              <div className="flex flex-wrap items-center text-[11px] text-taca-text-muted mt-1">
+              <div className="flex flex-wrap items-center text-[11px] text-taca-text-taca-text-muted mt-1">
                 {tags.map((tag, index) => (
                   <span key={index} className="flex items-center">
                     {tag} {index < tags.length - 1 && <span className="mx-2">·</span>}
