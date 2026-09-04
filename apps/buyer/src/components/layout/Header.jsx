@@ -30,15 +30,15 @@ const Header = () => {
 
           {/* Search Bar - 620px wide */}
           <div className="relative w-[620px] h-[44px] flex-shrink-0">
-            <form onSubmit={handleSearch} className="flex items-center bg-white h-full w-full">
+            <form onSubmit={handleSearch} className="flex items-center bg-white h-full w-full rounded-[8px] border border-transparent focus-within:border-taca-border overflow-hidden">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="⌕  Bạn tìm gì hôm nay? (iPhone, Anker, Lock&Lock, Sách…)"
-                className="flex-1 h-full px-4 border-none outline-none text-[12px] font-normal text-gray-400 bg-transparent placeholder:text-gray-400"
+                className="flex-1 h-full px-4 border-none outline-none text-[12px] font-normal text-taca-text-main bg-transparent placeholder:text-gray-400"
               />
-              <button type="submit" className="h-[36px] px-5 mx-1 bg-taca-primary text-white border-none text-[11px] font-extrabold cursor-pointer hover:bg-taca-primary-hover transition-colors">
+              <button type="submit" className="h-[36px] px-5 mx-1 bg-taca-primary text-white border-none text-[11px] font-extrabold cursor-pointer hover:bg-taca-primary-hover transition-colors rounded-[6px]">
                 Tìm kiếm
               </button>
             </form>
