@@ -27,49 +27,56 @@ const ProductReviews = ({ rating, reviewCount }) => {
 
   return (
     <div className="bg-white p-6 border border-taca-border flex flex-col gap-6">
-      <h2 className="text-[16px] font-bold text-taca-text-main uppercase">ĐÁNH GIÁ & NHẬN XÉT</h2>
-      
-      {/* Overview */}
-      <div className="flex items-center gap-8">
-        <div className="flex flex-col items-center">
-          <span className="text-[48px] font-extrabold text-taca-text-main leading-none">{rating}</span>
-          <span className="text-[20px] text-taca-warning tracking-widest mt-1">★★★★★</span>
-          <span className="text-[12px] text-taca-text-muted mt-2">{reviewCount} đánh giá đã xác thực</span>
-        </div>
-        
-        {/* Progress bars */}
-        <div className="flex-1 flex flex-col gap-2">
-          {ratingDistribution.map((item) => (
-            <div key={item.stars} className="flex items-center gap-3 text-[12px] font-medium text-taca-text-main">
-              <span>{item.stars} ★</span>
-              <div className="flex-1 h-[8px] bg-taca-surface rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-main" 
-                  style={{ width: `${item.percentage}%` }}
-                ></div>
-              </div>
-              <span className="w-[30px] text-right">{item.percentage}%</span>
-            </div>
-          ))}
-        </div>
+      <div className="flex justify-between items-center">
+        <h2 className="text-[16px] font-bold text-taca-text-main uppercase">ĐÁNH GIÁ & NHẬN XÉT</h2>
+        <button className="text-[14px] font-bold text-taca-primary hover:underline">
+          Xem tất cả nhận xét {'>'}
+        </button>
       </div>
+      
+      {/* Overview & Filters */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+        <div className="flex items-center gap-8">
+          <div className="flex flex-col items-center min-w-[120px]">
+            <span className="text-[48px] font-extrabold text-taca-sale leading-none">{rating}</span>
+            <span className="text-[20px] text-taca-warning tracking-widest mt-1">★★★★★</span>
+            <span className="text-[12px] text-taca-text-muted mt-2">{reviewCount} đánh giá đã xác thực</span>
+          </div>
+          
+          {/* Progress bars - made shorter w-[150px] */}
+          <div className="flex flex-col gap-2 w-[150px]">
+            {ratingDistribution.map((item) => (
+              <div key={item.stars} className="flex items-center gap-3 text-[12px] font-medium text-taca-text-main">
+                <span>{item.stars} ★</span>
+                <div className="flex-1 h-[8px] bg-taca-surface rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-taca-warning rounded-full" 
+                    style={{ width: `${item.percentage}%` }}
+                  ></div>
+                </div>
+                <span className="w-[30px] text-right">{item.percentage}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
-      {/* Filters */}
-      <div className="flex flex-col gap-3 mt-2">
-        <span className="text-[14px] font-bold text-taca-text-main">Lọc đánh giá</span>
-        <div className="flex flex-wrap gap-2">
-          {filters.map((filter, index) => (
-            <button 
-              key={filter}
-              className={`px-4 py-2 border text-[14px] rounded-[8px] transition-colors ${
-                index === 0 
-                  ? 'border-taca-primary text-taca-primary font-bold bg-indigo-50' 
-                  : 'border-taca-border text-taca-text-main bg-white hover:border-taca-primary'
-              }`}
-            >
-              {filter}
-            </button>
-          ))}
+        {/* Filters aligned to right */}
+        <div className="flex flex-col gap-3 lg:items-end">
+          <span className="text-[14px] font-bold text-taca-text-main">Lọc đánh giá</span>
+          <div className="flex flex-wrap gap-2 lg:justify-end">
+            {filters.map((filter, index) => (
+              <button 
+                key={filter}
+                className={`px-4 py-2 border text-[14px] rounded-[8px] transition-colors ${
+                  index === 0 
+                    ? 'border-taca-primary text-taca-primary font-bold bg-indigo-50' 
+                    : 'border-taca-border text-taca-text-main bg-white hover:border-taca-primary'
+                }`}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -87,13 +94,20 @@ const ProductReviews = ({ rating, reviewCount }) => {
             </div>
             
             <div className="text-[12px] text-taca-text-muted flex items-center gap-1">
-              {review.verified && <span className="text-taca-primary font-bold">✓ Đã mua hàng</span>}
+              {review.verified && <span className="text-taca-success font-bold">✓ Đã mua hàng</span>}
               <span>· {review.variant}</span>
             </div>
             
-            <p className="text-[14px] text-taca-text-main leading-relaxed">
-              {review.comment}
-            </p>
+            <div className="flex justify-between items-start gap-4">
+              <p className="text-[14px] text-taca-text-main leading-relaxed flex-1">
+                {review.comment}
+              </p>
+              {/* Helpful / Comment on the right side of the comment text */}
+              <div className="flex gap-4 text-[12px] text-taca-text-muted flex-shrink-0 mt-1">
+                <button className="hover:text-taca-primary flex items-center gap-1">👍 Hữu ích ({review.helpful})</button>
+                <button className="hover:text-taca-primary flex items-center gap-1">💬 Bình luận</button>
+              </div>
+            </div>
             
             {/* Photos */}
             {review.images && review.images.length > 0 && (
@@ -105,19 +119,9 @@ const ProductReviews = ({ rating, reviewCount }) => {
                 ))}
               </div>
             )}
-            
-            <div className="flex gap-6 text-[12px] text-taca-text-muted mt-1">
-              <button className="hover:text-taca-primary">👍 Hữu ích ({review.helpful})</button>
-              <button className="hover:text-taca-primary">💬 Bình luận</button>
-            </div>
           </div>
         ))}
       </div>
-      
-      {/* View All */}
-      <button className="w-full py-3 mt-2 text-[14px] font-bold text-taca-primary border border-taca-border rounded-[8px] hover:bg-taca-surface transition-colors">
-        Xem tất cả nhận xét
-      </button>
     </div>
   );
 };

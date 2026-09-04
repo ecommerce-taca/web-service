@@ -83,7 +83,7 @@ const ProductPurchase = ({ product }) => {
         {/* 'Mua ngay' has primary bg, primary border, 8px radius */}
         <Button 
           variant="primary" 
-          className="flex-1 h-[48px] text-[16px] rounded-[8px]"
+          className="flex-1 h-[48px] text-[16px] rounded-[8px] border border-taca-primary"
         >
           Mua ngay
         </Button>
