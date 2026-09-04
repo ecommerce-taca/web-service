@@ -5,7 +5,7 @@ import ProductContentTabs from '../components/ProductContentTabs';
 import ProductReviews from '../components/ProductReviews';
 
 // Giả lập lấy dữ liệu từ mock API
-import productsMock from '../../../../mocks/products.json';
+import productsMock from '../../../mocks/products.json';
 
 const ProductDetailPage = () => {
   const { id } = useParams();
@@ -20,19 +20,19 @@ const ProductDetailPage = () => {
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto pb-10">
       {/* Breadcrumb */}
-      <div className="text-[14px] text-muted">
+      <div className="text-[14px] text-taca-text-muted">
         Trang chủ / Điện thoại / iPhone / {product.name}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left: Gallery */}
-        <div className="lg:col-span-5 bg-white p-4 border border-border flex flex-col gap-4">
-          <div className="w-full aspect-square bg-surface flex items-center justify-center text-muted">
+        <div className="lg:col-span-5 bg-white p-4 border border-taca-border flex flex-col gap-4">
+          <div className="w-full aspect-square bg-taca-surface flex items-center justify-center text-taca-text-muted">
             [Product Image Main]
           </div>
           <div className="flex gap-2 overflow-x-auto">
             {product.images && product.images.map((img, i) => (
-              <div key={i} className="w-[60px] h-[60px] flex-shrink-0 bg-surface border border-transparent hover:border-primary cursor-pointer flex items-center justify-center text-[10px]">
+              <div key={i} className="w-[60px] h-[60px] flex-shrink-0 bg-taca-surface border border-transparent hover:border-taca-primary cursor-pointer flex items-center justify-center text-[10px]">
                 Thumb {i+1}
               </div>
             ))}

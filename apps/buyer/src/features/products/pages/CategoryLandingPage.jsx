@@ -11,17 +11,17 @@ const CategoryLandingPage = () => {
   return (
     <div className="flex flex-col gap-6">
       {/* Breadcrumb */}
-      <div className="text-[14px] text-muted">
+      <div className="text-[14px] text-taca-text-muted">
         Trang chủ / {categorySlug || 'Điện thoại'}
       </div>
 
       <div className="flex items-center justify-between">
-        <h1 className="text-[24px] font-extrabold text-main uppercase">
+        <h1 className="text-[24px] font-extrabold text-taca-text-main uppercase">
           {categorySlug || 'ĐIỆN THOẠI'}
         </h1>
-        <div className="flex items-center gap-2 text-[14px] text-main">
+        <div className="flex items-center gap-2 text-[14px] text-taca-text-main">
           Sắp xếp theo:
-          <select className="border border-border p-2 bg-white rounded-none outline-none focus:border-primary">
+          <select className="border border-taca-border p-2 bg-white rounded-none outline-none focus:border-taca-primary">
             <option>Phổ biến nhất</option>
             <option>Giá thấp đến cao</option>
             <option>Giá cao xuống thấp</option>
@@ -31,31 +31,31 @@ const CategoryLandingPage = () => {
 
       <div className="flex gap-6 items-start">
         {/* Sidebar Filters */}
-        <div className="w-[240px] flex-shrink-0 bg-white p-4 border border-border hidden lg:block">
-          <h3 className="font-bold text-[16px] text-main mb-4 uppercase">Bộ Lọc Tìm Kiếm</h3>
+        <div className="w-[240px] flex-shrink-0 bg-white p-4 border border-taca-border hidden lg:block">
+          <h3 className="font-bold text-[16px] text-taca-text-main mb-4 uppercase">Bộ Lọc Tìm Kiếm</h3>
           
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <span className="font-bold text-[14px] text-main">Khoảng Giá</span>
+              <span className="font-bold text-[14px] text-taca-text-main">Khoảng Giá</span>
               <div className="flex items-center gap-2">
-                <input type="text" placeholder="Từ" className="w-full border border-border p-2 text-[12px] bg-surface outline-none focus:border-primary" />
+                <input type="text" placeholder="Từ" className="w-full border border-taca-border p-2 text-[12px] bg-taca-surface outline-none focus:border-taca-primary" />
                 <span>-</span>
-                <input type="text" placeholder="Đến" className="w-full border border-border p-2 text-[12px] bg-surface outline-none focus:border-primary" />
+                <input type="text" placeholder="Đến" className="w-full border border-taca-border p-2 text-[12px] bg-taca-surface outline-none focus:border-taca-primary" />
               </div>
-              <button className="bg-primary text-white font-bold text-[12px] py-2 hover:bg-primary-hover">ÁP DỤNG</button>
+              <button className="bg-taca-primary text-white font-bold text-[12px] py-2 hover:bg-taca-primary-hover">ÁP DỤNG</button>
             </div>
             
             <div className="h-[1px] bg-border my-2"></div>
             
             <div className="flex flex-col gap-2">
-              <span className="font-bold text-[14px] text-main">Thương hiệu</span>
-              <label className="flex items-center gap-2 text-[14px] text-main cursor-pointer">
+              <span className="font-bold text-[14px] text-taca-text-main">Thương hiệu</span>
+              <label className="flex items-center gap-2 text-[14px] text-taca-text-main cursor-pointer">
                 <input type="checkbox" className="accent-primary" /> Apple
               </label>
-              <label className="flex items-center gap-2 text-[14px] text-main cursor-pointer">
+              <label className="flex items-center gap-2 text-[14px] text-taca-text-main cursor-pointer">
                 <input type="checkbox" className="accent-primary" /> Samsung
               </label>
-              <label className="flex items-center gap-2 text-[14px] text-main cursor-pointer">
+              <label className="flex items-center gap-2 text-[14px] text-taca-text-main cursor-pointer">
                 <input type="checkbox" className="accent-primary" /> Xiaomi
               </label>
             </div>

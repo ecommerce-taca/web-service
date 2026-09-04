@@ -5,14 +5,14 @@ const ProductContentTabs = ({ description, reviewCount }) => {
   const [activeTab, setActiveTab] = useState('description');
 
   return (
-    <div className="bg-white border border-border">
+    <div className="bg-white border border-taca-border">
       {/* Tab Navigation */}
-      <div className="flex border-b border-border">
+      <div className="flex border-b border-taca-border">
         <button
           className={`flex-1 py-4 text-[16px] border-b-2 bg-white transition-colors ${
             activeTab === 'description'
-              ? 'font-bold text-primary border-primary'
-              : 'font-medium text-main border-transparent hover:text-primary'
+              ? 'font-bold text-taca-primary border-taca-primary'
+              : 'font-medium text-taca-text-main border-transparent hover:text-taca-primary'
           }`}
           onClick={() => setActiveTab('description')}
         >
@@ -21,8 +21,8 @@ const ProductContentTabs = ({ description, reviewCount }) => {
         <button
           className={`flex-1 py-4 text-[16px] border-b-2 bg-white transition-colors ${
             activeTab === 'specs'
-              ? 'font-bold text-primary border-primary'
-              : 'font-medium text-main border-transparent hover:text-primary'
+              ? 'font-bold text-taca-primary border-taca-primary'
+              : 'font-medium text-taca-text-main border-transparent hover:text-taca-primary'
           }`}
           onClick={() => setActiveTab('specs')}
         >
@@ -31,8 +31,8 @@ const ProductContentTabs = ({ description, reviewCount }) => {
         <button
           className={`flex-1 py-4 text-[16px] border-b-2 bg-white transition-colors ${
             activeTab === 'reviews'
-              ? 'font-bold text-primary border-primary'
-              : 'font-medium text-main border-transparent hover:text-primary'
+              ? 'font-bold text-taca-primary border-taca-primary'
+              : 'font-medium text-taca-text-main border-transparent hover:text-taca-primary'
           }`}
           onClick={() => setActiveTab('reviews')}
         >
@@ -41,7 +41,7 @@ const ProductContentTabs = ({ description, reviewCount }) => {
       </div>
 
       {/* Tab Content */}
-      <div className="p-6 text-[14px] leading-relaxed text-main">
+      <div className="p-6 text-[14px] leading-relaxed text-taca-text-main">
         {activeTab === 'description' && (
           <div className="whitespace-pre-line">
             {description || 'Không có mô tả cho sản phẩm này.'}
@@ -49,25 +49,25 @@ const ProductContentTabs = ({ description, reviewCount }) => {
         )}
         
         {activeTab === 'specs' && (
-          <div className="flex flex-col gap-2 text-muted">
+          <div className="flex flex-col gap-2 text-taca-text-muted">
             {/* Giả lập phần thông số kỹ thuật */}
-            <div className="grid grid-cols-3 border-b border-border py-2">
-              <span className="font-medium text-main">Thương hiệu</span>
+            <div className="grid grid-cols-3 border-b border-taca-border py-2">
+              <span className="font-medium text-taca-text-main">Thương hiệu</span>
               <span className="col-span-2">Apple</span>
             </div>
-            <div className="grid grid-cols-3 border-b border-border py-2">
-              <span className="font-medium text-main">Xuất xứ</span>
+            <div className="grid grid-cols-3 border-b border-taca-border py-2">
+              <span className="font-medium text-taca-text-main">Xuất xứ</span>
               <span className="col-span-2">Mỹ</span>
             </div>
-            <div className="grid grid-cols-3 border-b border-border py-2">
-              <span className="font-medium text-main">Bảo hành</span>
+            <div className="grid grid-cols-3 border-b border-taca-border py-2">
+              <span className="font-medium text-taca-text-main">Bảo hành</span>
               <span className="col-span-2">12 tháng chính hãng</span>
             </div>
           </div>
         )}
 
         {activeTab === 'reviews' && (
-          <div className="text-center text-muted py-4">
+          <div className="text-center text-taca-text-muted py-4">
             Vui lòng xem chi tiết phần đánh giá bên dưới.
           </div>
         )}

@@ -19,7 +19,7 @@ const Badge = ({ children, variant, className }) => {
       break;
     case 'default':
     default:
-      variantClass = 'bg-taca-surface text-taca-text-main';
+      variantClass = 'bg-taca-surface text-taca-text-taca-text-main';
   }
 
   const combinedClass = `${baseClass} ${variantClass} ${className || ''}`.trim();
