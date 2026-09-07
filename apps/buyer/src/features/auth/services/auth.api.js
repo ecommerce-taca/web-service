@@ -1,4 +1,4 @@
-import apiClient from '../../../../../shared/utils/api-client';
+import apiClient from '../../../../../../shared/utils/api-client';
 
 export const authApi = {
   login: async (credentials) => {
