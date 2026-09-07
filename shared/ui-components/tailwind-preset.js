@@ -23,16 +23,6 @@ module.exports = {
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', 'sans-serif'],
       },
-      borderRadius: {
-        none: '0px',
-        DEFAULT: '0px',
-        md: '0px',
-        lg: '0px',
-        xl: '0px',
-        '2xl': '0px',
-        '3xl': '0px',
-        full: '9999px',
-      }
     }
   },
   plugins: [],

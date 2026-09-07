@@ -37,14 +37,25 @@ const Header = () => {
           </div>
 
           {/* User */}
-          <div
-            className="flex items-center cursor-pointer text-white flex-shrink-0"
-            onClick={() => user ? logout() : openAuthModal()}
-          >
-            <span className="text-[12px] font-bold">
-              {user ? `♙  ${user.name}  ▾` : '♙  Đăng nhập'}
-            </span>
-          </div>
+          {user ? (
+            <Link
+              to="/account"
+              className="flex items-center cursor-pointer text-white flex-shrink-0 no-underline hover:text-gray-200 transition-colors"
+            >
+              <span className="text-[12px] font-bold">
+                ♙  {user.full_name || user.name}  ▾
+              </span>
+            </Link>
+          ) : (
+            <div
+              className="flex items-center cursor-pointer text-white flex-shrink-0 hover:text-gray-200 transition-colors"
+              onClick={() => openAuthModal()}
+            >
+              <span className="text-[12px] font-bold">
+                ♙  Đăng nhập
+              </span>
+            </div>
+          )}
 
           {/* Cart */}
           <Link to="/cart" className="flex items-center text-white no-underline flex-shrink-0">
