@@ -1,36 +1,22 @@
+import apiClient from '../../../../../../shared/utils/api-client';
+
 export const authApi = {
   login: async (credentials) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Mock authentication
-        if (credentials.identifier && credentials.password) {
-          resolve({
-            id: '1',
-            name: 'Minh Anh',
-            email: credentials.identifier.includes('@') ? credentials.identifier : 'minhanh@taca.com',
-            phone: credentials.identifier.includes('@') ? null : credentials.identifier,
-          });
-        } else {
-          reject(new Error('Vui lòng nhập đầy đủ thông tin.'));
-        }
-      }, 1000);
-    });
+    // credentials contains identifier and password
+    const response = await apiClient.post('/auth/signin', credentials);
+    return response;
   },
 
   register: async (userData) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (userData.name && userData.identifier && userData.password) {
-          resolve({
-            id: '2',
-            name: userData.name,
-            email: userData.identifier.includes('@') ? userData.identifier : null,
-            phone: userData.identifier.includes('@') ? null : userData.identifier,
-          });
-        } else {
-          reject(new Error('Vui lòng điền đầy đủ thông tin.'));
-        }
-      }, 1000);
-    });
+    // userData contains full_name, email, password, and optionally phone
+    const response = await apiClient.post('/auth/signup', userData);
+    return response;
+  },
+
+  logout: async () => {
+    const refreshToken = localStorage.getItem('taca_refresh_token');
+    if (refreshToken) {
+      await apiClient.post('/auth/signout', { refresh_token: refreshToken });
+    }
   }
 };

@@ -37,8 +37,8 @@ const AuthModal = () => {
 
     setLoading(true);
     try {
-      const user = await authApi.login({ identifier, password });
-      login(user);
+      const response = await authApi.login({ identifier, password });
+      login(response.data.user, response.data.tokens);
       closeAuthModal();
     } catch (err) {
       setError(err.message || 'Đăng nhập thất bại.');
@@ -68,8 +68,14 @@ const AuthModal = () => {
 
     setLoading(true);
     try {
-      const user = await authApi.register({ name, identifier, password });
-      login(user);
+      const isEmail = identifier.includes('@');
+      const payload = {
+        full_name: name,
+        password: password,
+        ...(isEmail ? { email: identifier } : { phone: identifier })
+      };
+      const response = await authApi.register(payload);
+      login(response.data.user, response.data.tokens);
       closeAuthModal();
     } catch (err) {
       setError(err.message || 'Đăng ký thất bại.');
