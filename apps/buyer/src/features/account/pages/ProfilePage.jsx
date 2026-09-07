@@ -136,24 +136,24 @@ const ProfilePage = () => {
             
             <div className="grid grid-cols-[120px_1fr] items-center gap-4">
               <label className="text-[14px] text-taca-text-muted">Số điện thoại</label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <Input 
                   name="phone"
                   type="tel"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="!rounded-lg flex-1"
+                  className="!rounded-lg max-w-[200px]"
                 />
-                {user && user.phone && !user.phone_verified && (
+                {(!user || !user.phone_verified) && formData.phone && (
                   <button 
                     type="button"
                     onClick={() => setPhoneModalOpen(true)}
-                    className="whitespace-nowrap text-[13px] font-bold text-white bg-taca-primary px-3 py-2 rounded-[8px] hover:bg-taca-primary-hover"
+                    className="text-[13px] font-bold text-taca-primary hover:text-taca-primary-hover underline whitespace-nowrap"
                   >
                     Xác thực ngay
                   </button>
                 )}
-                {user && user.phone && user.phone_verified && (
+                {user?.phone_verified && (
                   <span className="text-[13px] text-green-600 font-medium whitespace-nowrap bg-green-50 px-2 py-1 rounded">
                     ✓ Đã xác thực
                   </span>
