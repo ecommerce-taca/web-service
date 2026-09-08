@@ -43,7 +43,10 @@ const AuthModal = () => {
       login(response.data.user, response.data.tokens);
       closeAuthModal();
     } catch (err) {
-      setError(err.message || 'Đăng nhập thất bại.');
+      const errorMsg = err.response?.status === 404 
+        ? 'Chưa kết nối Backend (Lỗi 404)' 
+        : (err.message || 'Đăng nhập thất bại.');
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -86,7 +89,10 @@ const AuthModal = () => {
         setSuccessMessage('Đăng ký thành công! Hãy xác thực số điện thoại trong phần Hồ sơ của bạn.');
       }
     } catch (err) {
-      setError(err.message || 'Đăng ký thất bại.');
+      const errorMsg = err.response?.status === 404 
+        ? 'Chưa kết nối Backend (Lỗi 404)' 
+        : (err.message || 'Đăng ký thất bại.');
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

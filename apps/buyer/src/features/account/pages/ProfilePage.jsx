@@ -147,14 +147,13 @@ const ProfilePage = () => {
                     type="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="!rounded-lg bg-gray-50 text-gray-500 max-w-[200px]"
-                    disabled
+                    className="!rounded-lg max-w-[200px]"
                   />
-                  {(!user || !user.email_verified) && formData.email && (
+                  {(!user || !user.email_verified) && (
                     <button 
                       type="button"
                       onClick={handleResendEmail}
-                      disabled={emailResendStatus === 'sending'}
+                      disabled={!formData.email || emailResendStatus === 'sending'}
                       className="text-[13px] font-bold text-taca-primary hover:text-taca-primary-hover underline whitespace-nowrap disabled:opacity-50 disabled:no-underline"
                     >
                       {emailResendStatus === 'sending' ? 'Đang gửi...' : 'Gửi lại email xác nhận'}
@@ -185,11 +184,12 @@ const ProfilePage = () => {
                   onChange={handleChange}
                   className="!rounded-lg max-w-[200px]"
                 />
-                {(!user || !user.phone_verified) && formData.phone && (
+                {(!user || !user.phone_verified) && (
                   <button 
                     type="button"
                     onClick={() => setPhoneModalOpen(true)}
-                    className="text-[13px] font-bold text-taca-primary hover:text-taca-primary-hover underline whitespace-nowrap"
+                    disabled={!formData.phone}
+                    className="text-[13px] font-bold text-taca-primary hover:text-taca-primary-hover underline whitespace-nowrap disabled:opacity-50 disabled:no-underline"
                   >
                     Xác thực ngay
                   </button>
