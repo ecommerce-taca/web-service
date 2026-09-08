@@ -21,8 +21,11 @@ const ProfilePage = () => {
   const [error, setError] = useState('');
 
   const [isPhoneModalOpen, setPhoneModalOpen] = useState(false);
+  const [isNewPhoneVerified, setIsNewPhoneVerified] = useState(false);
   const [emailResendStatus, setEmailResendStatus] = useState(''); // 'sending', 'success', 'error'
   const [emailResendMessage, setEmailResendMessage] = useState('');
+
+  const isPhoneChanged = formData.phone !== (user?.phone || '');
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -59,6 +62,9 @@ const ProfilePage = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'phone') {
+      setIsNewPhoneVerified(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -101,8 +107,8 @@ const ProfilePage = () => {
   };
 
   const handlePhoneVerificationSuccess = () => {
-    setMessage('Xác thực số điện thoại thành công!');
-    fetchProfile(); // Re-fetch to get phone_verified = true
+    setMessage('Xác thực số điện thoại thành công! Hãy bấm Lưu thay đổi để hoàn tất.');
+    setIsNewPhoneVerified(true);
   };
 
   return (
@@ -214,10 +220,20 @@ const ProfilePage = () => {
             </div>
 
             <div className="grid grid-cols-[120px_1fr] items-center gap-4 mt-2">
-              <div></div>
-              <Button type="submit" disabled={loading} className="w-fit !rounded-lg h-11 px-8 text-[15px]">
-                {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
-              </Button>
+              <div className="col-span-2">
+                {(isPhoneChanged && !isNewPhoneVerified) && (
+                  <p className="text-taca-sale text-[13px] mb-3">
+                    * Vui lòng nhấn "Xác thực ngay" số điện thoại mới trước khi lưu.
+                  </p>
+                )}
+                <Button 
+                  type="submit" 
+                  disabled={loading || (isPhoneChanged && !isNewPhoneVerified)} 
+                  className="w-full md:w-auto px-8 !rounded-lg h-11 text-[15px]"
+                >
+                  {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
+                </Button>
+              </div>
             </div>
           </form>
         </section>
