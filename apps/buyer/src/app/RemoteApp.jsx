@@ -35,6 +35,9 @@ export default function RemoteApp() {
             <Route path="wishlist" element={<WishlistPage />} />
           </Route>
         </Route>
+        <Route path="/search" element={<SearchLayout />}>
+          <Route index element={<SearchPage />} />
+        </Route>
       </Routes>
     </AuthProvider>
   );

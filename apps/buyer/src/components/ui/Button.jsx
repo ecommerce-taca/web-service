@@ -7,16 +7,16 @@ const Button = ({ children, variant, type, onClick, disabled, className }) => {
   let variantClass;
   switch (variant) {
     case 'primary':
-      variantClass = 'bg-primary text-white hover:not-disabled:bg-primary-hover';
+      variantClass = 'bg-taca-primary text-white hover:not-disabled:bg-taca-primary-hover';
       break;
     case 'outline':
-      variantClass = 'bg-transparent text-primary border border-primary hover:not-disabled:bg-primary/5';
+      variantClass = 'bg-transparent text-taca-primary border border-taca-primary hover:not-disabled:bg-taca-primary/5';
       break;
     case 'danger':
-      variantClass = 'bg-sale text-white hover:not-disabled:opacity-90';
+      variantClass = 'bg-taca-sale text-white hover:not-disabled:opacity-90';
       break;
     default:
-      variantClass = 'bg-primary text-white hover:not-disabled:bg-primary-hover';
+      variantClass = 'bg-taca-primary text-white hover:not-disabled:bg-taca-primary-hover';
   }
 
   const combinedClass = `${baseClass} ${disabledClass} ${variantClass} ${className || ''}`.trim();
