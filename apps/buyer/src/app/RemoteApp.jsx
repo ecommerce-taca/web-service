@@ -13,6 +13,8 @@ import OrdersPage from '../features/account/pages/OrdersPage';
 import ReviewsPage from '../features/account/pages/ReviewsPage';
 import VouchersPage from '../features/account/pages/VouchersPage';
 import WishlistPage from '../features/account/pages/WishlistPage';
+import SearchLayout from '../features/search/layouts/SearchLayout';
+import SearchPage from '../features/search/pages/SearchPage';
 
 export default function RemoteApp() {
   return (

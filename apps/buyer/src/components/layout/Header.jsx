@@ -5,6 +5,16 @@ import MegaMenu from './MegaMenu';
 
 const Header = () => {
   const { user, openAuthModal } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50">
