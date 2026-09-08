@@ -47,15 +47,18 @@ const ProfilePage = () => {
 
   useEffect(() => {
     if (user) {
-       
-      setFormData({
-        full_name: user.full_name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        date_of_birth: user.date_of_birth || ''
-      });
+      setTimeout(() => {
+        setFormData({
+          full_name: user.full_name || '',
+          email: user.email || '',
+          phone: user.phone || '',
+          date_of_birth: user.date_of_birth || ''
+        });
+      }, 0);
     } else {
-      fetchProfile();
+      setTimeout(() => {
+        fetchProfile();
+      }, 0);
     }
   }, [user, fetchProfile]);
 

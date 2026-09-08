@@ -38,8 +38,9 @@ const PhoneVerificationModal = ({ isOpen, onClose, phone, onVerificationSuccess 
 
   useEffect(() => {
     if (isOpen && phone) {
-       
-      handleRequestOtp();
+      setTimeout(() => {
+        handleRequestOtp();
+      }, 0);
     }
   }, [isOpen, phone, handleRequestOtp]);
 
