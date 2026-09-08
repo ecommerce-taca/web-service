@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Button from '../../../../../../shared/ui-components/src/components/Button';
 import Input from '../../../../../../shared/ui-components/src/components/Input';
 import AddressCard from '../components/AddressCard';
@@ -21,21 +21,10 @@ const ProfilePage = () => {
   const [error, setError] = useState('');
 
   const [isPhoneModalOpen, setPhoneModalOpen] = useState(false);
+  const [emailResendStatus, setEmailResendStatus] = useState(''); // 'sending', 'success', 'error'
+  const [emailResendMessage, setEmailResendMessage] = useState('');
 
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        full_name: user.full_name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        date_of_birth: user.date_of_birth || ''
-      });
-    } else {
-      fetchProfile();
-    }
-  }, [user]);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       const response = await authApi.getProfile();
       const fetchedUser = response.data.user || response.data;
@@ -51,7 +40,21 @@ const ProfilePage = () => {
     } catch (err) {
       console.error('Failed to fetch profile', err);
     }
-  };
+  }, [login]);
+
+  useEffect(() => {
+    if (user) {
+       
+      setFormData({
+        full_name: user.full_name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        date_of_birth: user.date_of_birth || ''
+      });
+    } else {
+      fetchProfile();
+    }
+  }, [user, fetchProfile]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -81,6 +84,19 @@ const ProfilePage = () => {
       setError(err.message || 'Có lỗi xảy ra khi cập nhật hồ sơ.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendEmail = async () => {
+    setEmailResendStatus('sending');
+    setEmailResendMessage('');
+    try {
+      await authApi.resendEmailVerification();
+      setEmailResendStatus('success');
+      setEmailResendMessage('Đã gửi email xác nhận. Vui lòng kiểm tra hộp thư.');
+    } catch (err) {
+      setEmailResendStatus('error');
+      setEmailResendMessage(err.message || 'Lỗi khi gửi email xác nhận.');
     }
   };
 
@@ -122,16 +138,41 @@ const ProfilePage = () => {
               />
             </div>
             
-            <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-              <label className="text-[14px] text-taca-text-muted">Email</label>
-              <Input 
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="!rounded-lg bg-gray-50 text-gray-500"
-                disabled
-              />
+            <div className="grid grid-cols-[120px_1fr] items-start gap-4">
+              <label className="text-[14px] text-taca-text-muted mt-2">Email</label>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-3">
+                  <Input 
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="!rounded-lg bg-gray-50 text-gray-500 max-w-[200px]"
+                    disabled
+                  />
+                  {(!user || !user.email_verified) && formData.email && (
+                    <button 
+                      type="button"
+                      onClick={handleResendEmail}
+                      disabled={emailResendStatus === 'sending'}
+                      className="text-[13px] font-bold text-taca-primary hover:text-taca-primary-hover underline whitespace-nowrap disabled:opacity-50 disabled:no-underline"
+                    >
+                      {emailResendStatus === 'sending' ? 'Đang gửi...' : 'Gửi lại email xác nhận'}
+                    </button>
+                  )}
+                  {user?.email_verified && (
+                    <span className="text-[13px] text-green-600 font-medium whitespace-nowrap bg-green-50 px-2 py-1 rounded">
+                      ✓ Đã xác thực
+                    </span>
+                  )}
+                </div>
+                {emailResendStatus === 'success' && (
+                  <span className="text-[12px] text-green-600">{emailResendMessage}</span>
+                )}
+                {emailResendStatus === 'error' && (
+                  <span className="text-[12px] text-taca-sale">{emailResendMessage}</span>
+                )}
+              </div>
             </div>
             
             <div className="grid grid-cols-[120px_1fr] items-center gap-4">

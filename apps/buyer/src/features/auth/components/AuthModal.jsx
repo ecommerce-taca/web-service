@@ -17,6 +17,7 @@ const AuthModal = () => {
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const validatePassword = (pwd) => {
     // Tối thiểu 8 ký tự, có số, chữ hoa
@@ -29,6 +30,7 @@ const AuthModal = () => {
   const handleSignIn = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     
     if (!identifier || !password) {
       setError('Vui lòng nhập Email/Số điện thoại và mật khẩu.');
@@ -50,6 +52,7 @@ const AuthModal = () => {
   const handleSignUp = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     
     if (!name || !identifier || !password || !confirmPassword) {
       setError('Vui lòng nhập đầy đủ thông tin.');
@@ -76,7 +79,12 @@ const AuthModal = () => {
       };
       const response = await authApi.register(payload);
       login(response.data.user, response.data.tokens);
-      closeAuthModal();
+      
+      if (isEmail) {
+        setSuccessMessage('Đăng ký thành công! Vui lòng kiểm tra email của bạn để xác thực tài khoản.');
+      } else {
+        setSuccessMessage('Đăng ký thành công! Hãy xác thực số điện thoại trong phần Hồ sơ của bạn.');
+      }
     } catch (err) {
       setError(err.message || 'Đăng ký thất bại.');
     } finally {
@@ -90,6 +98,7 @@ const AuthModal = () => {
     setName('');
     setConfirmPassword('');
     setError('');
+    setSuccessMessage('');
   };
 
   const toggleMode = () => {
@@ -113,7 +122,22 @@ const AuthModal = () => {
       hideHeader={true}
     >
       <div className="flex flex-col">
-        {/* Title & Subtitle */}
+        {successMessage ? (
+          <div className="text-center py-6">
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6">
+              <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-[24px] font-bold text-taca-text-main mb-4">Thành công!</h2>
+            <p className="text-[15px] text-taca-text-muted mb-8">{successMessage}</p>
+            <Button onClick={handleClose} className="w-full">
+              Bắt đầu mua sắm
+            </Button>
+          </div>
+        ) : (
+          <>
+            {/* Title & Subtitle */}
         <div className="mb-6">
           <h2 className="text-[24px] font-bold text-taca-text-main">
             {isSignIn ? 'ĐĂNG NHẬP TACA' : 'ĐĂNG KÝ TACA'}
@@ -221,6 +245,8 @@ const AuthModal = () => {
             </>
           )}
         </div>
+        </>
+        )}
       </div>
     </Modal>
   );

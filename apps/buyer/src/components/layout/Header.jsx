@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 
 const Header = () => {
-  const { user, openAuthModal, logout } = useAuth();
+  const { user, openAuthModal } = useAuth();
 
   return (
     <header className="sticky top-0 z-50">

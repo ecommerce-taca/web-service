@@ -1,12 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { Button } from '@taca/ui-components';
 import { authApi } from '../services/auth.api';
 
 const VerifyEmailPage = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
-  const navigate = useNavigate();
   
   const [status, setStatus] = useState('verifying'); // 'verifying', 'success', 'error'
   const [message, setMessage] = useState('Đang xác thực email của bạn...');

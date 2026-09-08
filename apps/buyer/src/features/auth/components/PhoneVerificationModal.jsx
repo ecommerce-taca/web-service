@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Modal, Input, Button } from '@taca/ui-components';
 import { authApi } from '../services/auth.api';
 
@@ -22,13 +22,7 @@ const PhoneVerificationModal = ({ isOpen, onClose, phone, onVerificationSuccess 
     };
   }, [isOpen, countdown]);
 
-  useEffect(() => {
-    if (isOpen && phone) {
-      handleRequestOtp();
-    }
-  }, [isOpen, phone]);
-
-  const handleRequestOtp = async () => {
+  const handleRequestOtp = useCallback(async () => {
     setError('');
     setIsResending(true);
     try {
@@ -40,7 +34,14 @@ const PhoneVerificationModal = ({ isOpen, onClose, phone, onVerificationSuccess 
     } finally {
       setIsResending(false);
     }
-  };
+  }, [phone]);
+
+  useEffect(() => {
+    if (isOpen && phone) {
+       
+      handleRequestOtp();
+    }
+  }, [isOpen, phone, handleRequestOtp]);
 
   const handleVerify = async (e) => {
     e.preventDefault();
