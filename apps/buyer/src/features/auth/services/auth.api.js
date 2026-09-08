@@ -108,7 +108,7 @@ export const authApi = {
       // Giả lập trạng thái đã verify điện thoại thành công sau khi verify otp
       return {
         data: {
-          user: { id: 1, full_name: 'Nguyễn Minh Anh (Mock)', email: 'test@taca.vn', phone: '0909 123 456', email_verified: false, phone_verified: true, date_of_birth: '1995-01-01' }
+          user: { id: 1, full_name: 'Nguyễn Minh Anh (Mock)', email: 'test@taca.vn', phone: '0909 123 456', email_verified: false, phone_verified: false, date_of_birth: '1995-01-01' }
         }
       };
     }
