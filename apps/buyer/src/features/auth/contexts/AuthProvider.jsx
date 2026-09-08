@@ -1,6 +1,7 @@
 import { useReducer } from 'react';
 import PropTypes from 'prop-types';
 import { AuthContext } from './AuthContext';
+import { authApi } from '../services/auth.api';
 
 const initialState = {
   user: (() => {
@@ -49,8 +50,14 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'LOGIN', payload: userData });
   };
 
-  const logout = () => {
-    dispatch({ type: 'LOGOUT' });
+  const logout = async () => {
+    try {
+      await authApi.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      dispatch({ type: 'LOGOUT' });
+    }
   };
 
   const openAuthModal = () => dispatch({ type: 'OPEN_MODAL' });
