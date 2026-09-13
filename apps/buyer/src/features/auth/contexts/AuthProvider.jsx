@@ -1,7 +1,6 @@
 import { useReducer } from 'react';
 import PropTypes from 'prop-types';
 import { AuthContext } from './AuthContext';
-import { authApi } from '../services/auth.api';
 
 const initialState = {
   user: (() => {
@@ -15,10 +14,14 @@ const initialState = {
 function authReducer(state, action) {
   switch (action.type) {
     case 'LOGIN':
-      localStorage.setItem('taca_user', JSON.stringify(action.payload));
+      localStorage.setItem('taca_user', JSON.stringify(action.payload.user));
+      if (action.payload.tokens) {
+        localStorage.setItem('taca_access_token', action.payload.tokens.access_token);
+        localStorage.setItem('taca_refresh_token', action.payload.tokens.refresh_token);
+      }
       return {
         ...state,
-        user: action.payload,
+        user: action.payload.user,
         isAuthenticated: true,
       };
     case 'LOGOUT':
@@ -43,19 +46,11 @@ export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
   const login = (userData, tokens) => {
-    setUser(userData);
-    localStorage.setItem('taca_user', JSON.stringify(userData));
-    if (tokens) {
-      localStorage.setItem('taca_access_token', tokens.access_token);
-      localStorage.setItem('taca_refresh_token', tokens.refresh_token);
-    }
+    dispatch({ type: 'LOGIN', payload: { user: userData, tokens } });
   };
 
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem('taca_user');
-    localStorage.removeItem('taca_access_token');
-    localStorage.removeItem('taca_refresh_token');
+    dispatch({ type: 'LOGOUT' });
   };
 
   const openAuthModal = () => dispatch({ type: 'OPEN_MODAL' });
