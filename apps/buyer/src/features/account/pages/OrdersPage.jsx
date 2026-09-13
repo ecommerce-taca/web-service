@@ -1,82 +1,92 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import OrderCard from '../components/OrderCard';
+import { orderApi } from '../services/order.api';
 
-const DUMMY_ORDERS = [
-  {
-    id: 'TACA2408271',
-    storeName: 'Taca Apple Flagship Store',
-    status: 'ĐÃ GIAO',
-    totalPrice: 29490000,
-    items: [
-      {
-        name: 'iPhone 16 Pro Max 256GB',
-        variant: 'Titan tự nhiên',
-        price: 29490000,
-        quantity: 1
-      }
-    ]
-  },
-  {
-    id: 'TACA2408272',
-    storeName: 'Sony Official Store',
-    status: 'ĐANG VẬN CHUYỂN',
-    totalPrice: 7490000,
-    items: [
-      {
-        name: 'Tai nghe chụp tai Sony WH-1000XM5',
-        variant: 'Đen',
-        price: 7490000,
-        quantity: 1
-      }
-    ]
-  }
+const TABS = [
+  { label: 'Tất cả', value: '' },
+  { label: 'Chờ xác nhận', value: 'PENDING' },
+  { label: 'Đang giao', value: 'SHIPPING' },
+  { label: 'Đã giao', value: 'COMPLETED' },
+  { label: 'Đã hủy', value: 'CANCELLED' }
 ];
 
-const TABS = ['Tất cả', 'Chờ xác nhận', 'Đang giao', 'Đã giao', 'Đã hủy'];
-
 const OrdersPage = () => {
-  const [activeTab, setActiveTab] = useState('Tất cả');
+  const [activeTab, setActiveTab] = useState('');
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  // Filter orders based on active tab
-  const filteredOrders = DUMMY_ORDERS.filter(order => {
-    if (activeTab === 'Tất cả') return true;
-    if (activeTab === 'Đang giao' && order.status === 'ĐANG VẬN CHUYỂN') return true;
-    if (activeTab === 'Đã giao' && order.status === 'ĐÃ GIAO') return true;
-    return false;
-  });
+  const fetchOrders = useCallback(async (status) => {
+    setLoading(true);
+    try {
+      const response = await orderApi.getOrders({ page: 1, size: 50, status: status || undefined });
+      const items = response.data.data || response.data || [];
+      // Map API data to UI structure (this depends on real API structure, assuming similar)
+      const formattedOrders = items.map(o => ({
+        id: o.id,
+        storeName: o.shop?.name || 'Cửa hàng',
+        status: o.status,
+        totalPrice: o.total_amount || 0,
+        items: (o.order_items || []).map(i => ({
+          name: i.product_name,
+          variant: i.variant_name || '',
+          price: i.unit_price,
+          quantity: i.quantity,
+          image: i.product_image
+        }))
+      }));
+      setOrders(formattedOrders);
+    } catch (error) {
+      console.error('Failed to fetch orders:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+     
+    fetchOrders(activeTab);
+  }, [activeTab, fetchOrders]);
 
   return (
-    <div>
-      <h2 className="text-[20px] font-extrabold text-taca-text-main m-0 mb-6">Đơn mua</h2>
+    <div className="flex flex-col h-full">
+      <div className="p-6 md:p-8 flex-1">
+        <h2 className="text-[20px] font-extrabold text-taca-text-main m-0 mb-6">Đơn mua</h2>
 
-      {/* Tabs */}
-      <div className="flex gap-6 border-b border-taca-border mb-6">
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`pb-3 text-[14px] font-semibold cursor-pointer border-b-2 transition-colors bg-transparent ${
-              activeTab === tab
-                ? 'border-taca-primary text-taca-primary'
-                : 'border-transparent text-taca-text-muted hover:text-taca-text-main'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+        {/* Tabs */}
+        <div className="flex gap-6 border-b border-taca-border mb-6">
+          {TABS.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setActiveTab(tab.value)}
+              className={`pb-3 text-[14px] font-semibold cursor-pointer border-b-2 transition-colors bg-transparent ${
+                activeTab === tab.value
+                  ? 'border-taca-primary text-taca-primary'
+                  : 'border-transparent text-taca-text-muted hover:text-taca-text-main'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-      {/* Order List */}
-      <div className="flex flex-col gap-4">
-        {filteredOrders.length > 0 ? (
-          filteredOrders.map(order => (
-            <OrderCard key={order.id} order={order} />
-          ))
-        ) : (
-          <div className="text-center py-12 text-gray-500">
-            Không có đơn hàng nào
-          </div>
-        )}
+        {/* Order List */}
+        <div className="flex flex-col gap-4">
+          {loading ? (
+            <div className="text-center py-12 text-gray-500">Đang tải...</div>
+          ) : orders.length > 0 ? (
+            orders.map(order => (
+              <div key={order.id} onClick={() => navigate(`/account/orders/${order.id}`)} className="cursor-pointer">
+                <OrderCard order={order} />
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+              Không có đơn hàng nào
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
