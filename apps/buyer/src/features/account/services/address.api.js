@@ -1,4 +1,6 @@
+import apiClient from '../../../../../../shared/utils/api-client';
 
+const USE_MOCK = false;
 
 // Mock data
 let mockAddresses = [
@@ -16,13 +18,15 @@ export const addressApi = {
    * Lấy danh sách địa chỉ
    */
   getAddresses: async () => {
-    // const response = await apiClient.get('/users/me/addresses', { params });
-    // return response;
-    return new Promise(resolve => {
-      setTimeout(() => {
-        resolve({ data: { data: mockAddresses } });
-      }, 300);
-    });
+    if (USE_MOCK) {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve({ data: { data: mockAddresses } });
+        }, 300);
+      });
+    }
+    const response = await apiClient.get('/users/me/addresses');
+    return response;
   },
 
   /**

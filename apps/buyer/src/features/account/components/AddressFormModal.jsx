@@ -50,6 +50,24 @@ const AddressFormModal = ({ isOpen, onClose, addressData, onSuccess }) => {
     setLoading(true);
     setError('');
 
+    // Custom Validation
+    const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
+    if (!formData.name.trim()) {
+      setError('Vui lòng nhập họ và tên.');
+      setLoading(false);
+      return;
+    }
+    if (!phoneRegex.test(formData.phone)) {
+      setError('Số điện thoại không hợp lệ.');
+      setLoading(false);
+      return;
+    }
+    if (!formData.detail_address.trim()) {
+      setError('Vui lòng nhập địa chỉ cụ thể.');
+      setLoading(false);
+      return;
+    }
+
     try {
       if (isEdit) {
         await addressApi.updateAddress(addressData.id, formData);

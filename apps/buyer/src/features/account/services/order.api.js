@@ -1,4 +1,6 @@
+import apiClient from '../../../../../../shared/utils/api-client';
 
+const USE_MOCK = false;
 
 // Mock data for development when backend is not ready
 const MOCK_ORDERS = {
@@ -56,8 +58,10 @@ export const orderApi = {
    * @param {Object} params - Query params (page, size, status)
    */
   getOrders: async (params = { page: 1, size: 20 }) => {
-    // const response = await apiClient.get('/orders/me', { params });
-    // return response;
+    if (!USE_MOCK) {
+      const response = await apiClient.get('/orders/me', { params });
+      return response;
+    }
     
     return new Promise(resolve => {
       setTimeout(() => {
