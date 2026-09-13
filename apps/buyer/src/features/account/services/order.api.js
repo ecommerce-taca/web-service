@@ -79,8 +79,10 @@ export const orderApi = {
    * @param {string} orderId - ID của đơn hàng
    */
   getOrderDetail: async (orderId) => {
-    // const response = await apiClient.get(`/orders/${orderId}`);
-    // return response;
+    if (!USE_MOCK) {
+      const response = await apiClient.get(`/orders/${orderId}`);
+      return response;
+    }
 
     return new Promise((resolve, reject) => {
       setTimeout(() => {

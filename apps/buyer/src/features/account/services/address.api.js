@@ -34,8 +34,10 @@ export const addressApi = {
    * @param {Object} data - Dữ liệu địa chỉ
    */
   addAddress: async (data) => {
-    // const response = await apiClient.post('/users/me/addresses', data);
-    // return response;
+    if (!USE_MOCK) {
+      const response = await apiClient.post('/users/me/addresses', data);
+      return response;
+    }
     return new Promise(resolve => {
       setTimeout(() => {
         const newAddress = { id: Date.now().toString(), ...data };
@@ -54,8 +56,10 @@ export const addressApi = {
    * @param {Object} data - Dữ liệu cập nhật
    */
   updateAddress: async (addressId, data) => {
-    // const response = await apiClient.put(`/users/me/addresses/${addressId}`, data);
-    // return response;
+    if (!USE_MOCK) {
+      const response = await apiClient.put(`/users/me/addresses/${addressId}`, data);
+      return response;
+    }
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         const idx = mockAddresses.findIndex(a => a.id === addressId);
@@ -77,8 +81,10 @@ export const addressApi = {
    * @param {string} addressId - ID của địa chỉ
    */
   deleteAddress: async (addressId) => {
-    // const response = await apiClient.delete(`/users/me/addresses/${addressId}`);
-    // return response;
+    if (!USE_MOCK) {
+      const response = await apiClient.delete(`/users/me/addresses/${addressId}`);
+      return response;
+    }
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         const idx = mockAddresses.findIndex(a => a.id === addressId);
