@@ -19,11 +19,25 @@ const AuthModal = () => {
   const [error, setError] = useState('');
 
   const validatePassword = (pwd) => {
-    // Tối thiểu 8 ký tự, có số, chữ hoa
-    const minLength = 8;
-    const hasNumber = /\d/.test(pwd);
-    const hasUpper = /[A-Z]/.test(pwd);
-    return pwd.length >= minLength && hasNumber && hasUpper;
+    return pwd.length >= 12 && pwd.length <= 72;
+  };
+
+  const validateIdentifier = (id) => {
+    const trimmedId = id.trim();
+    if (trimmedId.includes('@')) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedId)) return 'Email không hợp lệ.';
+      return null;
+    }
+    const phoneRegex = /^(0|\+84)[3|5|7|8|9][0-9]{8}$/;
+    if (!phoneRegex.test(trimmedId)) return 'Số điện thoại không hợp lệ (VD: 0912345678).';
+    return null;
+  };
+
+  const validateName = (val) => {
+    const trimmed = val.trim();
+    if (trimmed.length < 1 || trimmed.length > 120) return 'Họ tên phải từ 1 đến 120 ký tự.';
+    return null;
   };
 
   const handleSignIn = async (e) => {
@@ -35,9 +49,25 @@ const AuthModal = () => {
       return;
     }
 
+    const idError = validateIdentifier(identifier);
+    if (idError) {
+      setError(idError);
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      setError('Mật khẩu không hợp lệ (cần 12-72 ký tự).');
+      return;
+    }
+
     setLoading(true);
     try {
-      const user = await authApi.login({ identifier, password });
+      let finalIdentifier = identifier.trim();
+      if (!finalIdentifier.includes('@') && finalIdentifier.startsWith('0')) {
+        finalIdentifier = '+84' + finalIdentifier.slice(1);
+      }
+
+      const user = await authApi.login({ identifier: finalIdentifier, password });
       login(user);
       closeAuthModal();
     } catch (err) {
@@ -56,19 +86,36 @@ const AuthModal = () => {
       return;
     }
 
+    const nameError = validateName(name);
+    if (nameError) {
+      setError(nameError);
+      return;
+    }
+
+    const idError = validateIdentifier(identifier);
+    if (idError) {
+      setError(idError);
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      setError('Mật khẩu cần từ 12-72 ký tự.');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError('Mật khẩu nhập lại không khớp.');
       return;
     }
 
-    if (!validatePassword(password)) {
-      setError('Mật khẩu cần tối thiểu 8 ký tự, bao gồm chữ hoa và số.');
-      return;
-    }
-
     setLoading(true);
     try {
-      const user = await authApi.register({ name, identifier, password });
+      let finalIdentifier = identifier.trim();
+      if (!finalIdentifier.includes('@') && finalIdentifier.startsWith('0')) {
+        finalIdentifier = '+84' + finalIdentifier.slice(1);
+      }
+
+      const user = await authApi.register({ name: name.trim(), identifier: finalIdentifier, password });
       login(user);
       closeAuthModal();
     } catch (err) {
