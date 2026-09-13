@@ -9,6 +9,7 @@ import VerifyEmailPage from '../features/auth/pages/VerifyEmailPage';
 import AccountLayout from '../features/account/layouts/AccountLayout';
 import ProfilePage from '../features/account/pages/ProfilePage';
 import OrdersPage from '../features/account/pages/OrdersPage';
+import OrderDetailPage from '../features/account/pages/OrderDetailPage';
 import ReviewsPage from '../features/account/pages/ReviewsPage';
 import VouchersPage from '../features/account/pages/VouchersPage';
 import WishlistPage from '../features/account/pages/WishlistPage';
@@ -34,6 +35,7 @@ function App() {
               <Route path="profile" element={<ProfilePage />} />
               <Route path="overview" element={<div className="p-8">Tổng quan (Sắp ra mắt)</div>} />
               <Route path="orders" element={<OrdersPage />} />
+              <Route path="orders/:id" element={<OrderDetailPage />} />
               <Route path="reviews" element={<ReviewsPage />} />
               <Route path="vouchers" element={<VouchersPage />} />
               <Route path="wishlist" element={<WishlistPage />} />
