@@ -136,10 +136,11 @@ export default function CartPage() {
                         disabled={item.quantity <= 1}
                       >-</button>
                       <input 
-                        type="text" 
-                        className="w-10 text-center border-x border-y-0 border-slate-200 text-[12px] font-bold text-slate-900 focus:ring-0 p-0 h-full bg-white"
+                        type="number" 
+                        className="w-10 text-center border-x border-y-0 border-slate-200 text-[12px] font-bold text-slate-900 focus:ring-0 p-0 h-full bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         value={item.quantity}
-                        readOnly
+                        onChange={(e) => handleUpdateQuantity(item.id, parseInt(e.target.value) || 1)}
+                        min="1"
                       />
                       <button 
                         className="w-8 flex items-center justify-center text-slate-900 text-[12px] font-bold hover:bg-slate-50"
@@ -163,7 +164,10 @@ export default function CartPage() {
             <div className="flex flex-col mb-6">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Voucher</span>
-                <button className="bg-violet-600 text-white hover:bg-violet-700 px-4 py-2 rounded-lg text-[12px] font-bold transition-colors">
+                <button 
+                  className="bg-violet-600 text-white hover:bg-violet-700 px-4 py-2 rounded-lg text-[12px] font-bold transition-colors cursor-pointer"
+                  onClick={() => alert('Tính năng đổi voucher sẽ được cập nhật sớm!')}
+                >
                   2 voucher đã áp dụng
                 </button>
               </div>
@@ -193,7 +197,7 @@ export default function CartPage() {
             <button 
               onClick={handleCheckout}
               disabled={selectedItems.length === 0}
-              className="w-full bg-primary hover:bg-primary-dark text-white text-[12px] font-bold py-3.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed uppercase"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] font-bold py-3.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed uppercase"
             >
               Mua hàng ({selectedItems.length})
             </button>
