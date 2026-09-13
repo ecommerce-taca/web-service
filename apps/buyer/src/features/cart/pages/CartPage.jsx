@@ -63,146 +63,144 @@ export default function CartPage() {
   };
 
   return (
-    <div className="bg-[#F8F9FA] min-h-screen pb-16">
+    <div className="bg-slate-50 min-h-screen pb-16">
       {/* Breadcrumb */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-sm text-gray-500">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-[13px] text-slate-500">
         <Link to="/" className="hover:text-primary">Trang chủ</Link>
         <span className="mx-2">/</span>
-        <span className="text-gray-900">Giỏ hàng</span>
+        <span className="text-slate-900">Giỏ hàng</span>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Giỏ hàng ({items.length} sản phẩm)</h1>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-2">
+        <h1 className="text-2xl font-bold text-slate-900 mb-6">Giỏ hàng ({items.length} sản phẩm)</h1>
         
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
           {/* Left Column: Cart Items */}
-          <div className="flex-1">
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-              {/* Header row */}
-              <div className="flex items-center text-sm font-medium text-gray-500 mb-4 pb-4 border-b border-gray-100">
-                <div className="flex items-center w-1/2">
-                  <input 
-                    type="checkbox" 
-                    className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-                    checked={selectedItems.length === items.length && items.length > 0}
-                    onChange={handleSelectAll}
-                  />
-                  <span className="ml-3">Sản phẩm</span>
-                </div>
-                <div className="w-1/6 text-center">Đơn giá</div>
-                <div className="w-1/6 text-center">Số lượng</div>
-                <div className="w-1/6 text-right">Thành tiền</div>
+          <div className="flex-1 bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+            {/* Header row */}
+            <div className="flex items-center mb-4 pb-4 border-b border-slate-200">
+              <div className="flex items-center w-1/2">
+                <input 
+                  type="checkbox" 
+                  className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
+                  checked={selectedItems.length === items.length && items.length > 0}
+                  onChange={handleSelectAll}
+                />
+                <span className="ml-3 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Sản phẩm</span>
               </div>
+              <div className="w-1/6 text-center text-[11px] font-bold text-slate-600 uppercase tracking-wider">Đơn giá</div>
+              <div className="w-1/6 text-center text-[11px] font-bold text-slate-600 uppercase tracking-wider">Số lượng</div>
+              <div className="w-1/6 text-right text-[11px] font-bold text-slate-600 uppercase tracking-wider">Thành tiền</div>
+            </div>
 
-              {/* Items list */}
-              <div className="space-y-6">
-                {items.map(item => (
-                  <div key={item.id} className="flex items-start py-4 border-b border-gray-50 last:border-0 last:pb-0">
-                    <div className="flex items-start w-1/2">
-                      <div className="pt-2">
-                        <input 
-                          type="checkbox" 
-                          className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-                          checked={selectedItems.includes(item.id)}
-                          onChange={(e) => handleSelectItem(item.id, e.target.checked)}
-                        />
-                      </div>
-                      <div className="ml-4 w-24 h-24 bg-gray-100 rounded-lg flex-shrink-0">
-                        {/* Image placeholder */}
-                      </div>
-                      <div className="ml-4 flex flex-col justify-between h-full">
-                        <div>
-                          <h3 className="font-semibold text-gray-900 line-clamp-2">{item.name}</h3>
-                          <p className="text-sm text-gray-500 mt-1">{item.variant}</p>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm mt-4">
-                          <button className="text-gray-500 hover:text-primary flex items-center">
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                            Lưu để mua sau
-                          </button>
-                          <button className="text-gray-500 hover:text-red-500">Xóa</button>
-                        </div>
-                      </div>
+            {/* Items list */}
+            <div className="space-y-6">
+              {items.map(item => (
+                <div key={item.id} className="flex items-start py-4 border-b border-slate-100 last:border-0 last:pb-0">
+                  <div className="flex items-start w-1/2">
+                    <div className="pt-8">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
+                        checked={selectedItems.includes(item.id)}
+                        onChange={(e) => handleSelectItem(item.id, e.target.checked)}
+                      />
                     </div>
-                    
-                    <div className="w-1/6 text-center pt-2 font-bold text-[#E53935]">
-                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
+                    <div className="ml-4 w-24 h-24 bg-indigo-50 rounded-lg flex-shrink-0">
+                      {/* Image placeholder */}
                     </div>
-                    
-                    <div className="w-1/6 flex justify-center pt-2">
-                      <div className="flex items-center border border-gray-300 rounded h-8">
-                        <button 
-                          className="w-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                          onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                          disabled={item.quantity <= 1}
-                        >-</button>
-                        <input 
-                          type="text" 
-                          className="w-10 text-center border-x border-y-0 border-gray-300 text-sm focus:ring-0 p-0 h-full"
-                          value={item.quantity}
-                          readOnly
-                        />
-                        <button 
-                          className="w-8 flex items-center justify-center text-gray-500 hover:bg-gray-50"
-                          onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                        >+</button>
+                    <div className="ml-4 flex flex-col justify-between h-24">
+                      <div>
+                        <h3 className="text-[13px] font-extrabold text-slate-900 line-clamp-2 leading-tight">{item.name}</h3>
+                        <p className="text-[10px] font-medium text-slate-600 mt-1">{item.variant}</p>
                       </div>
-                    </div>
-                    
-                    <div className="w-1/6 text-right pt-2 font-bold text-gray-900">
-                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.quantity)}
+                      <div className="flex items-center gap-4 text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
+                        <button className="hover:text-primary flex items-center">
+                          <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                          Lưu để mua sau
+                        </button>
+                        <button className="hover:text-rose-500">Xóa</button>
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                  
+                  <div className="w-1/6 text-center pt-8 text-[13px] font-extrabold text-rose-600">
+                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
+                  </div>
+                  
+                  <div className="w-1/6 flex justify-center pt-8">
+                    <div className="flex items-center border border-slate-200 rounded h-8 bg-white">
+                      <button 
+                        className="w-8 flex items-center justify-center text-slate-900 text-[12px] font-bold hover:bg-slate-50 disabled:opacity-50"
+                        onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                        disabled={item.quantity <= 1}
+                      >-</button>
+                      <input 
+                        type="text" 
+                        className="w-10 text-center border-x border-y-0 border-slate-200 text-[12px] font-bold text-slate-900 focus:ring-0 p-0 h-full bg-white"
+                        value={item.quantity}
+                        readOnly
+                      />
+                      <button 
+                        className="w-8 flex items-center justify-center text-slate-900 text-[12px] font-bold hover:bg-slate-50"
+                        onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                      >+</button>
+                    </div>
+                  </div>
+                  
+                  <div className="w-1/6 text-right pt-8 text-[12px] font-extrabold text-slate-900">
+                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.quantity)}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Right Column: Order Summary */}
-          <div className="w-full lg:w-[380px]">
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-              <h2 className="font-bold text-lg text-gray-900 mb-6 uppercase">TÓM TẮT ĐƠN HÀNG</h2>
-              
-              <div className="flex justify-between items-start mb-6">
-                <span className="text-gray-600">Voucher</span>
-                <div className="text-right">
-                  <button className="bg-primary/10 text-primary hover:bg-primary/20 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                    2 voucher đã áp dụng
-                  </button>
-                  <p className="text-primary font-medium text-sm mt-2">APPLE300K + TACA200K</p>
-                </div>
+          <div className="w-full lg:w-[380px] bg-white rounded-lg p-6 shadow-sm border border-slate-200 flex flex-col">
+            <h2 className="text-[14px] font-extrabold text-slate-900 mb-6 uppercase">Tóm tắt đơn hàng</h2>
+            
+            <div className="flex flex-col mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Voucher</span>
+                <button className="bg-violet-600 text-white hover:bg-violet-700 px-4 py-2 rounded-lg text-[12px] font-bold transition-colors">
+                  2 voucher đã áp dụng
+                </button>
               </div>
-
-              <div className="space-y-4 border-b border-gray-100 pb-4 mb-4">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Tạm tính</span>
-                  <span className="font-medium">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(subtotal)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Giảm giá</span>
-                  <span className="font-medium text-[#00C853]">- {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(discount)}</span>
-                </div>
+              <div className="flex justify-end">
+                <p className="text-violet-600 text-[12px] font-bold">APPLE300K + TACA200K</p>
               </div>
-
-              <div className="flex justify-between items-center mb-6">
-                <span className="font-bold text-gray-900 text-lg">Tổng cộng</span>
-                <span className="font-bold text-2xl text-[#E53935]">
-                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}
-                </span>
-              </div>
-
-              <button 
-                onClick={handleCheckout}
-                disabled={selectedItems.length === 0}
-                className="w-full bg-primary hover:bg-primary-dark text-white font-medium py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Mua hàng ({selectedItems.length})
-              </button>
-              
-              <p className="text-xs text-gray-500 text-center mt-4">
-                Thanh toán an toàn • Bảo vệ người mua
-              </p>
             </div>
+
+            <div className="space-y-3 border-b border-slate-200 pb-4 mb-4">
+              <div className="flex justify-between items-center">
+                <span className="text-[11px] font-medium text-slate-600">Tạm tính</span>
+                <span className="text-[12px] font-bold text-slate-900">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(subtotal)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[11px] font-medium text-slate-600">Giảm giá</span>
+                <span className="text-[12px] font-bold text-emerald-600">- {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(discount)}</span>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center mb-6">
+              <span className="text-[14px] font-extrabold text-slate-900">Tổng cộng</span>
+              <span className="text-[18px] font-extrabold text-rose-600">
+                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}
+              </span>
+            </div>
+
+            <button 
+              onClick={handleCheckout}
+              disabled={selectedItems.length === 0}
+              className="w-full bg-primary hover:bg-primary-dark text-white text-[12px] font-bold py-3.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed uppercase"
+            >
+              Mua hàng ({selectedItems.length})
+            </button>
+            
+            <p className="text-[10px] font-medium text-slate-600 text-center mt-4">
+              Thanh toán an toàn • Bảo vệ người mua
+            </p>
           </div>
         </div>
       </div>
