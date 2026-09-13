@@ -15,6 +15,15 @@ export default defineConfig({
       shared: ['react', 'react-dom', 'react-router-dom']
     })
   ],
-  server: { port: 5173, cors: true }, preview: { port: 5173, strictPort: true, cors: true },
+  server: { 
+    port: 5173, 
+    cors: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      }
+    }
+  }, preview: { port: 5173, strictPort: true, cors: true },
   build: { target: 'esnext', minify: false, cssCodeSplit: false }
 })
