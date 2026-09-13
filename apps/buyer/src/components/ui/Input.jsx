@@ -1,13 +1,13 @@
 import PropTypes from 'prop-types';
 
 const Input = ({ label, type, placeholder, value, onChange, disabled, error, className }) => {
-  const baseInputClass = 'text-[14px] bg-white border rounded-none px-4 min-h-[40px] w-full outline-none transition-colors disabled:bg-surface disabled:text-muted disabled:cursor-not-allowed';
-  const borderClass = error ? 'border-sale' : 'border-border focus:border-primary';
+  const baseInputClass = 'text-[14px] bg-white border rounded-none px-4 min-h-[40px] w-full outline-none transition-colors disabled:bg-taca-surface disabled:text-taca-text-muted disabled:cursor-not-allowed';
+  const borderClass = error ? 'border-sale' : 'border-taca-border focus:border-taca-primary';
   const inputClass = `${baseInputClass} ${borderClass} ${className || ''}`.trim();
 
   return (
     <div className="flex flex-col gap-1 w-full">
-      {label && <label className="text-[12px] font-bold text-main">{label}</label>}
+      {label && <label className="text-[12px] font-bold text-taca-text-main">{label}</label>}
       <input
         type={type}
         className={inputClass}
@@ -16,7 +16,7 @@ const Input = ({ label, type, placeholder, value, onChange, disabled, error, cla
         onChange={onChange}
         disabled={disabled}
       />
-      {error && <span className="text-[10px] font-medium text-sale">{error}</span>}
+      {error && <span className="text-[10px] font-medium text-taca-sale">{error}</span>}
     </div>
   );
 };

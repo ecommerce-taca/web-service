@@ -1,14 +1,46 @@
-import { useState } from 'react';
+import { useReducer } from 'react';
 import PropTypes from 'prop-types';
 import { AuthContext } from './AuthContext';
+import { authApi } from '../services/auth.api';
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
+const initialState = {
+  user: (() => {
     const savedUser = localStorage.getItem('taca_user');
     return savedUser ? JSON.parse(savedUser) : null;
-  });
-  
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  })(),
+  isAuthenticated: !!localStorage.getItem('taca_user'),
+  isAuthModalOpen: false,
+};
+
+function authReducer(state, action) {
+  switch (action.type) {
+    case 'LOGIN':
+      localStorage.setItem('taca_user', JSON.stringify(action.payload));
+      return {
+        ...state,
+        user: action.payload,
+        isAuthenticated: true,
+      };
+    case 'LOGOUT':
+      localStorage.removeItem('taca_user');
+      localStorage.removeItem('taca_access_token');
+      localStorage.removeItem('taca_refresh_token');
+      return {
+        ...state,
+        user: null,
+        isAuthenticated: false,
+      };
+    case 'OPEN_MODAL':
+      return { ...state, isAuthModalOpen: true };
+    case 'CLOSE_MODAL':
+      return { ...state, isAuthModalOpen: false };
+    default:
+      return state;
+  }
+}
+
+export const AuthProvider = ({ children }) => {
+  const [state, dispatch] = useReducer(authReducer, initialState);
 
   const login = (userData, tokens) => {
     setUser(userData);
@@ -26,15 +58,16 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('taca_refresh_token');
   };
 
-  const openAuthModal = () => setIsAuthModalOpen(true);
-  const closeAuthModal = () => setIsAuthModalOpen(false);
+  const openAuthModal = () => dispatch({ type: 'OPEN_MODAL' });
+  const closeAuthModal = () => dispatch({ type: 'CLOSE_MODAL' });
 
   return (
     <AuthContext.Provider value={{
-      user,
+      user: state.user,
+      isAuthenticated: state.isAuthenticated,
+      isAuthModalOpen: state.isAuthModalOpen,
       login,
       logout,
-      isAuthModalOpen,
       openAuthModal,
       closeAuthModal
     }}>

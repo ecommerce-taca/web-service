@@ -1,10 +1,12 @@
 # 🎯 CURRENT TASK
 
-**Status**: COMPLETED (Auth) / PLANNING (Account Details)
+**Status**: COMPLETED (Shop Page) / PLANNING (Auth / Cart / Checkout)
 
-**Goal**: Bắt đầu xây dựng trang Chi tiết tài khoản sau khi hoàn thành Auth.
+**Goal**: Bắt đầu xây dựng trang Đăng nhập/Đăng ký (Auth), Giỏ hàng (Cart) hoặc các luồng khác sau khi hoàn thành Shop Page.
 
 ## Các bước tiếp theo:
-1. Tạo branch `feature/account-details` từ `develop`.
-2. Phân tích UI Account Details trên Penpot.
-3. Tạo Implementation Plan và tiến hành thực thi.
+
+1. Chờ user quyết định luồng tiếp theo.
+2. Tạo branch mới tương ứng (`feature/auth` hoặc `feature/cart`).
+3. Phân tích UI trên Penpot và tạo Implementation Plan.
+4. Tiến hành thực thi theo đúng quy trình AGENTS.md.

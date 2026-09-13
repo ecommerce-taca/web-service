@@ -22,7 +22,7 @@ const FlashProductCard = ({ id, name, price, discount, image, soldPercentage }) 
 
       {/* Right: Info */}
       <div className="flex flex-col justify-center flex-1 pl-4 pr-4 py-4 gap-1 min-w-0">
-        <h3 className="text-[12px] font-semibold text-taca-text-main line-clamp-2 leading-snug group-hover:text-taca-primary transition-colors m-0">
+        <h3 className="text-[12px] font-semibold text-taca-text-taca-text-main line-clamp-2 leading-snug group-hover:text-taca-primary transition-colors m-0">
           {name}
         </h3>
 
