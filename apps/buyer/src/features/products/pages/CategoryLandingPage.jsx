@@ -39,20 +39,32 @@ const CategoryLandingPage = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col gap-8">
+        <div className="flex-1 flex flex-col gap-8 min-w-0">
           {/* Category Hero */}
-          <div className="w-full h-[190px] bg-[#4f46e5] rounded-[16px] flex items-center justify-center overflow-hidden">
-            <h1 className="text-white text-[32px] font-extrabold uppercase tracking-wide">
-              {categorySlug || 'ĐIỆN THOẠI'} CHÍNH HÃNG
-            </h1>
+          <div className="w-full h-[220px] bg-taca-primary rounded-[4px] flex items-center justify-between px-10 overflow-hidden relative">
+            <div className="flex flex-col gap-3 z-10">
+              <h1 className="text-white text-[28px] font-bold uppercase m-0">
+                {categorySlug || 'ĐIỆN THOẠI'} CHÍNH HÃNG
+              </h1>
+              <div className="text-white text-[14px] leading-relaxed font-medium">
+                Apple - Samsung - Xiaomi - OPPO<br/>
+                Ưu đãi đến 30% - Giao nhanh 2H
+              </div>
+              <button className="mt-2 bg-white text-taca-primary font-bold text-[14px] px-6 py-2.5 rounded-[4px] w-fit hover:bg-gray-50 transition-colors">
+                Khám phá deal
+              </button>
+            </div>
+            <div className="z-10 hidden md:block">
+              <span className="text-white/90 text-[32px] font-bold uppercase tracking-wider">SMARTPHONE</span>
+            </div>
           </div>
 
           {/* Khám phá theo nhu cầu */}
           <div className="flex flex-col gap-4">
-            <h2 className="text-[20px] font-extrabold text-taca-text-main m-0">Khám phá theo nhu cầu</h2>
+            <h2 className="text-[16px] font-bold text-taca-text-main m-0">Khám phá theo nhu cầu</h2>
             <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
               {USE_CASES.map((uc, idx) => (
-                <div key={idx} className="flex-shrink-0 w-[148px] h-[74px] bg-taca-surface rounded-lg border border-taca-border/50 flex items-center justify-center font-bold text-[14px] text-taca-text-main hover:border-taca-primary cursor-pointer transition-colors">
+                <div key={idx} className="flex-shrink-0 w-[148px] h-[74px] bg-white rounded-[4px] border border-taca-border flex items-center justify-center font-bold text-[13px] text-taca-text-main hover:border-taca-primary cursor-pointer transition-colors shadow-sm">
                   {uc}
                 </div>
               ))}
@@ -61,10 +73,10 @@ const CategoryLandingPage = () => {
 
           {/* Thương hiệu nổi bật */}
           <div className="flex flex-col gap-4">
-            <h2 className="text-[20px] font-extrabold text-taca-text-main m-0">Thương hiệu nổi bật</h2>
+            <h2 className="text-[16px] font-bold text-taca-text-main m-0">Thương hiệu nổi bật</h2>
             <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
               {BRANDS.map((brand, idx) => (
-                <div key={idx} className="flex-shrink-0 w-[176px] h-[54px] bg-white rounded-lg border border-taca-border/80 flex items-center justify-center font-bold text-[15px] text-taca-text-main hover:shadow-md cursor-pointer transition-all">
+                <div key={idx} className="flex-shrink-0 w-[176px] h-[54px] bg-white rounded-[4px] border border-taca-border flex items-center justify-center font-bold text-[14px] text-taca-text-main hover:border-taca-primary cursor-pointer transition-colors shadow-sm">
                   {brand}
                 </div>
               ))}
@@ -73,19 +85,20 @@ const CategoryLandingPage = () => {
 
           {/* Sản phẩm nổi bật */}
           <div className="flex flex-col gap-6">
-            <h2 className="text-[20px] font-extrabold text-taca-text-main m-0">Sản phẩm nổi bật</h2>
-            
-            <div className="flex gap-3">
-              {CHIPS.map((chip, idx) => (
-                <button key={idx} className={`px-4 py-2 rounded-full border text-[13px] font-semibold transition-colors ${idx === 0 ? 'bg-taca-primary text-white border-taca-primary' : 'bg-white text-taca-text-main border-taca-border hover:border-taca-primary'}`}>
-                  {chip}
-                </button>
-              ))}
+            <div className="flex items-center justify-between">
+              <h2 className="text-[16px] font-bold text-taca-text-main m-0">Sản phẩm nổi bật</h2>
+              <div className="flex gap-3">
+                {CHIPS.map((chip, idx) => (
+                  <button key={idx} className={`px-4 py-2 rounded-[24px] border text-[13px] font-semibold transition-colors ${idx === 0 ? 'bg-white text-taca-primary border-taca-primary' : 'bg-white text-taca-text-muted border-taca-border hover:border-taca-primary hover:text-taca-primary'}`}>
+                    {chip}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Product Grid - 5 columns as per Penpot (1038px width / 202px = 5. Gap = 2) */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-              {products.map(product => (
+            {/* Product Grid - 4 columns as per Penpot screenshot */}
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {products.slice(0, 8).map(product => (
                 <ProductCard 
                   key={product.id}
                   id={product.id}
@@ -105,13 +118,23 @@ const CategoryLandingPage = () => {
           
           {/* Deal theo thương hiệu */}
           <div className="flex flex-col gap-4 mb-8">
-            <h2 className="text-[20px] font-extrabold text-taca-text-main m-0">Deal theo thương hiệu</h2>
+            <h2 className="text-[16px] font-bold text-taca-text-main m-0">Deal theo thương hiệu</h2>
             <div className="flex gap-4">
-              {[1, 2, 3].map((_, idx) => (
-                <div key={idx} className="flex-1 h-[74px] bg-red-50 rounded-lg border border-red-100 flex items-center justify-center font-bold text-red-600 cursor-pointer hover:bg-red-100 transition-colors">
-                  Giảm đến 50%
-                </div>
-              ))}
+              {/* Card 1 */}
+              <div className="flex-1 h-[80px] bg-white rounded-[4px] border border-taca-primary flex flex-col justify-center px-4 cursor-pointer hover:shadow-md transition-shadow">
+                <span className="font-bold text-[14px] text-taca-primary uppercase mb-1">APPLE WEEK - giảm đến 15%</span>
+                <span className="text-[12px] text-taca-primary font-semibold">Xem sản phẩm →</span>
+              </div>
+              {/* Card 2 */}
+              <div className="flex-1 h-[80px] bg-white rounded-[4px] border border-taca-border hover:border-taca-primary flex flex-col justify-center px-4 cursor-pointer hover:shadow-md transition-shadow">
+                <span className="font-bold text-[14px] text-taca-text-main uppercase mb-1">SAMSUNG AI - quà 3 triệu</span>
+                <span className="text-[12px] text-taca-primary font-semibold">Xem sản phẩm →</span>
+              </div>
+              {/* Card 3 */}
+              <div className="flex-1 h-[80px] bg-white rounded-[4px] border border-taca-border hover:border-taca-primary flex flex-col justify-center px-4 cursor-pointer hover:shadow-md transition-shadow">
+                <span className="font-bold text-[14px] text-taca-text-main uppercase mb-1">XIAOMI DEAL - freeship</span>
+                <span className="text-[12px] text-taca-primary font-semibold">Xem sản phẩm →</span>
+              </div>
             </div>
           </div>
           

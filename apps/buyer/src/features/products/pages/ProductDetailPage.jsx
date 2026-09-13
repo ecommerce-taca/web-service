@@ -28,28 +28,24 @@ const ProductDetailPage = () => {
         <span className="text-taca-text-main font-semibold">{product.name}</span>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Left/Main Column: Product Purchase */}
-        <div className="flex-1 flex flex-col gap-6 min-w-0">
-          <ProductPurchase product={product} />
-          
-          {/* Content Tabs */}
-          <ProductContentTabs 
-            description={product.description} 
-            reviewCount={product.reviewCount} 
-          />
+      <div className="flex flex-col gap-6">
+        {/* Product Purchase (Gallery & Info) */}
+        <ProductPurchase product={product} />
+        
+        {/* Shop Card */}
+        {product.shop && <ProductShopCard shop={product.shop} />}
+        
+        {/* Content Tabs */}
+        <ProductContentTabs 
+          description={product.description} 
+          reviewCount={product.reviewCount} 
+        />
 
-          {/* Ratings & Comments */}
-          <ProductReviews 
-            rating={product.rating} 
-            reviewCount={product.reviewCount} 
-          />
-        </div>
-
-        {/* Right Column: Shop Card & Suggestions */}
-        <div className="w-full lg:w-[320px] flex-shrink-0 flex flex-col gap-6">
-          {product.shop && <ProductShopCard shop={product.shop} />}
-        </div>
+        {/* Ratings & Comments */}
+        <ProductReviews 
+          rating={product.rating} 
+          reviewCount={product.reviewCount} 
+        />
       </div>
     </div>
   );
