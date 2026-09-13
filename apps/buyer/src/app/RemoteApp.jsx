@@ -15,6 +15,8 @@ import VouchersPage from '../features/account/pages/VouchersPage';
 import WishlistPage from '../features/account/pages/WishlistPage';
 import SearchLayout from '../features/search/layouts/SearchLayout';
 import SearchPage from '../features/search/pages/SearchPage';
+import CartPage from '../features/cart/pages/CartPage';
+import CheckoutPage from '../features/checkout/pages/CheckoutPage';
 
 export default function RemoteApp() {
   return (
@@ -26,6 +28,8 @@ export default function RemoteApp() {
           <Route path="/product/:id" element={<ProductDetailPage />} />
           <Route path="/category/:categorySlug?" element={<CategoryLandingPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
           
           <Route path="/account" element={<AccountLayout />}>
             <Route index element={<Navigate to="profile" replace />} />

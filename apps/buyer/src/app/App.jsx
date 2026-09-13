@@ -12,6 +12,8 @@ import OrdersPage from '../features/account/pages/OrdersPage';
 import ReviewsPage from '../features/account/pages/ReviewsPage';
 import VouchersPage from '../features/account/pages/VouchersPage';
 import WishlistPage from '../features/account/pages/WishlistPage';
+import CartPage from '../features/cart/pages/CartPage';
+import CheckoutPage from '../features/checkout/pages/CheckoutPage';
 
 function App() {
   return (
@@ -24,6 +26,8 @@ function App() {
             <Route path="/product/:id" element={<ProductDetailPage />} />
             <Route path="/category/:categorySlug?" element={<CategoryLandingPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
             
             <Route path="/account" element={<AccountLayout />}>
               <Route index element={<Navigate to="profile" replace />} />
