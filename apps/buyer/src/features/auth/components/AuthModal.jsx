@@ -30,7 +30,8 @@ const AuthModal = () => {
       if (!emailRegex.test(trimmedId)) return 'Email không hợp lệ.';
       return null;
     }
-    const phoneRegex = /^(0|\+84)[3|5|7|8|9][0-9]{8}$/;
+    // Nới lỏng regex để cho phép test các số như 0123456789
+    const phoneRegex = /^(0|\+84)[1-9][0-9]{8}$/;
     if (!phoneRegex.test(trimmedId)) return 'Số điện thoại không hợp lệ (VD: 0912345678).';
     return null;
   };
