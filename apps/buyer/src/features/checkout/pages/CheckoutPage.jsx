@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import DeliveryAddressModal from './components/DeliveryAddressModal';
-import ApplyVoucherModal from './components/ApplyVoucherModal';
-import VnpayQrModal from './components/VnpayQrModal';
+import DeliveryAddressModal from '../components/DeliveryAddressModal';
+import ApplyVoucherModal from '../components/ApplyVoucherModal';
+import VnpayQrModal from '../components/VnpayQrModal';
 
 const mockCheckoutItems = [
   {

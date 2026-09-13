@@ -1,5 +1,5 @@
 import React from 'react';
-import Modal from '../../../../../shared/ui-components/src/components/Modal';
+import { Modal } from '@taca/ui-components';
 
 export default function ApplyVoucherModal({ isOpen, onClose }) {
   return (
