@@ -10,9 +10,9 @@ const MegaMenu = ({ isOpen }) => {
   const activeCategory = MEGA_MENU_DATA.find((c) => c.id === activeCategoryId);
 
   return (
-    <div className="absolute top-[42px] left-0 w-[840px] min-h-[460px] bg-white rounded-xl shadow-xl flex z-50 border border-taca-border/30 overflow-hidden cursor-default">
+    <div className="absolute top-[42px] left-0 w-[820px] min-h-[452px] bg-white rounded-[20px] shadow-xl flex z-50 border border-taca-border/30 overflow-hidden cursor-default">
       {/* Left Sidebar (Category Rail) */}
-      <div className="w-[260px] bg-white border-r border-taca-border/30 py-4 flex flex-col">
+      <div className="w-[256px] bg-white border-r border-taca-border/30 py-4 flex flex-col">
         {MEGA_MENU_DATA.map((cat) => {
           const isActive = cat.id === activeCategoryId;
           return (
