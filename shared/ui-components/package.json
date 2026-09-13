@@ -1,7 +1,7 @@
 {
   "name": "@taca/ui-components",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "src/index.js",
   "exports": {
     ".": "./src/index.js",
     "./tailwind-preset": "./tailwind-preset.js"
