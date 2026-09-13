@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import ProductPurchase from '../components/ProductPurchase';
 import ProductShopCard from '../components/ProductShopCard';
 import ProductContentTabs from '../components/ProductContentTabs';
@@ -18,46 +18,35 @@ const ProductDetailPage = () => {
   if (!product) return <div className="p-8 text-center">Product not found</div>;
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto pb-10">
+    <div className="max-w-[1440px] mx-auto px-[80px] py-6 flex flex-col gap-6">
       {/* Breadcrumb */}
-      <div className="text-[14px] text-taca-text-muted">
-        Trang chủ / Điện thoại / iPhone / {product.name}
+      <div className="flex items-center gap-1 text-[13px] text-taca-text-muted">
+        <Link to="/" className="text-taca-text-muted hover:text-taca-primary transition-colors">Trang chủ</Link>
+        <span>/</span>
+        <Link to="/category/dien-thoai" className="text-taca-text-muted hover:text-taca-primary transition-colors">Điện thoại</Link>
+        <span>/</span>
+        <span className="text-taca-text-main font-semibold">{product.name}</span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left: Gallery */}
-        <div className="lg:col-span-5 bg-white p-4 border border-taca-border flex flex-col gap-4">
-          <div className="w-full aspect-square bg-taca-surface flex items-center justify-center text-taca-text-muted">
-            [Product Image Main]
-          </div>
-          <div className="flex gap-2 overflow-x-auto">
-            {product.images && product.images.map((img, i) => (
-              <div key={i} className="w-[60px] h-[60px] flex-shrink-0 bg-taca-surface border border-transparent hover:border-taca-primary cursor-pointer flex items-center justify-center text-[10px]">
-                Thumb {i+1}
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="flex flex-col gap-6">
+        {/* Product Purchase (Gallery & Info) */}
+        <ProductPurchase product={product} />
+        
+        {/* Shop Card */}
+        {product.shop && <ProductShopCard shop={product.shop} />}
+        
+        {/* Content Tabs */}
+        <ProductContentTabs 
+          description={product.description} 
+          reviewCount={product.reviewCount} 
+        />
 
-        {/* Right: Info & Purchase, Shop, Tabs */}
-        <div className="lg:col-span-7 flex flex-col gap-6">
-          <ProductPurchase product={product} />
-          
-          {product.shop && <ProductShopCard shop={product.shop} />}
-        </div>
+        {/* Ratings & Comments */}
+        <ProductReviews 
+          rating={product.rating} 
+          reviewCount={product.reviewCount} 
+        />
       </div>
-      
-      {/* Content Tabs */}
-      <ProductContentTabs 
-        description={product.description} 
-        reviewCount={product.reviewCount} 
-      />
-
-      {/* Ratings & Comments */}
-      <ProductReviews 
-        rating={product.rating} 
-        reviewCount={product.reviewCount} 
-      />
     </div>
   );
 };

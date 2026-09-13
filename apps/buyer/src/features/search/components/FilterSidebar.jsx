@@ -1,131 +1,86 @@
 const FilterSidebar = () => {
   return (
-    <div className="w-[240px] bg-white border border-taca-border rounded-[8px] flex flex-col overflow-hidden">
-      <div className="p-4 border-b border-taca-border">
-        <h3 className="text-[14px] font-extrabold text-taca-text-main m-0 uppercase tracking-wide">
-          Bộ lọc tìm kiếm
+    <div className="w-[240px] flex flex-col gap-8">
+      {/* DANH MỤC */}
+      <div className="flex flex-col gap-4">
+        <h3 className="text-[14px] font-extrabold text-taca-text-main m-0 uppercase tracking-wider">
+          DANH MỤC
         </h3>
+        <div className="flex flex-col gap-4">
+          <LinkItem label="- Điện thoại" isActive />
+          <LinkItem label="- Máy tính bảng" />
+          <LinkItem label="- Đồng hồ thông minh" />
+          <LinkItem label="- Phụ kiện điện thoại" />
+          <LinkItem label="- Điện thoại phổ thông" />
+        </div>
       </div>
 
-      <div className="p-4 flex flex-col gap-6">
-        {/* Danh mục */}
-        <div className="flex flex-col gap-3">
-          <h4 className="text-[13px] font-bold text-taca-text-main m-0">Danh mục</h4>
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="w-[14px] h-[14px] border-gray-300 rounded-sm text-taca-primary focus:ring-taca-primary" />
-              <span className="text-[13px] text-taca-text-muted">Tai nghe</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="w-[14px] h-[14px] border-gray-300 rounded-sm text-taca-primary focus:ring-taca-primary" />
-              <span className="text-[13px] text-taca-text-muted">Loa bluetooth</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="w-[14px] h-[14px] border-gray-300 rounded-sm text-taca-primary focus:ring-taca-primary" />
-              <span className="text-[13px] text-taca-text-muted">Phụ kiện âm thanh</span>
-            </label>
-          </div>
-        </div>
-
-        <div className="w-full h-px bg-taca-border/50"></div>
-
-        {/* Nơi bán */}
-        <div className="flex flex-col gap-3">
-          <h4 className="text-[13px] font-bold text-taca-text-main m-0">Nơi bán</h4>
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="w-[14px] h-[14px] border-gray-300 rounded-sm text-taca-primary focus:ring-taca-primary" />
-              <span className="text-[13px] text-taca-text-muted">TP. Hồ Chí Minh</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="w-[14px] h-[14px] border-gray-300 rounded-sm text-taca-primary focus:ring-taca-primary" />
-              <span className="text-[13px] text-taca-text-muted">Hà Nội</span>
-            </label>
-          </div>
-        </div>
-
-        <div className="w-full h-px bg-taca-border/50"></div>
-
-        {/* Khoảng giá */}
-        <div className="flex flex-col gap-3">
-          <h4 className="text-[13px] font-bold text-taca-text-main m-0">Khoảng giá</h4>
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="w-[14px] h-[14px] border-gray-300 rounded-sm text-taca-primary focus:ring-taca-primary" />
-              <span className="text-[13px] text-taca-text-muted">Dưới 500.000 ₫</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="w-[14px] h-[14px] border-gray-300 rounded-sm text-taca-primary focus:ring-taca-primary" />
-              <span className="text-[13px] text-taca-text-muted">500K – 2 triệu</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="w-[14px] h-[14px] border-gray-300 rounded-sm text-taca-primary focus:ring-taca-primary" />
-              <span className="text-[13px] text-taca-text-muted">Trên 2 triệu</span>
-            </label>
-          </div>
-        </div>
-
-        <div className="w-full h-px bg-taca-border/50"></div>
+      {/* BỘ LỌC NHANH */}
+      <div className="flex flex-col gap-6">
+        <h3 className="text-[14px] font-extrabold text-taca-text-main m-0 uppercase tracking-wider">
+          BỘ LỌC NHANH
+        </h3>
 
         {/* Thương hiệu */}
         <div className="flex flex-col gap-3">
           <h4 className="text-[13px] font-bold text-taca-text-main m-0">Thương hiệu</h4>
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="w-[14px] h-[14px] border-gray-300 rounded-sm text-taca-primary focus:ring-taca-primary" />
-              <span className="text-[13px] text-taca-text-muted">Sony</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="w-[14px] h-[14px] border-gray-300 rounded-sm text-taca-primary focus:ring-taca-primary" />
-              <span className="text-[13px] text-taca-text-muted">JBL</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="w-[14px] h-[14px] border-gray-300 rounded-sm text-taca-primary focus:ring-taca-primary" />
-              <span className="text-[13px] text-taca-text-muted">Apple</span>
-            </label>
+          <div className="flex flex-col gap-3">
+            <CheckboxItem label="Apple" />
+            <CheckboxItem label="Samsung" />
+            <CheckboxItem label="Xiaomi" />
+            <CheckboxItem label="OPPO" />
           </div>
         </div>
 
-        <div className="w-full h-px bg-taca-border/50"></div>
+        {/* Khoảng giá */}
+        <div className="flex flex-col gap-3">
+          <h4 className="text-[13px] font-bold text-taca-text-main m-0">Khoảng giá</h4>
+          <div className="flex flex-col gap-3">
+            <CheckboxItem label="Dưới 5 triệu" />
+            <CheckboxItem label="5 - 15 triệu" />
+            <CheckboxItem label="Trên 15 triệu" />
+          </div>
+        </div>
+
+        {/* Dịch vụ */}
+        <div className="flex flex-col gap-3">
+          <h4 className="text-[13px] font-bold text-taca-text-main m-0">Dịch vụ</h4>
+          <div className="flex flex-col gap-3">
+            <CheckboxItem label="Chính hãng" />
+            <CheckboxItem label="Freeship" />
+            <CheckboxItem label="Giao 2H" />
+          </div>
+        </div>
 
         {/* Đánh giá */}
         <div className="flex flex-col gap-3">
           <h4 className="text-[13px] font-bold text-taca-text-main m-0">Đánh giá</h4>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" className="w-[14px] h-[14px] border-gray-300 rounded-sm text-taca-primary focus:ring-taca-primary" />
               <span className="text-[13px] text-taca-text-muted flex items-center gap-1">
-                <span className="text-[#faad14] tracking-[2px]">★★★★★</span> từ 4 sao
+                <span className="text-[#faad14] tracking-[1px] text-[15px]">★★★★★</span> từ 5 sao
               </span>
             </label>
           </div>
         </div>
-
-        <div className="w-full h-px bg-taca-border/50"></div>
-
-        {/* Dịch vụ & ưu đãi */}
-        <div className="flex flex-col gap-3">
-          <h4 className="text-[13px] font-bold text-taca-text-main m-0">Dịch vụ & ưu đãi</h4>
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="w-[14px] h-[14px] border-gray-300 rounded-sm text-taca-primary focus:ring-taca-primary" />
-              <span className="text-[13px] text-taca-text-muted">Freeship</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="w-[14px] h-[14px] border-gray-300 rounded-sm text-taca-primary focus:ring-taca-primary" />
-              <span className="text-[13px] text-taca-text-muted">Hàng chính hãng</span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <div className="p-4 border-t border-taca-border mt-auto">
-        <button className="w-full py-2 bg-white border border-taca-primary text-taca-primary text-[13px] font-bold rounded-[6px] hover:bg-gray-50 transition-colors">
-          Xóa bộ lọc
-        </button>
       </div>
     </div>
   );
 };
+
+// Helper components for reusability
+const LinkItem = ({ label, isActive }) => (
+  <span className={`text-[13px] cursor-pointer hover:text-taca-primary transition-colors ${isActive ? 'font-bold text-taca-primary' : 'text-taca-text-main font-medium'}`}>
+    {label}
+  </span>
+);
+
+const CheckboxItem = ({ label }) => (
+  <label className="flex items-center gap-2 cursor-pointer group">
+    <input type="checkbox" className="w-[14px] h-[14px] border-gray-400 rounded-sm text-taca-primary focus:ring-taca-primary group-hover:border-taca-primary transition-colors" />
+    <span className="text-[13px] text-taca-text-main font-medium group-hover:text-taca-primary transition-colors">{label}</span>
+  </label>
+);
 
 export default FilterSidebar;

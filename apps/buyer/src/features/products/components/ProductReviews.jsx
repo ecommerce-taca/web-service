@@ -26,8 +26,8 @@ const ProductReviews = ({ rating, reviewCount }) => {
   ];
 
   return (
-    <div className="bg-white p-6 border border-taca-border flex flex-col gap-6">
-      <div className="flex justify-between items-center">
+    <div className="bg-white p-6 md:p-8 rounded-[12px] border border-taca-border flex flex-col gap-8">
+      <div className="flex justify-between items-center border-b border-taca-border pb-4">
         <h2 className="text-[16px] font-bold text-taca-text-main uppercase">ĐÁNH GIÁ & NHẬN XÉT</h2>
         <button className="text-[14px] font-bold text-taca-primary hover:underline">
           Xem tất cả nhận xét {'>'}
