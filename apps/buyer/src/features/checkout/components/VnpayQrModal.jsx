@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Modal } from '@taca/ui-components';
 
 export default function VnpayQrModal({ isOpen, onClose, amount = 0 }) {
