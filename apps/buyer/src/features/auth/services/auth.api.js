@@ -1,6 +1,6 @@
 import apiClient from '../../../../../../shared/utils/api-client';
 
-const USE_MOCK = true; // Đổi thành false khi ghép API thật với Backend
+const USE_MOCK = false; // Đã đổi thành false để chạy API thật
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 

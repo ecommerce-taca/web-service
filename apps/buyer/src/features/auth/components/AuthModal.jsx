@@ -39,7 +39,13 @@ const AuthModal = () => {
 
     setLoading(true);
     try {
-      const response = await authApi.login({ identifier, password });
+      let finalIdentifier = identifier;
+      // Chuẩn hóa sđt E.164 nếu là sđt Việt Nam (bắt đầu bằng 0)
+      if (!identifier.includes('@') && identifier.startsWith('0')) {
+        finalIdentifier = '+84' + identifier.slice(1);
+      }
+
+      const response = await authApi.login({ identifier: finalIdentifier, password });
       login(response.data.user, response.data.tokens);
       closeAuthModal();
     } catch (err) {
@@ -75,10 +81,17 @@ const AuthModal = () => {
     setLoading(true);
     try {
       const isEmail = identifier.includes('@');
+      let finalPhone = identifier;
+      
+      // Chuẩn hóa sđt E.164 nếu là sđt Việt Nam (bắt đầu bằng 0)
+      if (!isEmail && identifier.startsWith('0')) {
+        finalPhone = '+84' + identifier.slice(1);
+      }
+
       const payload = {
         full_name: name,
         password: password,
-        ...(isEmail ? { email: identifier } : { phone: identifier })
+        ...(isEmail ? { email: identifier } : { phone: finalPhone })
       };
       const response = await authApi.register(payload);
       login(response.data.user, response.data.tokens);

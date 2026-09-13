@@ -33,8 +33,9 @@ const Modal = ({
 
   if (!isOpen) return null;
 
-  const handleBackdropClick = (e) => {
-    if (modalRef.current && !modalRef.current.contains(e.target)) {
+  const handleBackdropMouseDown = (e) => {
+    // Chỉ đóng modal nếu người dùng click trực tiếp vào vùng nền đen (backdrop)
+    if (e.target === e.currentTarget) {
       onClose();
     }
   };
@@ -42,7 +43,7 @@ const Modal = ({
   return (
     <div 
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity"
-      onClick={handleBackdropClick}
+      onMouseDown={handleBackdropMouseDown}
     >
       <div 
         ref={modalRef}
