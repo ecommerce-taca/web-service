@@ -1,6 +1,6 @@
 import apiClient from '../../../../../../shared/utils/api-client';
 
-const USE_MOCK = false; // Đã tắt Mock
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'; // Có thể bật tắt qua file .env
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -105,11 +105,10 @@ export const authApi = {
   getProfile: async () => {
     if (USE_MOCK) {
       await delay(500);
-      // Giả lập trạng thái đã verify điện thoại thành công sau khi verify otp
+      const savedUser = localStorage.getItem('taca_user');
+      const user = savedUser ? JSON.parse(savedUser) : { id: 1, full_name: 'Nguyễn Minh Anh (Mock)', email: 'test@taca.vn', phone: '0909 123 456', email_verified: false, phone_verified: false, date_of_birth: '1995-01-01' };
       return {
-        data: {
-          user: { id: 1, full_name: 'Nguyễn Minh Anh (Mock)', email: 'test@taca.vn', phone: '0909 123 456', email_verified: false, phone_verified: false, date_of_birth: '1995-01-01' }
-        }
+        data: { user }
       };
     }
     const response = await apiClient.get('/users/me');
@@ -119,7 +118,11 @@ export const authApi = {
   updateProfile: async (data) => {
     if (USE_MOCK) {
       await delay(1000);
-      return { data: { user: { ...data, id: 1, email_verified: false, phone_verified: true } } };
+      const savedUser = localStorage.getItem('taca_user');
+      const currentUser = savedUser ? JSON.parse(savedUser) : { id: 1, email_verified: false, phone_verified: true };
+      const updatedUser = { ...currentUser, ...data };
+      localStorage.setItem('taca_user', JSON.stringify(updatedUser));
+      return { data: { user: updatedUser } };
     }
     const response = await apiClient.put('/users/me', data);
     return response;

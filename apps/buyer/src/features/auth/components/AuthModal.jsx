@@ -11,6 +11,7 @@ const AuthModal = () => {
   
   // Form state
   const [identifier, setIdentifier] = useState('');
+  const [signupPhone, setSignupPhone] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -33,6 +34,21 @@ const AuthModal = () => {
     // Nới lỏng regex để cho phép test các số như 0123456789
     const phoneRegex = /^(0|\+84)[1-9][0-9]{8}$/;
     if (!phoneRegex.test(trimmedId)) return 'Số điện thoại không hợp lệ (VD: 0912345678).';
+    return null;
+  };
+
+  const validateEmailOnly = (email) => {
+    const trimmedEmail = email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) return 'Email không hợp lệ.';
+    return null;
+  };
+
+  const validatePhoneOnly = (phone) => {
+    const trimmedPhone = phone.trim();
+    if (!trimmedPhone) return null; // Optional
+    const phoneRegex = /^(0|\+84)[1-9][0-9]{8}$/;
+    if (!phoneRegex.test(trimmedPhone)) return 'Số điện thoại không hợp lệ (VD: 0912345678).';
     return null;
   };
 
@@ -89,7 +105,7 @@ const AuthModal = () => {
     setSuccessMessage('');
     
     if (!name || !identifier || !password || !confirmPassword) {
-      setError('Vui lòng nhập đầy đủ thông tin.');
+      setError('Vui lòng nhập đầy đủ thông tin bắt buộc.');
       return;
     }
 
@@ -99,9 +115,15 @@ const AuthModal = () => {
       return;
     }
 
-    const idError = validateIdentifier(identifier);
-    if (idError) {
-      setError(idError);
+    const emailError = validateEmailOnly(identifier);
+    if (emailError) {
+      setError(emailError);
+      return;
+    }
+
+    const phoneError = validatePhoneOnly(signupPhone);
+    if (phoneError) {
+      setError(phoneError);
       return;
     }
 
@@ -117,29 +139,25 @@ const AuthModal = () => {
 
     setLoading(true);
     try {
-      const trimmedIdentifier = identifier.trim();
-      const isEmail = trimmedIdentifier.includes('@');
-      let finalPhone = trimmedIdentifier;
+      const email = identifier.trim();
+      let finalPhone = null;
       
-      // Chuẩn hóa sđt E.164 nếu là sđt Việt Nam (bắt đầu bằng 0)
-      if (!isEmail && trimmedIdentifier.startsWith('0')) {
-        finalPhone = '+84' + trimmedIdentifier.slice(1);
+      if (signupPhone.trim()) {
+        const trimmedPhone = signupPhone.trim();
+        finalPhone = trimmedPhone.startsWith('0') ? '+84' + trimmedPhone.slice(1) : trimmedPhone;
       }
 
       const payload = {
         full_name: name.trim(),
         password: password,
-        ...(isEmail ? { email: trimmedIdentifier } : { phone: finalPhone })
+        email: email,
+        ...(finalPhone && { phone: finalPhone })
       };
       
       const response = await authApi.register(payload);
       login(response.data?.user || response.user, response.data?.tokens || response.tokens);
       
-      if (isEmail) {
-        setSuccessMessage('Đăng ký thành công! Vui lòng kiểm tra email của bạn để xác thực tài khoản.');
-      } else {
-        setSuccessMessage('Đăng ký thành công! Hãy xác thực số điện thoại trong phần Hồ sơ của bạn.');
-      }
+      setSuccessMessage('Đăng ký thành công! Vui lòng kiểm tra email của bạn để xác thực tài khoản.');
     } catch (err) {
       const errorMsg = err.response?.status === 404 
         ? 'Chưa kết nối Backend (Lỗi 404)' 
@@ -151,7 +169,9 @@ const AuthModal = () => {
   };
 
   const resetState = () => {
+    setMode('signin');
     setIdentifier('');
+    setSignupPhone('');
     setPassword('');
     setName('');
     setConfirmPassword('');
@@ -161,7 +181,13 @@ const AuthModal = () => {
 
   const toggleMode = () => {
     setMode(mode === 'signin' ? 'signup' : 'signin');
-    resetState();
+    setIdentifier('');
+    setSignupPhone('');
+    setPassword('');
+    setName('');
+    setConfirmPassword('');
+    setError('');
+    setSuccessMessage('');
   };
 
   // Close handler to reset state too
@@ -227,12 +253,21 @@ const AuthModal = () => {
           )}
 
           <Input 
-            label="Email hoặc số điện thoại"
-            type="text"
+            label={isSignIn ? "Email hoặc số điện thoại" : "Email"}
+            type={isSignIn ? "text" : "email"}
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             required
           />
+
+          {!isSignIn && (
+            <Input 
+              label="Số điện thoại (Tuỳ chọn)"
+              type="tel"
+              value={signupPhone}
+              onChange={(e) => setSignupPhone(e.target.value)}
+            />
+          )}
           
           <Input 
             label="Mật khẩu"

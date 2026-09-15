@@ -48,8 +48,8 @@ const ProfilePage = () => {
         phone: fetchedUser.phone || '',
         date_of_birth: fetchedUser.date_of_birth || ''
       });
-      if (login && response.data.tokens) {
-        login(fetchedUser, response.data.tokens);
+      if (login) {
+        login(fetchedUser, response.data.tokens || null);
       }
     } catch (err) {
       console.error('Failed to fetch profile', err);
@@ -102,18 +102,20 @@ const ProfilePage = () => {
     setError('');
 
     try {
+      let finalPhone = formData.phone ? formData.phone.trim() : null;
+      if (finalPhone && finalPhone.startsWith('0')) {
+        finalPhone = '+84' + finalPhone.slice(1);
+      }
+
       const payload = {
         full_name: formData.full_name,
         date_of_birth: formData.date_of_birth || null,
-        phone: formData.phone || null
+        phone: finalPhone
       };
 
-      const response = await authApi.updateProfile(payload);
+      await authApi.updateProfile(payload);
       setMessage('Cập nhật hồ sơ thành công.');
-      if (login) {
-        const updatedUser = response.data.user || response.data;
-        login(updatedUser, null); // preserve existing tokens
-      }
+      await fetchProfile(); // refresh data
     } catch (err) {
       setError(err.message || 'Có lỗi xảy ra khi cập nhật hồ sơ.');
     } finally {

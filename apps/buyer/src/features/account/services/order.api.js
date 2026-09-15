@@ -1,6 +1,6 @@
 import apiClient from '../../../../../../shared/utils/api-client';
 
-const USE_MOCK = false;
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 // Mock data for development when backend is not ready
 const MOCK_ORDERS = {

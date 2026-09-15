@@ -68,6 +68,7 @@ const PhoneVerificationModal = ({ isOpen, onClose, phone, onVerificationSuccess 
     setOtp('');
     setError('');
     setChallengeId(null);
+    setCountdown(60);
     onClose();
   };
 

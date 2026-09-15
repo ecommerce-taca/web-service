@@ -28,6 +28,7 @@ export default defineConfig([
     rules: {
       'react/jsx-uses-vars': 'error',
       'react/jsx-uses-react': 'off',
+      'react-hooks/set-state-in-effect': 'off'
     }
   },
 ])
