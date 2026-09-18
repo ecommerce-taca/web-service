@@ -2,6 +2,7 @@ import { useParams, Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import FilterSidebar from '../../search/components/FilterSidebar';
 import productsMock from '../../../mocks/products.json';
+import { useFavorites } from '../hooks/useFavorites';
 
 const USE_CASES = [
   'Chụp ảnh đẹp', 'Gaming', 'Pin trâu', 'Giá tốt', '5G', 'Gập'
@@ -14,13 +15,16 @@ const BRANDS = [
 const CHIPS = ['Phổ biến', 'Bán chạy', 'Mới nhất', 'Giá thấp → cao'];
 
 const CategoryLandingPage = () => {
-  const { categorySlug } = useParams();
+  const { categorySlug, subCategorySlug } = useParams();
   
   // Fake repeat the mock product to create a grid of 10 items (2 rows of 5)
   const products = Array(10).fill(productsMock[0]).map((p, i) => ({ ...p, id: i + 1 }));
+  
+  const productIds = products.map(p => p.id);
+  const { favoritesMap, toggleFavorite } = useFavorites(productIds);
 
   return (
-    <div className="max-w-[1440px] mx-auto px-[80px] py-6 flex flex-col gap-6">
+    <div className="py-6 flex flex-col gap-6">
       {/* Breadcrumb */}
       <div className="flex items-center gap-1 text-[13px] text-taca-text-muted">
         <Link to="/" className="text-taca-text-muted hover:text-taca-primary transition-colors">
@@ -28,7 +32,7 @@ const CategoryLandingPage = () => {
         </Link>
         <span>/</span>
         <span className="text-taca-text-main font-semibold capitalize">
-          {categorySlug || 'Điện thoại'}
+          {categorySlug ? categorySlug.replace(/-/g, ' ') : 'Điện thoại'} {subCategorySlug ? `- ${subCategorySlug.replace(/-/g, ' ')}` : ''}
         </span>
       </div>
 
@@ -44,15 +48,15 @@ const CategoryLandingPage = () => {
           <div className="w-full h-[220px] bg-taca-primary rounded-[4px] flex items-center justify-between px-10 overflow-hidden relative">
             <div className="flex flex-col gap-3 z-10">
               <h1 className="text-white text-[28px] font-bold uppercase m-0">
-                {categorySlug || 'ĐIỆN THOẠI'} CHÍNH HÃNG
+                {subCategorySlug ? subCategorySlug.replace(/-/g, ' ') : (categorySlug ? categorySlug.replace(/-/g, ' ') : 'ĐIỆN THOẠI')} CHÍNH HÃNG
               </h1>
               <div className="text-white text-[14px] leading-relaxed font-medium">
                 Apple - Samsung - Xiaomi - OPPO<br/>
                 Ưu đãi đến 30% - Giao nhanh 2H
               </div>
-              <button className="mt-2 bg-white text-taca-primary font-bold text-[14px] px-6 py-2.5 rounded-[4px] w-fit hover:bg-gray-50 transition-colors">
+              <Link to="/search" className="mt-2 inline-flex items-center justify-center bg-white text-taca-primary font-bold text-[14px] px-6 py-2.5 rounded-[4px] w-fit hover:bg-gray-50 transition-colors no-underline">
                 Khám phá deal
-              </button>
+              </Link>
             </div>
             <div className="z-10 hidden md:block">
               <span className="text-white/90 text-[32px] font-bold uppercase tracking-wider">SMARTPHONE</span>
@@ -111,6 +115,8 @@ const CategoryLandingPage = () => {
                   rating={product.rating}
                   soldCount={product.soldCount}
                   tags={product.tags}
+                  isFavorite={!!favoritesMap[product.id]}
+                  onToggleFavorite={toggleFavorite}
                 />
               ))}
             </div>
@@ -121,20 +127,20 @@ const CategoryLandingPage = () => {
             <h2 className="text-[16px] font-bold text-taca-text-main m-0">Deal theo thương hiệu</h2>
             <div className="flex gap-4">
               {/* Card 1 */}
-              <div className="flex-1 h-[80px] bg-white rounded-[4px] border border-taca-primary flex flex-col justify-center px-4 cursor-pointer hover:shadow-md transition-shadow">
+              <Link to="/search?q=apple" className="flex-1 h-[80px] bg-white rounded-[4px] border border-taca-primary flex flex-col justify-center px-4 cursor-pointer hover:shadow-md transition-shadow no-underline">
                 <span className="font-bold text-[14px] text-taca-primary uppercase mb-1">APPLE WEEK - giảm đến 15%</span>
                 <span className="text-[12px] text-taca-primary font-semibold">Xem sản phẩm →</span>
-              </div>
+              </Link>
               {/* Card 2 */}
-              <div className="flex-1 h-[80px] bg-white rounded-[4px] border border-taca-border hover:border-taca-primary flex flex-col justify-center px-4 cursor-pointer hover:shadow-md transition-shadow">
+              <Link to="/search?q=samsung" className="flex-1 h-[80px] bg-white rounded-[4px] border border-taca-border hover:border-taca-primary flex flex-col justify-center px-4 cursor-pointer hover:shadow-md transition-shadow no-underline">
                 <span className="font-bold text-[14px] text-taca-text-main uppercase mb-1">SAMSUNG AI - quà 3 triệu</span>
                 <span className="text-[12px] text-taca-primary font-semibold">Xem sản phẩm →</span>
-              </div>
+              </Link>
               {/* Card 3 */}
-              <div className="flex-1 h-[80px] bg-white rounded-[4px] border border-taca-border hover:border-taca-primary flex flex-col justify-center px-4 cursor-pointer hover:shadow-md transition-shadow">
+              <Link to="/search?q=xiaomi" className="flex-1 h-[80px] bg-white rounded-[4px] border border-taca-border hover:border-taca-primary flex flex-col justify-center px-4 cursor-pointer hover:shadow-md transition-shadow no-underline">
                 <span className="font-bold text-[14px] text-taca-text-main uppercase mb-1">XIAOMI DEAL - freeship</span>
                 <span className="text-[12px] text-taca-primary font-semibold">Xem sản phẩm →</span>
-              </div>
+              </Link>
             </div>
           </div>
           

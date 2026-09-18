@@ -106,12 +106,12 @@ export default function CartPage() {
                         onChange={(e) => handleSelectItem(item.id, e.target.checked)}
                       />
                     </div>
-                    <div className="ml-4 w-24 h-24 bg-indigo-50 rounded-lg flex-shrink-0">
-                      {/* Image placeholder */}
-                    </div>
+                    <Link to={`/product/${item.id}`} className="ml-4 w-24 h-24 bg-indigo-50 rounded-lg flex-shrink-0 cursor-pointer hover:opacity-90 overflow-hidden">
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    </Link>
                     <div className="ml-4 flex flex-col justify-between h-24">
                       <div>
-                        <h3 className="text-[13px] font-extrabold text-slate-900 line-clamp-2 leading-tight">{item.name}</h3>
+                        <Link to={`/product/${item.id}`} className="text-[13px] font-extrabold text-slate-900 line-clamp-2 leading-tight hover:text-primary no-underline">{item.name}</Link>
                         <p className="text-[10px] font-medium text-slate-600 mt-1">{item.variant}</p>
                       </div>
                       <div className="flex items-center gap-4 text-[10px] font-semibold text-slate-600 uppercase tracking-wider">

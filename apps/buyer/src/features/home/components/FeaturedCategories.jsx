@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 const CATEGORIES = [
   { name: 'Điện thoại', icon: '📱' },
   { name: 'Laptop', icon: '💻' },
@@ -19,15 +21,16 @@ const FeaturedCategories = () => {
       {/* Category Grid - 7 cards, each 148×92px */}
       <div className="flex gap-[28px] px-5 mt-[20px]">
         {CATEGORIES.map((cat, index) => (
-          <div
+          <Link
             key={index}
-            className="w-[148px] h-[92px] border border-taca-border flex flex-col items-center justify-center gap-2 cursor-pointer group hover:border-taca-primary transition-colors bg-white"
+            to={`/category/${cat.name.toLowerCase().replace(/\s+/g, '-')}`}
+            className="w-[148px] h-[92px] border border-taca-border flex flex-col items-center justify-center gap-2 cursor-pointer group hover:border-taca-primary transition-colors bg-white no-underline"
           >
             <div className="w-[48px] h-[48px] bg-[#eef2ff] flex items-center justify-center text-[20px] group-hover:bg-indigo-100 transition-colors">
               {cat.icon}
             </div>
             <span className="text-[11px] font-bold text-taca-text-main">{cat.name}</span>
-          </div>
+          </Link>
         ))}
       </div>
     </section>

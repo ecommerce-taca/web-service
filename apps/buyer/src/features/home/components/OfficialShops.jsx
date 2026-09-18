@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 const SHOPS = [
   { name: 'Anker Flagship', icon: '⚡' },
   { name: 'Nhã Nam', icon: '📚' },
@@ -21,9 +23,10 @@ const OfficialShops = () => {
       {/* Shop Cards - 4 cards, each 286×76px */}
       <div className="flex gap-[22px] px-5 mt-4">
         {SHOPS.map((shop, index) => (
-          <div
+          <Link
             key={index}
-            className="w-[286px] h-[76px] border border-taca-border flex items-center p-3 gap-3 cursor-pointer hover:border-taca-primary transition-colors bg-white"
+            to={`/shop/${shop.name.toLowerCase().replace(/\s+/g, '-')}`}
+            className="w-[286px] h-[76px] border border-taca-border flex items-center p-3 gap-3 cursor-pointer hover:border-taca-primary transition-colors bg-white no-underline"
           >
             <div className="w-[48px] h-[48px] bg-[#f1f5f9] flex items-center justify-center text-[24px] flex-shrink-0">
               {shop.icon}
@@ -32,7 +35,7 @@ const OfficialShops = () => {
               <span className="text-[12px] font-bold text-taca-text-main truncate">{shop.name}</span>
               <span className="text-[11px] font-semibold text-taca-primary mt-1">★ 4.9 · Official</span>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </section>

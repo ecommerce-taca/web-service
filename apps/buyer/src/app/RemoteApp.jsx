@@ -27,6 +27,7 @@ export default function RemoteApp() {
           <Route path="/" element={<HomePage />} />
           <Route path="/product/:id" element={<ProductDetailPage />} />
           <Route path="/category/:categorySlug?" element={<CategoryLandingPage />} />
+          <Route path="/category/:categorySlug/:subCategorySlug" element={<CategoryLandingPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />

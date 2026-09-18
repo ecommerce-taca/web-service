@@ -18,7 +18,7 @@ const ProductDetailPage = () => {
   if (!product) return <div className="p-8 text-center">Product not found</div>;
 
   return (
-    <div className="max-w-[1440px] mx-auto px-[80px] py-6 flex flex-col gap-6">
+    <div className="py-6 flex flex-col gap-6">
       {/* Breadcrumb */}
       <div className="flex items-center gap-1 text-[13px] text-taca-text-muted">
         <Link to="/" className="text-taca-text-muted hover:text-taca-primary transition-colors">Trang chủ</Link>

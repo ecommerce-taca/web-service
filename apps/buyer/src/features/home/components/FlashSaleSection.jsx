@@ -1,4 +1,5 @@
 import FlashProductCard from '../../products/components/FlashProductCard';
+import { Link } from 'react-router-dom';
 
 const FlashSaleSection = () => {
   const flashProducts = [
@@ -18,12 +19,12 @@ const FlashSaleSection = () => {
         <span className="text-[14px] font-extrabold text-taca-text-main ml-9">
           02 : 45 : 18
         </span>
-        <a
-          href="#"
+        <Link
+          to="/search?q=flashsale"
           className="ml-auto text-[11px] font-bold text-taca-primary hover:underline no-underline"
         >
           Xem tất cả Deal Sốc  ›
-        </a>
+        </Link>
       </div>
 
       {/* Product Cards Row - 4 cards, each 286px wide */}

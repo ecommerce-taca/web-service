@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 const HeroSection = () => {
   return (
     <section
@@ -31,9 +33,9 @@ const HeroSection = () => {
         </p>
 
         {/* CTA Button */}
-        <button className="bg-taca-primary text-white border-none h-[36px] px-6 text-[11px] font-extrabold cursor-pointer mt-2 mb-[4px] hover:bg-taca-primary-hover transition-colors">
+        <Link to="/search?q=khuyen-mai" className="inline-flex items-center justify-center bg-taca-primary text-white border-none h-[36px] px-6 text-[11px] font-extrabold cursor-pointer mt-2 mb-[4px] hover:bg-taca-primary-hover transition-colors no-underline">
           Khám phá ngay  ›
-        </button>
+        </Link>
       </div>
     </section>
   );

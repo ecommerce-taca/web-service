@@ -8,15 +8,15 @@ const ShopPage = () => {
   return (
     <div className="bg-taca-surface min-h-screen pb-12">
       {/* Breadcrumb */}
-      <div className="max-w-[1440px] mx-auto px-[80px] py-4 text-[12px] text-taca-text-muted font-medium flex gap-2">
+      <div className="py-4 text-[12px] text-taca-text-muted font-medium flex gap-2">
         <Link to="/" className="hover:text-taca-primary no-underline text-inherit">Trang chủ</Link>
         <span>/</span>
-        <Link to="/shop" className="hover:text-taca-primary no-underline text-inherit">Cửa hàng</Link>
+        <span className="text-taca-text-main">Cửa hàng</span>
         <span>/</span>
         <span className="text-taca-text-main">Taca Apple Flagship Store</span>
       </div>
 
-      <div className="max-w-[1440px] mx-auto px-[80px]">
+      <div className="flex flex-col gap-6">
         {/* Shop Header */}
         <ShopHero />
         

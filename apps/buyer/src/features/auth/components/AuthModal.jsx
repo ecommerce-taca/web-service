@@ -20,6 +20,9 @@ const AuthModal = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
+  const isSignIn = mode === 'signin';
+  const isForgot = mode === 'forgot';
+
   const validatePassword = (pwd) => {
     return pwd.length >= 12 && pwd.length <= 72;
   };
@@ -168,6 +171,41 @@ const AuthModal = () => {
     }
   };
 
+  const handleForgot = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+    
+    if (!identifier) {
+      setError('Vui lòng nhập Email hoặc Số điện thoại.');
+      return;
+    }
+
+    const idError = validateIdentifier(identifier);
+    if (idError) {
+      setError(idError);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let finalIdentifier = identifier.trim();
+      if (!finalIdentifier.includes('@') && finalIdentifier.startsWith('0')) {
+        finalIdentifier = '+84' + finalIdentifier.slice(1);
+      }
+
+      await authApi.forgotPassword(finalIdentifier);
+      setSuccessMessage('Yêu cầu thành công! Vui lòng kiểm tra email hoặc tin nhắn SMS để đặt lại mật khẩu.');
+    } catch (err) {
+      const errorMsg = err.response?.status === 404 
+        ? 'Chưa kết nối Backend (Lỗi 404)' 
+        : (err.message || 'Yêu cầu thất bại.');
+      setError(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const resetState = () => {
     setMode('signin');
     setIdentifier('');
@@ -179,24 +217,13 @@ const AuthModal = () => {
     setSuccessMessage('');
   };
 
-  const toggleMode = () => {
-    setMode(mode === 'signin' ? 'signup' : 'signin');
-    setIdentifier('');
-    setSignupPhone('');
-    setPassword('');
-    setName('');
-    setConfirmPassword('');
-    setError('');
-    setSuccessMessage('');
-  };
+
 
   // Close handler to reset state too
   const handleClose = () => {
     resetState();
     closeAuthModal();
   };
-
-  const isSignIn = mode === 'signin';
 
   return (
     <Modal 
@@ -224,12 +251,14 @@ const AuthModal = () => {
             {/* Title & Subtitle */}
         <div className="mb-6">
           <h2 className="text-[24px] font-bold text-taca-text-main">
-            {isSignIn ? 'ĐĂNG NHẬP TACA' : 'ĐĂNG KÝ TACA'}
+            {isForgot ? 'QUÊN MẬT KHẨU' : (isSignIn ? 'ĐĂNG NHẬP TACA' : 'ĐĂNG KÝ TACA')}
           </h2>
           <p className="text-[14px] text-taca-text-muted mt-2">
-            {isSignIn 
-              ? 'Theo dõi đơn hàng, lưu voucher và mua sắm nhanh hơn.' 
-              : 'Tạo tài khoản để mua sắm và nhận nhiều ưu đãi.'}
+            {isForgot 
+              ? 'Nhập email hoặc số điện thoại để đặt lại mật khẩu.' 
+              : (isSignIn 
+                ? 'Theo dõi đơn hàng, lưu voucher và mua sắm nhanh hơn.' 
+                : 'Tạo tài khoản để mua sắm và nhận nhiều ưu đãi.')}
           </p>
         </div>
         
@@ -240,9 +269,9 @@ const AuthModal = () => {
         )}
 
         {/* Form */}
-        <form onSubmit={isSignIn ? handleSignIn : handleSignUp} className="flex flex-col gap-4">
+        <form onSubmit={isForgot ? handleForgot : (isSignIn ? handleSignIn : handleSignUp)} className="flex flex-col gap-4">
           
-          {!isSignIn && (
+          {!isForgot && !isSignIn && (
             <Input 
               label="Họ và tên"
               type="text"
@@ -253,14 +282,14 @@ const AuthModal = () => {
           )}
 
           <Input 
-            label={isSignIn ? "Email hoặc số điện thoại" : "Email"}
-            type={isSignIn ? "text" : "email"}
+            label={isSignIn || isForgot ? "Email hoặc số điện thoại" : "Email"}
+            type={isSignIn || isForgot ? "text" : "email"}
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             required
           />
 
-          {!isSignIn && (
+          {!isForgot && !isSignIn && (
             <Input 
               label="Số điện thoại (Tuỳ chọn)"
               type="tel"
@@ -269,15 +298,17 @@ const AuthModal = () => {
             />
           )}
           
-          <Input 
-            label="Mật khẩu"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          {!isForgot && (
+            <Input 
+              label="Mật khẩu"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          )}
 
-          {!isSignIn && (
+          {!isForgot && !isSignIn && (
             <Input 
               label="Nhập lại mật khẩu"
               type="password"
@@ -292,50 +323,61 @@ const AuthModal = () => {
             className="w-full mt-4"
             disabled={loading}
           >
-            {loading ? 'Đang xử lý...' : (isSignIn ? 'Đăng nhập' : 'Đăng ký')}
+            {loading ? 'Đang xử lý...' : (isForgot ? 'Gửi yêu cầu' : (isSignIn ? 'Đăng nhập' : 'Đăng ký'))}
           </Button>
 
           {isSignIn && (
             <div className="text-center mt-2">
-              <button type="button" className="text-[14px] font-bold text-taca-primary hover:text-taca-primary-hover focus:outline-none">
+              <button type="button" onClick={() => setMode('forgot')} className="text-[14px] font-bold text-taca-primary hover:text-taca-primary-hover focus:outline-none">
                 Quên mật khẩu?
               </button>
             </div>
           )}
         </form>
 
-        <div className="relative flex items-center py-6">
-          <div className="flex-grow border-t border-taca-border"></div>
-          <span className="flex-shrink-0 mx-4 text-taca-text-muted text-[13px]">Hoặc tiếp tục với</span>
-          <div className="flex-grow border-t border-taca-border"></div>
-        </div>
+        {!isForgot && (
+          <div className="relative flex items-center py-6">
+            <div className="flex-grow border-t border-taca-border"></div>
+            <span className="flex-shrink-0 mx-4 text-taca-text-muted text-[13px]">Hoặc tiếp tục với</span>
+            <div className="flex-grow border-t border-taca-border"></div>
+          </div>
+        )}
 
         {/* Placeholder cho Login with Google sau này */}
-        <button 
-          type="button"
-          className="flex items-center justify-center w-full bg-white border border-taca-border rounded-lg py-2 hover:bg-gray-50 transition-colors"
-        >
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5 mr-2" />
-          <span className="text-[14px] font-bold text-taca-text-main">Google</span>
-        </button>
+        {!isForgot && (
+          <button 
+            type="button"
+            className="flex items-center justify-center w-full bg-white border border-taca-border rounded-lg py-2 hover:bg-gray-50 transition-colors"
+          >
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5 mr-2" />
+            <span className="text-[14px] font-bold text-taca-text-main">Google</span>
+          </button>
+        )}
 
-        <div className="w-full h-[1px] bg-taca-border mt-6 mb-4"></div>
+        {!isForgot && <div className="w-full h-[1px] bg-taca-border mt-6 mb-4"></div>}
 
         <div className="text-center text-[14px] text-taca-text-main">
-          {isSignIn ? (
-            <>
-              Chưa có tài khoản?{' '}
-              <button type="button" onClick={toggleMode} className="font-bold cursor-pointer hover:text-taca-primary focus:outline-none">
-                Đăng ký ngay
-              </button>
-            </>
+          {isForgot ? (
+            <button type="button" onClick={() => setMode('signin')} className="font-bold cursor-pointer hover:text-taca-primary focus:outline-none flex items-center justify-center mx-auto gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+              Quay lại đăng nhập
+            </button>
           ) : (
-            <>
-              Đã có tài khoản?{' '}
-              <button type="button" onClick={toggleMode} className="font-bold cursor-pointer hover:text-taca-primary focus:outline-none">
-                Đăng nhập
-              </button>
-            </>
+            isSignIn ? (
+              <>
+                Chưa có tài khoản?{' '}
+                <button type="button" onClick={() => setMode('signup')} className="font-bold cursor-pointer hover:text-taca-primary focus:outline-none">
+                  Đăng ký ngay
+                </button>
+              </>
+            ) : (
+              <>
+                Đã có tài khoản?{' '}
+                <button type="button" onClick={() => setMode('signin')} className="font-bold cursor-pointer hover:text-taca-primary focus:outline-none">
+                  Đăng nhập
+                </button>
+              </>
+            )
           )}
         </div>
         </>

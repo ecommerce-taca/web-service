@@ -70,5 +70,18 @@ export const favoritesApi = {
       return { data: { success: true } };
     }
     return apiClient.delete(`/users/me/favorites/${productId}`);
+  },
+
+  checkFavorites: async (productIds) => {
+    if (USE_MOCK) {
+      await delay(300);
+      const result = {};
+      productIds.forEach(id => {
+        result[id] = MOCK_FAVORITES.some(f => f.product_id === id);
+      });
+      return { data: result };
+    }
+    // Tham số có thể truyền qua query string dạng ?ids=1,2,3 hoặc body tùy thiết kế API
+    return apiClient.get('/users/me/favorites/contains', { params: { ids: productIds.join(',') } });
   }
 };

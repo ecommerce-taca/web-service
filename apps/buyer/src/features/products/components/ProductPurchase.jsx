@@ -1,13 +1,22 @@
 import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
 import Button from '../../../components/ui/Button';
+import FavoriteButton from './FavoriteButton';
 
-const ProductPurchase = ({ product }) => {
+const ProductPurchase = ({ product, isFavorite, onToggleFavorite }) => {
+  const navigate = useNavigate();
   return (
     <div className="bg-white p-6 rounded-[12px] border border-taca-border flex flex-col md:flex-row gap-8">
       {/* Left: Gallery */}
       <div className="w-full md:w-[400px] flex-shrink-0 flex flex-col gap-4">
-        <div className="w-full aspect-square bg-taca-surface rounded-[8px] flex items-center justify-center text-taca-text-muted overflow-hidden">
+        <div className="w-full aspect-square bg-taca-surface rounded-[8px] flex items-center justify-center text-taca-text-muted overflow-hidden relative">
           <img src={product.image || "https://placehold.co/400"} alt={product.name} className="w-full h-full object-cover" />
+          <div className="absolute top-4 right-4 z-10">
+            <FavoriteButton 
+              isFavorite={isFavorite} 
+              onToggle={() => onToggleFavorite && onToggleFavorite(product.id, isFavorite)} 
+            />
+          </div>
         </div>
         <div className="flex gap-3 overflow-x-auto">
           {product.images ? product.images.map((img, i) => (
@@ -110,12 +119,14 @@ const ProductPurchase = ({ product }) => {
           <Button 
             variant="outline" 
             className="flex-1 h-[48px] text-[16px] font-semibold rounded-[8px] border-2 border-taca-primary text-taca-primary bg-white hover:bg-indigo-50"
+            onClick={() => alert('Đã thêm sản phẩm vào giỏ hàng!')}
           >
             Thêm vào giỏ
           </Button>
           <Button 
             variant="primary" 
             className="flex-[2] h-[48px] text-[16px] font-semibold rounded-[8px]"
+            onClick={() => navigate('/checkout')}
           >
             Mua ngay
           </Button>
@@ -132,6 +143,7 @@ const ProductPurchase = ({ product }) => {
 
 ProductPurchase.propTypes = {
   product: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     name: PropTypes.string.isRequired,
     isOfficial: PropTypes.bool,
     rating: PropTypes.number,
@@ -150,7 +162,13 @@ ProductPurchase.propTypes = {
       type: PropTypes.string,
       options: PropTypes.arrayOf(PropTypes.string)
     }))
-  }).isRequired
+  }).isRequired,
+  isFavorite: PropTypes.bool,
+  onToggleFavorite: PropTypes.func
+};
+
+ProductPurchase.defaultProps = {
+  isFavorite: false,
 };
 
 export default ProductPurchase;

@@ -1,8 +1,9 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import Badge from '../../../components/ui/Badge';
+import FavoriteButton from './FavoriteButton';
 
-const ProductCard = ({ id, image, name, price, originalPrice, discount, isOfficial, rating, soldCount, tags }) => {
+const ProductCard = ({ id, image, name, price, originalPrice, discount, isOfficial, rating, soldCount, tags, isFavorite, onToggleFavorite }) => {
   return (
     <Link to={`/product/${id || 1}`} className="flex flex-col bg-white border border-taca-border cursor-pointer group hover:border-taca-primary hover:shadow-md transition-all h-full no-underline rounded-[12px] overflow-hidden p-3 gap-3">
       {/* Image Area */}
@@ -19,6 +20,14 @@ const ProductCard = ({ id, image, name, price, originalPrice, discount, isOffici
         <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
           {isOfficial && <Badge variant="official">Official</Badge>}
           {discount && <Badge variant="sale">-{discount}%</Badge>}
+        </div>
+
+        {/* Favorite Button */}
+        <div className="absolute top-2 right-2 z-10">
+          <FavoriteButton 
+            isFavorite={isFavorite} 
+            onToggle={() => onToggleFavorite && onToggleFavorite(id, isFavorite)} 
+          />
         </div>
       </div>
 
@@ -80,6 +89,8 @@ ProductCard.propTypes = {
   rating: PropTypes.number,
   soldCount: PropTypes.number,
   tags: PropTypes.arrayOf(PropTypes.string),
+  isFavorite: PropTypes.bool,
+  onToggleFavorite: PropTypes.func,
 };
 
 ProductCard.defaultProps = {
@@ -91,6 +102,7 @@ ProductCard.defaultProps = {
   rating: null,
   soldCount: null,
   tags: [],
+  isFavorite: false,
 };
 
 export default ProductCard;

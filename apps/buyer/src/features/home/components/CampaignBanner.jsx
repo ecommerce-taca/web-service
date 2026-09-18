@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom';
 
 const CampaignBanner = ({ brand, title, subtitle, ctaText, bgColor, textColor }) => {
   return (
@@ -15,12 +16,13 @@ const CampaignBanner = ({ brand, title, subtitle, ctaText, bgColor, textColor })
       <p className="text-[13px] font-medium opacity-80 line-clamp-1 m-0">
         {subtitle}
       </p>
-      <button
-        className="mt-1 bg-transparent border-none text-[11px] font-bold cursor-pointer hover:opacity-70 transition-opacity p-0 flex items-center gap-1"
+      <Link
+        to={`/search?q=${brand.toLowerCase().replace(/\s+/g, '-')}`}
+        className="mt-1 bg-transparent border-none text-[11px] font-bold cursor-pointer hover:opacity-70 transition-opacity p-0 flex items-center gap-1 no-underline"
         style={{ color: textColor }}
       >
         {ctaText || 'Xem sản phẩm'} →
-      </button>
+      </Link>
     </section>
   );
 };

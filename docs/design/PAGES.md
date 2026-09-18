@@ -1,39 +1,16 @@
-# Pages Inventory
+# Danh sách màn hình UI đã code
 
-Based on Penpot designs, the application pages are distributed across the three micro-frontends.
+Các màn hình sau trong Penpot đã được ánh xạ thành công sang component React:
 
-## 1. Buyer App Pages (Desktop Width: 1440px)
-- **Home:** Main landing page (`/`).
-- **Search:** Results grid for queries (`/search`).
-- **Category Landing:** Specific category browsing (`/category/:id`).
-- **Shop:** Seller storefront page (`/shop/:id`).
-- **Product Detail:** Full specs, images, reviews (`/product/:id`).
-- **Cart:** Shopping cart review (`/cart`).
-- **Checkout:** Shipping and payment flow (`/checkout`).
-- **Account:** User profile settings (`/account`).
-- **Orders:** List of past/current orders (`/account/orders`).
-- **Order Detail:** Specific order tracking (`/account/orders/:id`).
-- **Favorite Products:** Wishlist (`/account/favorites`).
-- **My Vouchers:** Saved coupons (`/account/vouchers`).
-- **My Reviews:** History of user ratings (`/account/reviews`).
+1. **Trang Chủ**: `HomePage.jsx` (Hero Banner, Flash Sale, Official Shops, Categories, Mega Menu).
+2. **Chi tiết SP**: `ProductDetailPage.jsx`, `ProductPurchase.jsx`, `ProductReviews.jsx`.
+3. **Danh mục SP**: `CategoryLandingPage.jsx`, `SearchPage.jsx` (kèm sidebar lọc).
+4. **Giỏ hàng & Thanh toán**: `CartPage.jsx`, `CheckoutPage.jsx`.
+5. **Cửa hàng (Shop)**: `ShopPage.jsx`.
+6. **Xác thực**: `AuthModal.jsx` (Login/Sign up popups), `ResetPasswordPage.jsx`, `VerifyEmailPage.jsx`.
+7. **Tài khoản**: `AccountLayout`, `ProfilePage.jsx`, `OrdersPage.jsx`, `ReviewsPage.jsx`, `VouchersPage.jsx`, `WishlistPage.jsx`.
 
-## 2. Seller App Pages (Desktop Width: Flexible with 288px Sidebar)
-- **Dashboard:** High-level metrics (`/`).
-- **Products:** Inventory management (`/products`).
-- **Orders:** Fulfillment and tracking (`/orders`).
-- **Vouchers:** Promotion creation (`/vouchers`).
-- **Finance:** Revenue and withdrawals (`/finance`).
-- **Settings:** Store configuration (`/settings`).
-
-## 3. Admin App Pages (Desktop Width: Flexible with 288px Sidebar)
-- **Dashboard:** Platform metrics (`/`).
-- **Campaigns:** Platform-wide promotions (`/campaigns`).
-- **Categories:** Global taxonomy management (`/categories`).
-- **Shops / KYC:** Seller verification (`/shops`).
-- **Products / SKU:** Global catalog oversight (`/products`).
-- **Fees / Taxes:** Financial rules (`/fees`).
-- **Finance:** Platform revenue (`/finance`).
-- **Orders / Disputes:** Customer service escalation (`/orders`).
-- **Vouchers:** Global coupons (`/vouchers`).
-- **Users / Roles:** Admin access control (`/users`).
-- **Settings:** Platform config (`/settings`).
+## Responsive Design
+- 100% các trang đã hỗ trợ giao diện trên Desktop (lg, xl) và Mobile (md, sm).
+- Ẩn Sidebar trên Mobile (đưa vào Drawer hoặc Modal).
+- Chỉnh Breakpoint theo Tailwind (dựa trên class `sm:`, `md:`, `lg:`).

@@ -1,11 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import BuyerLayout from '../layouts/BuyerLayout';
 import HomePage from '../features/home/pages/HomePage';
+import SearchPage from '../features/search/pages/SearchPage';
 import ProductDetailPage from '../features/products/pages/ProductDetailPage';
 import CategoryLandingPage from '../features/products/pages/CategoryLandingPage';
+import ShopPage from '../features/shops/pages/ShopPage';
 import { AuthProvider } from '../features/auth/contexts/AuthProvider';
 import AuthModal from '../features/auth/components/AuthModal';
 import VerifyEmailPage from '../features/auth/pages/VerifyEmailPage';
+import ResetPasswordPage from '../features/auth/pages/ResetPasswordPage';
 import AccountLayout from '../features/account/layouts/AccountLayout';
 import ProfilePage from '../features/account/pages/ProfilePage';
 import OrdersPage from '../features/account/pages/OrdersPage';
@@ -24,9 +27,13 @@ function App() {
         <Routes>
           <Route element={<BuyerLayout />}>
             <Route path="/" element={<HomePage />} />
+            <Route path="/search" element={<SearchPage />} />
             <Route path="/product/:id" element={<ProductDetailPage />} />
             <Route path="/category/:categorySlug?" element={<CategoryLandingPage />} />
+            <Route path="/category/:categorySlug/:subCategorySlug" element={<CategoryLandingPage />} />
+            <Route path="/shop/:id" element={<ShopPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             
