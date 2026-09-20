@@ -27,6 +27,8 @@ apiClient.interceptors.request.use(
     const token = localStorage.getItem('taca_access_token');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      delete config.headers['Authorization'];
     }
     return config;
   },
@@ -79,7 +81,6 @@ apiClient.interceptors.response.use(
           localStorage.setItem('taca_access_token', newAccessToken);
           localStorage.setItem('taca_refresh_token', newRefreshToken);
 
-          apiClient.defaults.headers.common['Authorization'] = 'Bearer ' + newAccessToken;
           originalRequest.headers['Authorization'] = 'Bearer ' + newAccessToken;
           
           processQueue(null, newAccessToken);

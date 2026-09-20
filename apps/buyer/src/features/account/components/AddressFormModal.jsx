@@ -3,12 +3,17 @@ import Modal from '../../../../../../shared/ui-components/src/components/Modal';
 import Button from '../../../../../../shared/ui-components/src/components/Button';
 import Input from '../../../../../../shared/ui-components/src/components/Input';
 import { addressApi } from '../services/address.api';
+import provincesData from '../../../../../../shared/utils/vietnam_provinces.json';
 
 const AddressFormModal = ({ isOpen, onClose, addressData, onSuccess }) => {
   const [formData, setFormData] = useState({
-    name: '',
+    recipient: '',
     phone: '',
-    detail_address: '',
+    line1: '',
+    country: 'Việt Nam',
+    province: '',
+    district: '',
+    ward: '',
     is_default: false
   });
   const [loading, setLoading] = useState(false);
@@ -20,16 +25,24 @@ const AddressFormModal = ({ isOpen, onClose, addressData, onSuccess }) => {
     if (isOpen) {
       if (isEdit && addressData) {
         setFormData({
-          name: addressData.name || '',
+          recipient: addressData.recipient || addressData.name || '',
           phone: addressData.phone || '',
-          detail_address: addressData.detail_address || '',
+          line1: addressData.line1 || addressData.detail_address || '',
+          country: 'Việt Nam',
+          province: addressData.province || '',
+          district: addressData.district || '',
+          ward: addressData.ward || '',
           is_default: addressData.is_default || false
         });
       } else {
         setFormData({
-          name: '',
+          recipient: '',
           phone: '',
-          detail_address: '',
+          line1: '',
+          country: 'Việt Nam',
+          province: '',
+          district: '',
+          ward: '',
           is_default: false
         });
       }
@@ -45,6 +58,12 @@ const AddressFormModal = ({ isOpen, onClose, addressData, onSuccess }) => {
     }));
   };
 
+  const provinces = provincesData;
+  const selectedProvinceObj = provinces.find(p => p.n === formData.province);
+  const districts = selectedProvinceObj ? selectedProvinceObj.d : [];
+  const selectedDistrictObj = districts.find(d => d.n === formData.district);
+  const wards = selectedDistrictObj ? selectedDistrictObj.w : [];
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -54,7 +73,7 @@ const AddressFormModal = ({ isOpen, onClose, addressData, onSuccess }) => {
     const cleanPhone = formData.phone.replace(/\s+/g, '');
     const phoneRegex = /^(0|84|\+84)[3|5|7|8|9][0-9]{8}$/;
     
-    if (!formData.name.trim()) {
+    if (!formData.recipient.trim()) {
       setError('Vui lòng nhập họ và tên.');
       setLoading(false);
       return;
@@ -64,7 +83,12 @@ const AddressFormModal = ({ isOpen, onClose, addressData, onSuccess }) => {
       setLoading(false);
       return;
     }
-    if (!formData.detail_address.trim()) {
+    if (!formData.province || !formData.district || !formData.ward) {
+      setError('Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện, Xã/Phường.');
+      setLoading(false);
+      return;
+    }
+    if (!formData.line1.trim()) {
       setError('Vui lòng nhập địa chỉ cụ thể.');
       setLoading(false);
       return;
@@ -79,9 +103,12 @@ const AddressFormModal = ({ isOpen, onClose, addressData, onSuccess }) => {
       }
       
       const payload = {
-        name: formData.name.trim(),
+        recipient: formData.recipient.trim(),
         phone: finalPhone,
-        detail_address: formData.detail_address.trim(),
+        line1: formData.line1.trim(),
+        ward: formData.ward,
+        district: formData.district,
+        province: formData.province,
         is_default: formData.is_default
       };
 
@@ -116,8 +143,8 @@ const AddressFormModal = ({ isOpen, onClose, addressData, onSuccess }) => {
         <div className="grid grid-cols-[100px_1fr] items-center gap-4">
           <label className="text-[14px] text-taca-text-muted">Họ và tên</label>
           <Input 
-            name="name"
-            value={formData.name}
+            name="recipient"
+            value={formData.recipient}
             onChange={handleChange}
             className="!rounded-lg"
             placeholder="VD: Nguyễn Minh Anh"
@@ -138,14 +165,83 @@ const AddressFormModal = ({ isOpen, onClose, addressData, onSuccess }) => {
           />
         </div>
         
+        <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+          <label className="text-[14px] text-taca-text-muted">Quốc gia</label>
+          <select
+            name="country"
+            value={formData.country}
+            onChange={(e) => {
+              setFormData(prev => ({ ...prev, country: e.target.value, province: '', district: '', ward: '' }));
+            }}
+            className="h-[40px] px-3 border border-gray-200 rounded-lg outline-none focus:border-taca-primary text-[14px] text-taca-text-main bg-white w-full"
+            required
+          >
+            <option value="Việt Nam">Việt Nam</option>
+          </select>
+        </div>
+
+        <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+          <label className="text-[14px] text-taca-text-muted">Tỉnh/Thành</label>
+          <select
+            name="province"
+            value={formData.province}
+            onChange={(e) => {
+              setFormData(prev => ({ ...prev, province: e.target.value, district: '', ward: '' }));
+            }}
+            className="h-[40px] px-3 border border-gray-200 rounded-lg outline-none focus:border-taca-primary text-[14px] text-taca-text-main bg-white w-full"
+            required
+          >
+            <option value="" disabled>Chọn Tỉnh/Thành phố</option>
+            {provinces.map(p => (
+              <option key={p.c} value={p.n}>{p.n}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+          <label className="text-[14px] text-taca-text-muted">Quận/Huyện</label>
+          <select
+            name="district"
+            value={formData.district}
+            onChange={(e) => {
+              setFormData(prev => ({ ...prev, district: e.target.value, ward: '' }));
+            }}
+            className="h-[40px] px-3 border border-gray-200 rounded-lg outline-none focus:border-taca-primary text-[14px] text-taca-text-main bg-white w-full"
+            disabled={!formData.province}
+            required
+          >
+            <option value="" disabled>Chọn Quận/Huyện</option>
+            {districts.map(d => (
+              <option key={d.c} value={d.n}>{d.n}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+          <label className="text-[14px] text-taca-text-muted">Xã/Phường</label>
+          <select
+            name="ward"
+            value={formData.ward}
+            onChange={handleChange}
+            className="h-[40px] px-3 border border-gray-200 rounded-lg outline-none focus:border-taca-primary text-[14px] text-taca-text-main bg-white w-full"
+            disabled={!formData.district}
+            required
+          >
+            <option value="" disabled>Chọn Phường/Xã</option>
+            {wards.map(w => (
+              <option key={w.c} value={w.n}>{w.n}</option>
+            ))}
+          </select>
+        </div>
+        
         <div className="grid grid-cols-[100px_1fr] items-start gap-4">
-          <label className="text-[14px] text-taca-text-muted mt-2">Địa chỉ</label>
+          <label className="text-[14px] text-taca-text-muted mt-2">Địa chỉ cụ thể</label>
           <Input 
-            name="detail_address"
-            value={formData.detail_address}
+            name="line1"
+            value={formData.line1}
             onChange={handleChange}
             className="!rounded-lg"
-            placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố..."
+            placeholder="Số nhà, tên đường..."
             required
           />
         </div>
