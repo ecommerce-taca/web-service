@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Modal, Input, Button } from '@taca/ui-components';
 import { authApi } from '../services/auth.api';
 
@@ -9,6 +9,8 @@ const PhoneVerificationModal = ({ isOpen, onClose, phone, onVerificationSuccess 
   const [challengeId, setChallengeId] = useState(null);
   const [countdown, setCountdown] = useState(60);
   const [isResending, setIsResending] = useState(false);
+
+  const requestRef = React.useRef(0);
 
   useEffect(() => {
     let timer;
@@ -23,6 +25,7 @@ const PhoneVerificationModal = ({ isOpen, onClose, phone, onVerificationSuccess 
   }, [isOpen, countdown]);
 
   const handleRequestOtp = useCallback(async () => {
+    const currentRequest = ++requestRef.current;
     setError('');
     setIsResending(true);
     try {
@@ -30,8 +33,10 @@ const PhoneVerificationModal = ({ isOpen, onClose, phone, onVerificationSuccess 
       const phoneRegex = /^(0|84|\+84)[35789][0-9]{8}$/;
       
       if (!phoneRegex.test(finalPhone)) {
-        setError('Số điện thoại không hợp lệ (Ví dụ: 0912345678).');
-        setIsResending(false);
+        if (currentRequest === requestRef.current) {
+          setError('Số điện thoại không hợp lệ (Ví dụ: 0912345678).');
+          setIsResending(false);
+        }
         return;
       }
       
@@ -42,13 +47,21 @@ const PhoneVerificationModal = ({ isOpen, onClose, phone, onVerificationSuccess 
       }
       
       const response = await authApi.requestPhoneOtp(finalPhone);
+      if (currentRequest !== requestRef.current) return;
+      
       setChallengeId(response.data.challenge_id);
       setCountdown(60);
     } catch (err) {
-      // Backend may return 429 Too Many Requests if they request too often
-      setError(err.response?.status === 429 ? 'Bạn yêu cầu quá nhiều lần. Vui lòng thử lại sau 60s.' : (err.message || 'Không thể gửi mã OTP. Vui lòng thử lại sau.'));
+      if (currentRequest !== requestRef.current) return;
+      setError(
+        err.response?.status === 429 
+          ? 'Bạn yêu cầu quá nhiều lần. Vui lòng thử lại sau 60s.' 
+          : (err.response?.data?.message || err.message || 'Không thể gửi mã OTP. Vui lòng thử lại sau.')
+      );
     } finally {
-      setIsResending(false);
+      if (currentRequest === requestRef.current) {
+        setIsResending(false);
+      }
     }
   }, [phone]);
 
