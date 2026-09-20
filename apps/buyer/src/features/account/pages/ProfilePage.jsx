@@ -8,11 +8,12 @@ import PhoneVerificationModal from '../../auth/components/PhoneVerificationModal
 import { addressApi } from '../services/address.api';
 import AddressFormModal from '../components/AddressFormModal';
 
-const CustomDateInput = ({ value, onChange }) => {
+const DateInput = ({ value, onChange }) => {
   const [inputValue, setInputValue] = useState('');
+  const [error, setError] = useState('');
   
   useEffect(() => {
-    if (value && value !== 'INVALID') {
+    if (value && value !== 'INVALID' && value.includes('-')) {
       const p = value.split('T')[0].split('-');
       if (p.length === 3) {
         setInputValue(`${p[2]}/${p[1]}/${p[0]}`);
@@ -37,47 +38,35 @@ const CustomDateInput = ({ value, onChange }) => {
       const d = val.slice(0, 2);
       const m = val.slice(2, 4);
       const y = val.slice(4, 8);
-      onChange(`${y}-${m}-${d}`);
+      
+      const date = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+      if (date.getFullYear() === parseInt(y, 10) && date.getMonth() === parseInt(m, 10) - 1 && date.getDate() === parseInt(d, 10)) {
+         onChange(`${y}-${m}-${d}`);
+         setError('');
+      } else {
+         onChange('INVALID');
+         setError('Ngày không hợp lệ');
+      }
       return;
     } else if (val.length > 0) {
       onChange('INVALID');
+      setError('');
       return;
     }
     onChange('');
+    setError('');
   };
-
-  const handleNativeDateChange = (e) => {
-    if (e.target.value) {
-       onChange(e.target.value);
-    }
-  };
-
-  const maxDate = new Date(new Date().setFullYear(new Date().getFullYear() - 14)).toISOString().split('T')[0];
 
   return (
-    <div className="relative flex items-center w-full max-w-[200px]">
-      <Input 
+    <div className="flex flex-col gap-1 w-full max-w-[320px]">
+      <input 
+        type="text"
         placeholder="DD/MM/YYYY"
         value={inputValue}
         onChange={handleTextChange}
-        className="!rounded-lg pr-10 text-left pl-4 w-full tracking-[2px]"
-        wrapperClassName="w-full"
+        className="w-full h-11 px-4 border border-taca-border rounded-lg text-[14px] bg-white outline-none focus:border-taca-primary focus:ring-1 focus:ring-taca-primary transition-all text-taca-text-main tracking-[1px]"
       />
-      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 cursor-pointer hover:opacity-80 transition-opacity">
-        <input 
-          type="date"
-          max={maxDate}
-          value={value && value !== 'INVALID' ? value.split('T')[0] : ''}
-          onChange={handleNativeDateChange}
-          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
-        />
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-taca-text-muted">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-          <line x1="16" y1="2" x2="16" y2="6"></line>
-          <line x1="8" y1="2" x2="8" y2="6"></line>
-          <line x1="3" y1="10" x2="21" y2="10"></line>
-        </svg>
-      </div>
+      {error && <span className="text-[12px] text-taca-sale">{error}</span>}
     </div>
   );
 };
@@ -401,7 +390,7 @@ const ProfilePage = () => {
             
             <div className="grid grid-cols-[120px_1fr] items-center gap-4">
               <label className="text-[14px] text-taca-text-muted">Ngày sinh</label>
-              <CustomDateInput 
+              <DateInput 
                 value={formData.date_of_birth}
                 onChange={(val) => setFormData(prev => ({...prev, date_of_birth: val}))}
               />
