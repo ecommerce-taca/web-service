@@ -107,6 +107,21 @@ const ProfilePage = () => {
         finalPhone = '+84' + finalPhone.slice(1);
       }
 
+      if (formData.date_of_birth) {
+        const dob = new Date(formData.date_of_birth);
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const m = today.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+          age--;
+        }
+        if (age < 14) {
+          setError('Độ tuổi phải từ 14 tuổi trở lên.');
+          setLoading(false);
+          return;
+        }
+      }
+
       const payload = {
         full_name: formData.full_name,
         date_of_birth: formData.date_of_birth || null,
@@ -362,9 +377,9 @@ const ProfilePage = () => {
                 <AddressCard 
                   key={address.id}
                   isDefault={address.is_default}
-                  name={address.name || formData.full_name}
+                  name={address.recipient || address.name || formData.full_name}
                   phone={address.phone || formData.phone}
-                  address={address.detail_address}
+                  address={address.detail_address || [address.line1, address.ward, address.district, address.province, address.country || 'Việt Nam'].filter(Boolean).join(', ')}
                   onEdit={() => handleEditAddress(address)}
                   onDelete={() => handleDeleteAddress(address.id)}
                 />
