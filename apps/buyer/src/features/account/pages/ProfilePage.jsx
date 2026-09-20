@@ -103,8 +103,21 @@ const ProfilePage = () => {
 
     try {
       let finalPhone = formData.phone ? formData.phone.trim() : null;
-      if (finalPhone && finalPhone.startsWith('0')) {
-        finalPhone = '+84' + finalPhone.slice(1);
+      if (finalPhone) {
+        const cleanPhone = finalPhone.replace(/\s+/g, '');
+        const phoneRegex = /^(0|84|\+84)[35789][0-9]{8}$/;
+        if (!phoneRegex.test(cleanPhone)) {
+          setError('Số điện thoại không hợp lệ.');
+          setLoading(false);
+          return;
+        }
+        if (cleanPhone.startsWith('0')) {
+          finalPhone = '+84' + cleanPhone.slice(1);
+        } else if (cleanPhone.startsWith('84')) {
+          finalPhone = '+' + cleanPhone;
+        } else {
+          finalPhone = cleanPhone;
+        }
       }
 
       if (formData.date_of_birth) {
@@ -264,7 +277,16 @@ const ProfilePage = () => {
                 {(!user || !user.phone_verified || isPhoneChanged) && (
                   <button 
                     type="button"
-                    onClick={() => setPhoneModalOpen(true)}
+                    onClick={() => {
+                      const cleanPhone = formData.phone.replace(/\s+/g, '');
+                      const phoneRegex = /^(0|84|\+84)[35789][0-9]{8}$/;
+                      if (!phoneRegex.test(cleanPhone)) {
+                        setError('Số điện thoại không hợp lệ (Ví dụ: 0912345678).');
+                      } else {
+                        setError('');
+                        setPhoneModalOpen(true);
+                      }
+                    }}
                     disabled={!formData.phone}
                     className="text-[13px] font-bold text-taca-primary hover:text-taca-primary-hover underline whitespace-nowrap disabled:opacity-50 disabled:no-underline"
                   >

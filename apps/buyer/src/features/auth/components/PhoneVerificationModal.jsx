@@ -27,7 +27,7 @@ const PhoneVerificationModal = ({ isOpen, onClose, phone, onVerificationSuccess 
     setIsResending(true);
     try {
       let finalPhone = phone.replace(/\s+/g, '');
-      const phoneRegex = /^(0|84|\+84)[3|5|7|8|9][0-9]{8}$/;
+      const phoneRegex = /^(0|84|\+84)[35789][0-9]{8}$/;
       
       if (!phoneRegex.test(finalPhone)) {
         setError('Số điện thoại không hợp lệ (Ví dụ: 0912345678).');

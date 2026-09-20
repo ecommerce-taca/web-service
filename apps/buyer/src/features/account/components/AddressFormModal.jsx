@@ -71,7 +71,7 @@ const AddressFormModal = ({ isOpen, onClose, addressData, onSuccess }) => {
 
     // Custom Validation
     const cleanPhone = formData.phone.replace(/\s+/g, '');
-    const phoneRegex = /^(0|84|\+84)[3|5|7|8|9][0-9]{8}$/;
+    const phoneRegex = /^(0|84|\+84)[35789][0-9]{8}$/;
     
     if (!formData.recipient.trim()) {
       setError('Vui lòng nhập họ và tên.');

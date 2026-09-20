@@ -35,7 +35,7 @@ const AuthModal = () => {
       return null;
     }
     // Nới lỏng regex để cho phép test các số như 0123456789
-    const phoneRegex = /^(0|\+84)[1-9][0-9]{8}$/;
+    const phoneRegex = /^(0|84|\+84)[35789][0-9]{8}$/;
     if (!phoneRegex.test(trimmedId)) return 'Số điện thoại không hợp lệ (VD: 0912345678).';
     return null;
   };
@@ -50,7 +50,7 @@ const AuthModal = () => {
   const validatePhoneOnly = (phone) => {
     const trimmedPhone = phone.trim();
     if (!trimmedPhone) return null; // Optional
-    const phoneRegex = /^(0|\+84)[1-9][0-9]{8}$/;
+    const phoneRegex = /^(0|84|\+84)[35789][0-9]{8}$/;
     if (!phoneRegex.test(trimmedPhone)) return 'Số điện thoại không hợp lệ (VD: 0912345678).';
     return null;
   };
