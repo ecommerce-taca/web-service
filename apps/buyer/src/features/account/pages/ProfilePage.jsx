@@ -306,9 +306,10 @@ const ProfilePage = () => {
               <Input 
                 name="date_of_birth"
                 type="date"
-                value={formData.date_of_birth}
+                value={formData.date_of_birth ? formData.date_of_birth.split('T')[0] : ''}
                 onChange={handleChange}
                 className="!rounded-lg max-w-[200px]"
+                style={{ fontFamily: 'inherit' }}
               />
             </div>
 
