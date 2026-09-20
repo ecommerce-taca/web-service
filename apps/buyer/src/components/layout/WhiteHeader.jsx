@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 
 const WhiteHeader = () => {
-  const { user, openAuthModal, logout } = useAuth();
+  const { user, openAuthModal, } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -66,13 +66,13 @@ const WhiteHeader = () => {
           {/* User */}
           <div
             className="flex flex-col cursor-pointer text-taca-text-main flex-shrink-0"
-            onClick={() => user ? logout() : openAuthModal()}
+            onClick={() => user ? navigate('/account/overview') : openAuthModal()}
           >
             <span className="text-[11px] font-semibold text-taca-text-muted leading-snug">
               Tài khoản
             </span>
             <span className="text-[12px] font-bold leading-snug">
-              {user ? `${user.name} ▾` : 'Đăng nhập'}
+              {user ? `${user.full_name || 'Người dùng'} ▾` : 'Đăng nhập'}
             </span>
           </div>
 

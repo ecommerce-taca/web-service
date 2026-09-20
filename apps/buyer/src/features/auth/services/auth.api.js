@@ -1,6 +1,6 @@
 import apiClient from '../../../../../../shared/utils/api-client';
 
-const USE_MOCK = false; // Đã tắt Mock
+const USE_MOCK = true; // Đã tắt Mock
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 

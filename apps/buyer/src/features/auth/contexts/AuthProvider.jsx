@@ -1,6 +1,7 @@
-import { useReducer } from 'react';
+import { useReducer, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { AuthContext } from './AuthContext';
+import { authApi } from '../services/auth.api';
 
 const initialState = {
   user: (() => {
@@ -49,9 +50,24 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'LOGIN', payload: { user: userData, tokens } });
   };
 
-  const logout = () => {
-    dispatch({ type: 'LOGOUT' });
+  const logout = async () => {
+    try {
+      await authApi.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      dispatch({ type: 'LOGOUT' });
+    }
   };
+
+  useEffect(() => {
+    const handleAuthLogout = () => {
+      dispatch({ type: 'LOGOUT' });
+    };
+    
+    window.addEventListener('auth:logout', handleAuthLogout);
+    return () => window.removeEventListener('auth:logout', handleAuthLogout);
+  }, []);
 
   const openAuthModal = () => dispatch({ type: 'OPEN_MODAL' });
   const closeAuthModal = () => dispatch({ type: 'CLOSE_MODAL' });
