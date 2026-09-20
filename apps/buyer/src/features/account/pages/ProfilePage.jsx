@@ -7,6 +7,81 @@ import { authApi } from '../../auth/services/auth.api';
 import PhoneVerificationModal from '../../auth/components/PhoneVerificationModal';
 import { addressApi } from '../services/address.api';
 import AddressFormModal from '../components/AddressFormModal';
+
+const CustomDateInput = ({ value, onChange }) => {
+  const [inputValue, setInputValue] = useState('');
+  
+  useEffect(() => {
+    if (value && value !== 'INVALID') {
+      const p = value.split('T')[0].split('-');
+      if (p.length === 3) {
+        setInputValue(`${p[2]}/${p[1]}/${p[0]}`);
+      }
+    } else {
+      setInputValue('');
+    }
+  }, [value]);
+
+  const handleTextChange = (e) => {
+    let val = e.target.value.replace(/\D/g, '');
+    if (val.length > 8) val = val.slice(0, 8);
+    let formatted = val;
+    if (val.length > 4) {
+      formatted = `${val.slice(0,2)}/${val.slice(2,4)}/${val.slice(4)}`;
+    } else if (val.length > 2) {
+      formatted = `${val.slice(0,2)}/${val.slice(2)}`;
+    }
+    setInputValue(formatted);
+
+    if (val.length === 8) {
+      const d = val.slice(0, 2);
+      const m = val.slice(2, 4);
+      const y = val.slice(4, 8);
+      onChange(`${y}-${m}-${d}`);
+      return;
+    } else if (val.length > 0) {
+      onChange('INVALID');
+      return;
+    }
+    onChange('');
+  };
+
+  const handleNativeDateChange = (e) => {
+    if (e.target.value) {
+       onChange(e.target.value);
+    }
+  };
+
+  const maxDate = new Date(new Date().setFullYear(new Date().getFullYear() - 14)).toISOString().split('T')[0];
+
+  return (
+    <div className="relative flex items-center w-full max-w-[200px]">
+      <Input 
+        placeholder="DD/MM/YYYY"
+        value={inputValue}
+        onChange={handleTextChange}
+        className="!rounded-lg pr-10 text-left pl-4 w-full tracking-[2px]"
+        wrapperClassName="w-full"
+      />
+      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 cursor-pointer hover:opacity-80 transition-opacity">
+        <input 
+          type="date"
+          max={maxDate}
+          value={value && value !== 'INVALID' ? value.split('T')[0] : ''}
+          onChange={handleNativeDateChange}
+          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+        />
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-taca-text-muted">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+      </div>
+    </div>
+  );
+};
+
 const ProfilePage = () => {
   const { user, login } = useAuth(); // login handles updating the user context
   
@@ -120,16 +195,39 @@ const ProfilePage = () => {
         }
       }
 
+      if (formData.date_of_birth === 'INVALID') {
+        setError('Ngày sinh chưa đầy đủ hoặc không hợp lệ.');
+        setLoading(false);
+        return;
+      }
+
       if (formData.date_of_birth) {
         const dob = new Date(formData.date_of_birth);
+        if (isNaN(dob.getTime())) {
+          setError('Ngày sinh không hợp lệ.');
+          setLoading(false);
+          return;
+        }
+        
+        const parts = formData.date_of_birth.split('-');
+        if (
+          dob.getFullYear() !== parseInt(parts[0]) ||
+          dob.getMonth() + 1 !== parseInt(parts[1]) ||
+          dob.getDate() !== parseInt(parts[2])
+        ) {
+          setError('Ngày sinh không tồn tại (ví dụ: ngày 31 tháng 2).');
+          setLoading(false);
+          return;
+        }
+
         const today = new Date();
         let age = today.getFullYear() - dob.getFullYear();
         const m = today.getMonth() - dob.getMonth();
         if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
           age--;
         }
-        if (age < 14) {
-          setError('Độ tuổi phải từ 14 tuổi trở lên.');
+        if (age < 14 || age > 120) {
+          setError('Độ tuổi phải từ 14 đến 120 tuổi.');
           setLoading(false);
           return;
         }
@@ -303,13 +401,9 @@ const ProfilePage = () => {
             
             <div className="grid grid-cols-[120px_1fr] items-center gap-4">
               <label className="text-[14px] text-taca-text-muted">Ngày sinh</label>
-              <Input 
-                name="date_of_birth"
-                type="date"
-                value={formData.date_of_birth ? formData.date_of_birth.split('T')[0] : ''}
-                onChange={handleChange}
-                className="!rounded-lg max-w-[200px]"
-                style={{ fontFamily: 'inherit' }}
+              <CustomDateInput 
+                value={formData.date_of_birth}
+                onChange={(val) => setFormData(prev => ({...prev, date_of_birth: val}))}
               />
             </div>
 
