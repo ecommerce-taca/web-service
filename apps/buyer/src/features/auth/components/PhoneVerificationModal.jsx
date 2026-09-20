@@ -26,11 +26,27 @@ const PhoneVerificationModal = ({ isOpen, onClose, phone, onVerificationSuccess 
     setError('');
     setIsResending(true);
     try {
-      const response = await authApi.requestPhoneOtp(phone);
+      let finalPhone = phone.replace(/\s+/g, '');
+      const phoneRegex = /^(0|84|\+84)[3|5|7|8|9][0-9]{8}$/;
+      
+      if (!phoneRegex.test(finalPhone)) {
+        setError('Số điện thoại không hợp lệ (Ví dụ: 0912345678).');
+        setIsResending(false);
+        return;
+      }
+      
+      if (finalPhone.startsWith('0')) {
+        finalPhone = '+84' + finalPhone.slice(1);
+      } else if (finalPhone.startsWith('84')) {
+        finalPhone = '+' + finalPhone;
+      }
+      
+      const response = await authApi.requestPhoneOtp(finalPhone);
       setChallengeId(response.data.challenge_id);
       setCountdown(60);
     } catch (err) {
-      setError(err.message || 'Không thể gửi mã OTP.');
+      // Backend may return 429 Too Many Requests if they request too often
+      setError(err.response?.status === 429 ? 'Bạn yêu cầu quá nhiều lần. Vui lòng thử lại sau 60s.' : (err.message || 'Không thể gửi mã OTP. Vui lòng thử lại sau.'));
     } finally {
       setIsResending(false);
     }

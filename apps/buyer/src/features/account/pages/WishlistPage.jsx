@@ -24,6 +24,16 @@ const WishlistPage = () => {
     fetchFavorites();
   }, [fetchFavorites]);
 
+  const handleRemoveFavorite = async (productId) => {
+    try {
+      await favoritesApi.removeFavorite(productId);
+      setFavorites(prev => prev.filter(fav => fav.product_id !== productId));
+    } catch (error) {
+      console.error('Failed to remove favorite', error);
+      alert('Không thể xóa khỏi danh sách yêu thích');
+    }
+  };
+
   const filteredFavorites = favorites.filter(fav => 
     fav.name.toLowerCase().includes(search.toLowerCase())
   );
@@ -77,6 +87,8 @@ const WishlistPage = () => {
                 rating={product.rating}
                 sold={product.sold}
                 image={product.image}
+                isFavorite={true}
+                onToggleFavorite={handleRemoveFavorite}
               />
             ))}
           </div>

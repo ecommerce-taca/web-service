@@ -90,7 +90,21 @@ const AuthModal = () => {
       }
 
       const response = await authApi.login({ identifier: finalIdentifier, password });
-      login(response.data?.user || response.user, response.data?.tokens || response.tokens);
+      
+      const userFromLogin = response.data?.user || response.user;
+      const tokens = response.data?.tokens || response.tokens;
+      login(userFromLogin, tokens); // Initial login to set token
+
+      try {
+        const profileRes = await authApi.getProfile();
+        const fullUser = profileRes.data?.user || profileRes.data;
+        if (fullUser) {
+          login(fullUser, tokens); // Update with full profile
+        }
+      } catch (err) {
+        console.error('Failed to fetch full profile after login:', err);
+      }
+
       closeAuthModal();
     } catch (err) {
       const errorMsg = err.response?.status === 404 
@@ -158,7 +172,19 @@ const AuthModal = () => {
       };
       
       const response = await authApi.register(payload);
-      login(response.data?.user || response.user, response.data?.tokens || response.tokens);
+      const userFromSignup = response.data?.user || response.user;
+      const tokens = response.data?.tokens || response.tokens;
+      login(userFromSignup, tokens); // Initial login to set token
+      
+      try {
+        const profileRes = await authApi.getProfile();
+        const fullUser = profileRes.data?.user || profileRes.data;
+        if (fullUser) {
+          login(fullUser, tokens); // Update with full profile
+        }
+      } catch (err) {
+        console.error('Failed to fetch full profile after signup:', err);
+      }
       
       setSuccessMessage('Đăng ký thành công! Vui lòng kiểm tra email của bạn để xác thực tài khoản.');
     } catch (err) {

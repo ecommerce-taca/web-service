@@ -51,13 +51,15 @@ const AddressFormModal = ({ isOpen, onClose, addressData, onSuccess }) => {
     setError('');
 
     // Custom Validation
-    const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
+    const cleanPhone = formData.phone.replace(/\s+/g, '');
+    const phoneRegex = /^(0|84|\+84)[3|5|7|8|9][0-9]{8}$/;
+    
     if (!formData.name.trim()) {
       setError('Vui lòng nhập họ và tên.');
       setLoading(false);
       return;
     }
-    if (!phoneRegex.test(formData.phone)) {
+    if (!phoneRegex.test(cleanPhone)) {
       setError('Số điện thoại không hợp lệ.');
       setLoading(false);
       return;
@@ -69,10 +71,24 @@ const AddressFormModal = ({ isOpen, onClose, addressData, onSuccess }) => {
     }
 
     try {
+      let finalPhone = cleanPhone;
+      if (finalPhone.startsWith('0')) {
+        finalPhone = '+84' + finalPhone.slice(1);
+      } else if (finalPhone.startsWith('84')) {
+        finalPhone = '+' + finalPhone;
+      }
+      
+      const payload = {
+        name: formData.name.trim(),
+        phone: finalPhone,
+        detail_address: formData.detail_address.trim(),
+        is_default: formData.is_default
+      };
+
       if (isEdit) {
-        await addressApi.updateAddress(addressData.id, formData);
+        await addressApi.updateAddress(addressData.id, payload);
       } else {
-        await addressApi.addAddress(formData);
+        await addressApi.addAddress(payload);
       }
       onSuccess();
       onClose();

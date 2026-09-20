@@ -1,4 +1,4 @@
-import { useReducer, useEffect } from 'react';
+import { useReducer, useEffect, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { AuthContext } from './AuthContext';
 import { authApi } from '../services/auth.api';
@@ -46,11 +46,11 @@ function authReducer(state, action) {
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  const login = (userData, tokens) => {
+  const login = useCallback((userData, tokens) => {
     dispatch({ type: 'LOGIN', payload: { user: userData, tokens } });
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await authApi.logout();
     } catch (error) {
@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       dispatch({ type: 'LOGOUT' });
     }
-  };
+  }, []);
 
   useEffect(() => {
     const handleAuthLogout = () => {
@@ -69,19 +69,21 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener('auth:logout', handleAuthLogout);
   }, []);
 
-  const openAuthModal = () => dispatch({ type: 'OPEN_MODAL' });
-  const closeAuthModal = () => dispatch({ type: 'CLOSE_MODAL' });
+  const openAuthModal = useCallback(() => dispatch({ type: 'OPEN_MODAL' }), []);
+  const closeAuthModal = useCallback(() => dispatch({ type: 'CLOSE_MODAL' }), []);
+
+  const contextValue = useMemo(() => ({
+    user: state.user,
+    isAuthenticated: state.isAuthenticated,
+    isAuthModalOpen: state.isAuthModalOpen,
+    login,
+    logout,
+    openAuthModal,
+    closeAuthModal
+  }), [state.user, state.isAuthenticated, state.isAuthModalOpen, login, logout, openAuthModal, closeAuthModal]);
 
   return (
-    <AuthContext.Provider value={{
-      user: state.user,
-      isAuthenticated: state.isAuthenticated,
-      isAuthModalOpen: state.isAuthModalOpen,
-      login,
-      logout,
-      openAuthModal,
-      closeAuthModal
-    }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

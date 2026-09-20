@@ -14,6 +14,7 @@ const ReviewFormModal = ({ isOpen, onClose, reviewItem, onSuccess }) => {
     setLoading(true);
     try {
       await reviewApi.submitReview({
+        order_item_id: reviewItem?.id,
         product_id: reviewItem?.product_id,
         rating,
         content
