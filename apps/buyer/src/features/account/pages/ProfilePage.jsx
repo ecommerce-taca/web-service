@@ -281,55 +281,13 @@ const ProfilePage = () => {
             
             <div className="grid grid-cols-[120px_1fr] items-center gap-4">
               <label className="text-[14px] text-taca-text-muted">Ngày sinh</label>
-              <div className="flex gap-3 max-w-[400px]">
-                <select
-                  className="flex-1 h-[40px] px-3 border border-gray-200 rounded-lg outline-none focus:border-taca-primary text-[14px] text-taca-text-main bg-white"
-                  value={formData.date_of_birth ? formData.date_of_birth.split('-')[2] : ''}
-                  onChange={(e) => {
-                    const parts = formData.date_of_birth ? formData.date_of_birth.split('-') : ['', '', ''];
-                    const newDate = `${parts[0] || new Date().getFullYear()}-${parts[1] || '01'}-${e.target.value}`;
-                    handleChange({ target: { name: 'date_of_birth', value: newDate }});
-                  }}
-                >
-                  <option value="" disabled>Ngày</option>
-                  {Array.from({ length: 31 }, (_, i) => {
-                    const day = String(i + 1).padStart(2, '0');
-                    return <option key={day} value={day}>{day}</option>;
-                  })}
-                </select>
-                
-                <select
-                  className="flex-1 h-[40px] px-3 border border-gray-200 rounded-lg outline-none focus:border-taca-primary text-[14px] text-taca-text-main bg-white"
-                  value={formData.date_of_birth ? formData.date_of_birth.split('-')[1] : ''}
-                  onChange={(e) => {
-                    const parts = formData.date_of_birth ? formData.date_of_birth.split('-') : ['', '', ''];
-                    const newDate = `${parts[0] || new Date().getFullYear()}-${e.target.value}-${parts[2] || '01'}`;
-                    handleChange({ target: { name: 'date_of_birth', value: newDate }});
-                  }}
-                >
-                  <option value="" disabled>Tháng</option>
-                  {Array.from({ length: 12 }, (_, i) => {
-                    const month = String(i + 1).padStart(2, '0');
-                    return <option key={month} value={month}>Tháng {month}</option>;
-                  })}
-                </select>
-
-                <select
-                  className="flex-1 h-[40px] px-3 border border-gray-200 rounded-lg outline-none focus:border-taca-primary text-[14px] text-taca-text-main bg-white"
-                  value={formData.date_of_birth ? formData.date_of_birth.split('-')[0] : ''}
-                  onChange={(e) => {
-                    const parts = formData.date_of_birth ? formData.date_of_birth.split('-') : ['', '', ''];
-                    const newDate = `${e.target.value}-${parts[1] || '01'}-${parts[2] || '01'}`;
-                    handleChange({ target: { name: 'date_of_birth', value: newDate }});
-                  }}
-                >
-                  <option value="" disabled>Năm</option>
-                  {Array.from({ length: 100 }, (_, i) => {
-                    const year = String(new Date().getFullYear() - i);
-                    return <option key={year} value={year}>{year}</option>;
-                  })}
-                </select>
-              </div>
+              <Input 
+                name="date_of_birth"
+                type="date"
+                value={formData.date_of_birth}
+                onChange={handleChange}
+                className="!rounded-lg max-w-[200px]"
+              />
             </div>
 
             <div className="grid grid-cols-[120px_1fr] items-center gap-4 mt-2">
