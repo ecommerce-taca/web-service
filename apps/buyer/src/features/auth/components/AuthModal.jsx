@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Modal, Input, Button } from '@taca/ui-components';
 import { authApi } from '../services/auth.api';
 import { useAuth } from '../hooks/useAuth';
@@ -19,6 +19,7 @@ const AuthModal = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [isWaitingVerification, setIsWaitingVerification] = useState(false);
 
   const isSignIn = mode === 'signin';
   const isForgot = mode === 'forgot';
@@ -186,7 +187,7 @@ const AuthModal = () => {
         console.error('Failed to fetch full profile after signup:', err);
       }
       
-      setSuccessMessage('Đăng ký thành công! Vui lòng kiểm tra email của bạn để xác thực tài khoản.');
+      setIsWaitingVerification(true);
     } catch (err) {
       const errorMsg = err.response?.status === 404 
         ? 'Chưa kết nối Backend (Lỗi 404)' 
@@ -232,7 +233,7 @@ const AuthModal = () => {
     }
   };
 
-  const resetState = () => {
+  const resetState = useCallback(() => {
     setMode('signin');
     setIdentifier('');
     setSignupPhone('');
@@ -241,15 +242,39 @@ const AuthModal = () => {
     setConfirmPassword('');
     setError('');
     setSuccessMessage('');
-  };
-
-
+    setIsWaitingVerification(false);
+  }, []);
 
   // Close handler to reset state too
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     resetState();
     closeAuthModal();
-  };
+  }, [resetState, closeAuthModal]);
+
+  useEffect(() => {
+    let intervalId;
+    if (isWaitingVerification) {
+      intervalId = setInterval(async () => {
+        try {
+          const profileRes = await authApi.getProfile();
+          const user = profileRes.data?.user || profileRes.data;
+          if (user && user.email_verified) {
+            login(user, null);
+            setIsWaitingVerification(false);
+            setSuccessMessage('Xác thực email thành công! Đang chuyển hướng...');
+            setTimeout(() => {
+              handleClose();
+            }, 2000);
+          }
+        } catch (err) {
+          console.error('Lỗi kiểm tra xác thực email:', err);
+        }
+      }, 3000);
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [isWaitingVerification, login, handleClose]);
 
   return (
     <Modal 
@@ -259,7 +284,24 @@ const AuthModal = () => {
       hideHeader={true}
     >
       <div className="flex flex-col">
-        {successMessage ? (
+        {isWaitingVerification ? (
+          <div className="text-center py-6">
+            <div className="mx-auto flex items-center justify-center mb-6">
+              <svg className="animate-spin h-10 w-10 text-taca-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+            <h2 className="text-[24px] font-bold text-taca-text-main mb-4">Đang chờ xác thực...</h2>
+            <p className="text-[15px] text-taca-text-muted mb-8">
+              Đăng ký thành công! Vui lòng kiểm tra email của bạn để xác thực tài khoản. <br/>
+              Hệ thống sẽ tự động chuyển hướng sau khi bạn xác nhận email.
+            </p>
+            <Button variant="outline" onClick={handleClose} className="w-full">
+              Đóng và xác thực sau
+            </Button>
+          </div>
+        ) : successMessage ? (
           <div className="text-center py-6">
             <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6">
               <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

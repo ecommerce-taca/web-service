@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@taca/ui-components';
 import { authApi } from '../services/auth.api';
 
 const VerifyEmailPage = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
+  const navigate = useNavigate();
   
   const [status, setStatus] = useState('verifying'); // 'verifying', 'success', 'error'
   const [message, setMessage] = useState('Đang xác thực email của bạn...');
@@ -25,7 +26,10 @@ const VerifyEmailPage = () => {
       try {
         await authApi.verifyEmail(token);
         setStatus('success');
-        setMessage('Xác thực email thành công! Bạn có thể tiếp tục sử dụng dịch vụ.');
+        setMessage('Xác thực email thành công! Đang chuyển hướng...');
+        setTimeout(() => {
+          navigate('/');
+        }, 2000);
       } catch (err) {
         setStatus('error');
         setMessage(err.message || 'Mã xác thực không hợp lệ hoặc đã hết hạn.');

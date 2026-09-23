@@ -141,7 +141,7 @@ const AddressFormModal = ({ isOpen, onClose, addressData, onSuccess }) => {
         )}
         
         <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-          <label className="text-[14px] text-taca-text-muted">Họ và tên</label>
+          <label className="text-[14px] text-taca-text-muted">Họ và tên <span className="text-taca-sale">*</span></label>
           <Input 
             name="recipient"
             value={formData.recipient}
@@ -153,7 +153,7 @@ const AddressFormModal = ({ isOpen, onClose, addressData, onSuccess }) => {
         </div>
         
         <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-          <label className="text-[14px] text-taca-text-muted">Số điện thoại</label>
+          <label className="text-[14px] text-taca-text-muted">Số điện thoại <span className="text-taca-sale">*</span></label>
           <Input 
             name="phone"
             type="tel"
@@ -166,7 +166,7 @@ const AddressFormModal = ({ isOpen, onClose, addressData, onSuccess }) => {
         </div>
         
         <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-          <label className="text-[14px] text-taca-text-muted">Quốc gia</label>
+          <label className="text-[14px] text-taca-text-muted">Quốc gia <span className="text-taca-sale">*</span></label>
           <select
             name="country"
             value={formData.country}
@@ -181,7 +181,7 @@ const AddressFormModal = ({ isOpen, onClose, addressData, onSuccess }) => {
         </div>
 
         <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-          <label className="text-[14px] text-taca-text-muted">Tỉnh/Thành</label>
+          <label className="text-[14px] text-taca-text-muted">Tỉnh/Thành <span className="text-taca-sale">*</span></label>
           <select
             name="province"
             value={formData.province}
@@ -199,7 +199,7 @@ const AddressFormModal = ({ isOpen, onClose, addressData, onSuccess }) => {
         </div>
 
         <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-          <label className="text-[14px] text-taca-text-muted">Quận/Huyện</label>
+          <label className="text-[14px] text-taca-text-muted">Quận/Huyện <span className="text-taca-sale">*</span></label>
           <select
             name="district"
             value={formData.district}
@@ -218,7 +218,7 @@ const AddressFormModal = ({ isOpen, onClose, addressData, onSuccess }) => {
         </div>
 
         <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-          <label className="text-[14px] text-taca-text-muted">Xã/Phường</label>
+          <label className="text-[14px] text-taca-text-muted">Xã/Phường <span className="text-taca-sale">*</span></label>
           <select
             name="ward"
             value={formData.ward}
@@ -235,7 +235,7 @@ const AddressFormModal = ({ isOpen, onClose, addressData, onSuccess }) => {
         </div>
         
         <div className="grid grid-cols-[100px_1fr] items-start gap-4">
-          <label className="text-[14px] text-taca-text-muted mt-2">Địa chỉ cụ thể</label>
+          <label className="text-[14px] text-taca-text-muted mt-2">Địa chỉ cụ thể <span className="text-taca-sale">*</span></label>
           <Input 
             name="line1"
             value={formData.line1}

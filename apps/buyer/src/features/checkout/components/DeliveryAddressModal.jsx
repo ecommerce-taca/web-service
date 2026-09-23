@@ -17,15 +17,15 @@ export default function DeliveryAddressModal({ isOpen, onClose }) {
         <h3 className="font-bold text-gray-900 mb-4 text-sm">Hoặc thêm địa chỉ mới</h3>
         <div className="space-y-4 mb-6">
           <div className="flex items-center">
-            <label className="w-28 text-sm text-gray-600 shrink-0">Họ tên</label>
+            <label className="w-28 text-sm text-gray-600 shrink-0">Họ tên <span className="text-taca-sale">*</span></label>
             <input type="text" placeholder="Nguyễn Minh Anh" className="flex-1 border border-gray-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-primary" />
           </div>
           <div className="flex items-center">
-            <label className="w-28 text-sm text-gray-600 shrink-0">Số điện thoại</label>
+            <label className="w-28 text-sm text-gray-600 shrink-0">Số điện thoại <span className="text-taca-sale">*</span></label>
             <input type="text" placeholder="0909 123 456" className="flex-1 border border-gray-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-primary" />
           </div>
           <div className="flex items-center">
-            <label className="w-28 text-sm text-gray-600 shrink-0">Địa chỉ</label>
+            <label className="w-28 text-sm text-gray-600 shrink-0">Địa chỉ <span className="text-taca-sale">*</span></label>
             <input type="text" placeholder="Số nhà, đường, phường/xã..." className="flex-1 border border-gray-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-primary" />
           </div>
         </div>

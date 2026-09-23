@@ -22,6 +22,7 @@ const Input = forwardRef(({
       {label && (
         <label htmlFor={inputId} className="text-[12px] font-bold text-taca-text-main">
           {label}
+          {props.required && <span className="text-taca-sale ml-1">*</span>}
         </label>
       )}
       <div className="relative flex items-center">
