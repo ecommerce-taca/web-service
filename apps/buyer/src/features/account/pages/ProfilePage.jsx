@@ -16,9 +16,14 @@ const DateInput = ({ value, onChange }) => {
     if (value && value !== 'INVALID' && value.includes('-')) {
       const p = value.split('T')[0].split('-');
       if (p.length === 3) {
-        setInputValue(`${p[2]}/${p[1]}/${p[0]}`);
+        const newFormatted = `${p[2]}/${p[1]}/${p[0]}`;
+        // Chỉ update inputValue nếu nó khác với giá trị hiện tại (để tránh ghi đè khi đang gõ)
+        setInputValue(prev => {
+          if (prev.replace(/\D/g, '') === newFormatted.replace(/\D/g, '')) return prev;
+          return newFormatted;
+        });
       }
-    } else {
+    } else if (!value) {
       setInputValue('');
     }
   }, [value]);
@@ -61,6 +66,7 @@ const DateInput = ({ value, onChange }) => {
     <div className="flex flex-col gap-1 w-full max-w-[320px]">
       <input 
         type="text"
+        inputMode="numeric"
         placeholder="DD/MM/YYYY"
         value={inputValue}
         onChange={handleTextChange}
