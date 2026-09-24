@@ -2,11 +2,12 @@ import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@taca/ui-components';
 import { authApi } from '../services/auth.api';
-
+import { useAuth } from '../hooks/useAuth';
 const VerifyEmailPage = () => {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
+  const token = searchParams.get('t');
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const [status, setStatus] = useState('verifying'); // 'verifying', 'success', 'error'
   const [message, setMessage] = useState('Đang xác thực email của bạn...');
@@ -59,6 +60,21 @@ const VerifyEmailPage = () => {
             </div>
             <h2 className="text-[20px] font-bold text-gray-900 mb-2">Xác thực thành công!</h2>
             <p className="text-[14px] text-taca-text-muted mb-6">{message}</p>
+            
+            {user?.email && (
+              <div className="mb-6 flex flex-col items-center justify-center gap-2">
+                <div className="text-[16px] font-medium text-taca-text-main">
+                  {user.email}
+                </div>
+                <div className="inline-flex items-center gap-1 text-[13px] text-green-600 font-medium bg-green-50 px-3 py-1 rounded-full">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Đã xác thực
+                </div>
+              </div>
+            )}
+            
             <Link to="/">
               <Button className="w-full">Về trang chủ</Button>
             </Link>

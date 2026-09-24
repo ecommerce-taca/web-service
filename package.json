@@ -9,8 +9,8 @@
   "scripts": {
     "lint": "npm run lint --workspaces --if-present",
     "build:remotes": "npm run build -w @taca/buyer -w @taca/seller -w @taca/admin",
-    "serve:remotes": "concurrently \"npm run preview -w @taca/buyer\" \"npm run preview -w @taca/seller\" \"npm run preview -w @taca/admin\"",
-    "dev:shell": "npm run dev -w @taca/shell",
+    "serve:remotes": "concurrently \"npm run preview --host -w @taca/buyer\" \"npm run preview --host -w @taca/seller\" \"npm run preview --host -w @taca/admin\"",
+    "dev:shell": "npm run dev --host -w @taca/shell",
     "dev": "concurrently \"npm run build:remotes && npm run serve:remotes\" \"npm run dev:shell\"",
     "prepare": "husky"
   },
