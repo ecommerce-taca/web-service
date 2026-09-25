@@ -41,8 +41,16 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Handle 401 Unauthorized
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Do not attempt token refresh or broadcast logout for public auth endpoints
+    const isAuthEndpoint = originalRequest?.url && (
+      originalRequest.url.includes('/auth/signin') ||
+      originalRequest.url.includes('/auth/signup') ||
+      originalRequest.url.includes('/auth/email') ||
+      originalRequest.url.includes('/auth/password')
+    );
+
+    // Handle 401 Unauthorized for protected endpoints
+    if (error.response?.status === 401 && !isAuthEndpoint && !originalRequest._retry) {
       // If it's the refresh endpoint itself that failed, don't retry it to avoid infinite loop
       if (originalRequest.url.includes('/auth/refresh')) {
         return Promise.reject(error);
@@ -100,7 +108,7 @@ apiClient.interceptors.response.use(
       });
     }
 
-    return Promise.reject(error.response?.data?.error || error);
+    return Promise.reject(error);
   }
 );
 

@@ -1,41 +1,274 @@
 import apiClient from '../../../../../../shared/utils/api-client';
 
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
+/**
+ * Kiểm tra xem ứng dụng có đang chạy ở chế độ Mock hay không.
+ * - Ưu tiên đọc biến môi trường VITE_USE_MOCK trong file .env
+ * - Cho phép tester ép bật/tắt nhanh bằng localStorage.setItem('taca_force_mock', 'true' | 'false')
+ */
+export const isMockMode = () => {
+  if (typeof window !== 'undefined') {
+    const forceMock = localStorage.getItem('taca_force_mock');
+    if (forceMock === 'true') return true;
+    if (forceMock === 'false') return false;
+  }
+  return import.meta.env.VITE_USE_MOCK === 'true';
+};
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Lấy danh sách tài khoản Mock đã đăng ký và kích hoạt trong localStorage
+const getMockUsers = () => {
+  const data = localStorage.getItem('taca_mock_users');
+  if (data) {
+    try {
+      return JSON.parse(data);
+    } catch {
+      // fallback
+    }
+  }
+  const initialUsers = [
+    {
+      id: '01912f31-7a1b-7c12-9c55-8b1c34a6d001',
+      full_name: 'Nguyễn Minh Anh',
+      email: 'test@taca.vn',
+      phone: '+84909123456',
+      password: 'Password123456@',
+      email_verified: true,
+      phone_verified: false,
+      date_of_birth: '1995-01-01'
+    },
+    {
+      id: '01912f31-7a1b-7c12-9c55-8b1c34a6d002',
+      full_name: 'Tài Khoản Chưa Kích Hoạt',
+      email: 'unverified@taca.vn',
+      phone: '+84909888999',
+      password: 'Password123456@',
+      email_verified: false,
+      phone_verified: false,
+      date_of_birth: '1998-05-15'
+    }
+  ];
+  localStorage.setItem('taca_mock_users', JSON.stringify(initialUsers));
+  return initialUsers;
+};
+
+const saveMockUsers = (users) => {
+  localStorage.setItem('taca_mock_users', JSON.stringify(users));
+};
+
+// Lấy danh sách đăng ký chờ xác thực email qua link (Pending)
+const getMockPending = () => {
+  const data = localStorage.getItem('taca_mock_pending');
+  if (data) {
+    try {
+      return JSON.parse(data);
+    } catch {
+      // fallback
+    }
+  }
+  return [];
+};
+
+const saveMockPending = (list) => {
+  localStorage.setItem('taca_mock_pending', JSON.stringify(list));
+};
+
 export const authApi = {
+  /**
+   * Đăng nhập: POST /auth/signin
+   * Hỗ trợ cả Mock và Backend thật qua API Gateway
+   */
   login: async (credentials) => {
-    if (USE_MOCK) {
-      await delay(1000);
+    if (isMockMode()) {
+      await delay(600);
+      const users = getMockUsers();
+      const rawId = (credentials.identifier || '').trim().toLowerCase();
+      const isEmail = rawId.includes('@');
+
+      const user = users.find(u => {
+        if (isEmail) {
+          return (u.email || '').toLowerCase() === rawId;
+        }
+        const cleanUserPhone = (u.phone || '').replace(/\D/g, '');
+        const cleanInputPhone = rawId.replace(/\D/g, '');
+        return cleanUserPhone && cleanInputPhone && cleanUserPhone.endsWith(cleanInputPhone.slice(-9));
+      });
+
+      if (!user) {
+        // Kiểm tra xem có đang chờ xác thực email không
+        const pendings = getMockPending();
+        const pendingUser = pendings.find(p => (p.email || '').toLowerCase() === rawId);
+        if (pendingUser) {
+          const err = new Error('Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email và nhấp vào đường link xác nhận.');
+          err.response = {
+            status: 403,
+            data: {
+              error: {
+                code: 'AUTH_EMAIL_NOT_VERIFIED',
+                message: 'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email và nhấp vào đường link xác nhận.'
+              }
+            }
+          };
+          throw err;
+        }
+
+        const err = new Error('Email/Số điện thoại hoặc mật khẩu không chính xác.');
+        err.response = {
+          status: 401,
+          data: {
+            error: {
+              code: 'AUTH_INVALID_CREDENTIALS',
+              message: 'Email/Số điện thoại hoặc mật khẩu không chính xác.'
+            }
+          }
+        };
+        throw err;
+      }
+
+      // Kiểm tra trạng thái xác thực email
+      if (!user.email_verified) {
+        const err = new Error('Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email và nhấp vào đường link xác nhận.');
+        err.response = {
+          status: 403,
+          data: {
+            error: {
+              code: 'AUTH_EMAIL_NOT_VERIFIED',
+              message: 'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email và nhấp vào đường link xác nhận.'
+            }
+          }
+        };
+        throw err;
+      }
+
+      // Kiểm tra mật khẩu
+      if (user.password && credentials.password !== user.password) {
+        const err = new Error('Email/Số điện thoại hoặc mật khẩu không chính xác.');
+        err.response = {
+          status: 401,
+          data: {
+            error: {
+              code: 'AUTH_INVALID_CREDENTIALS',
+              message: 'Email/Số điện thoại hoặc mật khẩu không chính xác.'
+            }
+          }
+        };
+        throw err;
+      }
+
       return {
         data: {
-          user: { id: 1, full_name: 'Nguyễn Minh Anh (Mock)', email: credentials.identifier.includes('@') ? credentials.identifier : '', phone: credentials.identifier.includes('@') ? '' : credentials.identifier, email_verified: false, phone_verified: false },
-          tokens: { access_token: 'mock_access', refresh_token: 'mock_refresh' }
+          user: {
+            id: user.id,
+            full_name: user.full_name,
+            email: user.email,
+            phone: user.phone,
+            email_verified: user.email_verified,
+            phone_verified: user.phone_verified,
+            date_of_birth: user.date_of_birth
+          },
+          tokens: {
+            token_type: 'Bearer',
+            access_token: `mock_access_${Date.now()}`,
+            refresh_token: `mock_refresh_${Date.now()}`,
+            expires_in: 900
+          }
         }
       };
     }
-    const response = await apiClient.post('/auth/signin', credentials);
+
+    // Kết nối Backend thật
+    const payload = {
+      identifier: credentials.identifier,
+      password: credentials.password,
+      remember_me: credentials.remember_me !== false
+    };
+    const response = await apiClient.post('/auth/signin', payload);
     return response;
   },
 
+  /**
+   * Đăng ký tài khoản: POST /auth/signup
+   * Tạo tài khoản với email_verified: false và gửi link kích hoạt đến email
+   */
   register: async (userData) => {
-    if (USE_MOCK) {
-      await delay(1000);
+    if (isMockMode()) {
+      await delay(700);
+      const users = getMockUsers();
+      const targetEmail = (userData.email || '').trim().toLowerCase();
+
+      // Kiểm tra email đã đăng ký và kích hoạt chưa
+      const existingUser = users.find(u => (u.email || '').toLowerCase() === targetEmail);
+      if (existingUser && existingUser.email_verified) {
+        const err = new Error('Tài khoản hoặc email này đã tồn tại trong hệ thống. Vui lòng đăng nhập.');
+        err.response = {
+          status: 409,
+          data: {
+            error: {
+              code: 'AUTH_EMAIL_EXISTS',
+              message: 'Tài khoản hoặc email này đã tồn tại trong hệ thống. Vui lòng đăng nhập.'
+            }
+          }
+        };
+        throw err;
+      }
+
+      // Tạo mã token xác thực cho link gửi về email
+      const verifyToken = `mock_token_${Date.now()}`;
+      const pendings = getMockPending();
+      const filtered = pendings.filter(p => (p.email || '').toLowerCase() !== targetEmail);
+
+      const pendingUser = {
+        id: `01912f31-7a1b-7c12-9c55-${Date.now().toString().slice(-12)}`,
+        full_name: userData.full_name,
+        email: targetEmail,
+        phone: userData.phone || '',
+        password: userData.password,
+        email_verified: false,
+        token: verifyToken,
+        created_at: Date.now()
+      };
+
+      filtered.push(pendingUser);
+      saveMockPending(filtered);
+
       return {
         data: {
-          user: { id: 1, full_name: userData.full_name, email: userData.email || '', phone: userData.phone || '', email_verified: false, phone_verified: false },
-          tokens: { access_token: 'mock_access', refresh_token: 'mock_refresh' }
+          user: {
+            id: pendingUser.id,
+            full_name: pendingUser.full_name,
+            email: targetEmail,
+            email_verified: false,
+            phone: userData.phone || '',
+            phone_verified: false,
+            roles: ['BUYER'],
+            status: 'ACTIVE'
+          },
+          verification: {
+            email_sent: true,
+            expires_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+            token: verifyToken // Token link phục vụ kiểm thử tiện lợi trong Mock mode
+          }
         }
       };
     }
-    const response = await apiClient.post('/auth/signup', userData);
+
+    // Kết nối Backend thật: chỉ gửi phone nếu người dùng có nhập
+    const payload = {
+      full_name: userData.full_name,
+      email: userData.email,
+      password: userData.password,
+      ...(userData.phone && userData.phone.trim() ? { phone: userData.phone.trim() } : {})
+    };
+    const response = await apiClient.post('/auth/signup', payload);
     return response;
   },
 
+  /**
+   * Đăng xuất: POST /auth/signout
+   */
   logout: async () => {
-    if (USE_MOCK) {
-      await delay(500);
+    if (isMockMode()) {
+      await delay(200);
       return;
     }
     const refreshToken = localStorage.getItem('taca_refresh_token');
@@ -44,28 +277,136 @@ export const authApi = {
     }
   },
 
+  /**
+   * Xác thực Email qua đường link (token): POST /auth/email/verify
+   * Request body: { token: "..." }
+   */
   verifyEmail: async (token) => {
-    if (USE_MOCK) {
-      await delay(1500);
-      if (token === 'error') throw new Error('Mã xác thực sai hoặc hết hạn');
-      return { data: { success: true } };
+    if (isMockMode()) {
+      await delay(900);
+      const cleanToken = String(token || '').trim();
+
+      if (!cleanToken || cleanToken === 'error') {
+        const err = new Error('Đường dẫn xác thực không hợp lệ hoặc đã hết hạn.');
+        err.response = {
+          status: 400,
+          data: {
+            error: {
+              code: 'AUTH_VERIFICATION_INVALID',
+              message: 'Đường dẫn xác thực không hợp lệ hoặc đã hết hạn.'
+            }
+          }
+        };
+        throw err;
+      }
+
+      const pendings = getMockPending();
+      const pendingIndex = pendings.findIndex(p => p.token === cleanToken || cleanToken.startsWith('mock_token'));
+
+      if (pendingIndex !== -1) {
+        const pendingUser = pendings[pendingIndex];
+        const activatedUser = {
+          id: pendingUser.id,
+          full_name: pendingUser.full_name,
+          email: pendingUser.email,
+          phone: pendingUser.phone,
+          password: pendingUser.password,
+          email_verified: true,
+          phone_verified: false,
+          date_of_birth: ''
+        };
+
+        const users = getMockUsers();
+        const updatedUsers = users.filter(u => (u.email || '').toLowerCase() !== pendingUser.email);
+        updatedUsers.push(activatedUser);
+        saveMockUsers(updatedUsers);
+
+        // Xóa khỏi pending
+        pendings.splice(pendingIndex, 1);
+        saveMockPending(pendings);
+
+        return {
+          data: {
+            user_id: activatedUser.id,
+            email_verified: true,
+            verified_at: new Date().toISOString(),
+            user: {
+              id: activatedUser.id,
+              full_name: activatedUser.full_name,
+              email: activatedUser.email,
+              phone: activatedUser.phone,
+              email_verified: true,
+              phone_verified: false
+            },
+            tokens: {
+              access_token: `mock_access_${Date.now()}`,
+              refresh_token: `mock_refresh_${Date.now()}`
+            }
+          }
+        };
+      }
+
+      // Kiểm tra nếu đã kích hoạt trước đó
+      const users = getMockUsers();
+      const existingUser = cleanToken.startsWith('mock_token') ? users.find(u => !u.email_verified) : null;
+      if (existingUser) {
+        existingUser.email_verified = true;
+        saveMockUsers(users);
+        return {
+          data: {
+            user_id: existingUser.id,
+            email_verified: true,
+            verified_at: new Date().toISOString(),
+            user: existingUser,
+            tokens: {
+              access_token: `mock_access_${Date.now()}`,
+              refresh_token: `mock_refresh_${Date.now()}`
+            }
+          }
+        };
+      }
+
+      const err = new Error('Đường dẫn xác thực không hợp lệ, đã hết hạn hoặc đã được sử dụng.');
+      err.response = {
+        status: 400,
+        data: {
+          error: {
+            code: 'AUTH_VERIFICATION_INVALID',
+            message: 'Đường dẫn xác thực không hợp lệ, đã hết hạn hoặc đã được sử dụng.'
+          }
+        }
+      };
+      throw err;
     }
+
+    // Kết nối Backend thật theo đặc tả API
     const response = await apiClient.post('/auth/email/verify', { token });
     return response;
   },
 
+  /**
+   * Gửi lại email xác thực: POST /auth/email/resend
+   */
   resendEmailVerification: async () => {
-    if (USE_MOCK) {
-      await delay(1500);
-      return { data: { success: true } };
+    if (isMockMode()) {
+      await delay(700);
+      return {
+        data: {
+          accepted: true,
+          expires_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString()
+        }
+      };
     }
-    const response = await apiClient.post('/auth/email/resend', { purpose: 'EMAIL_VERIFY' });
+
+    const response = await apiClient.post('/auth/email/resend', {
+      purpose: 'EMAIL_VERIFY'
+    });
     return response;
   },
 
   requestPhoneOtp: async (phone) => {
-    if (USE_MOCK) {
-      await delay(1500);
+    if (isMockMode()) {
+      await delay(700);
       return { data: { challenge_id: 'mock_challenge_123' } };
     }
     const response = await apiClient.post('/auth/phone/request-otp', { phone });
@@ -73,9 +414,13 @@ export const authApi = {
   },
 
   verifyPhoneOtp: async (challenge_id, otp) => {
-    if (USE_MOCK) {
-      await delay(1500);
-      if (otp !== '123456') throw new Error('Mã OTP không đúng. Hãy nhập 123456 để test.');
+    if (isMockMode()) {
+      await delay(700);
+      if (otp !== '123456') {
+        const err = new Error('Mã OTP không đúng. Hãy nhập 123456 để test.');
+        err.response = { status: 400, data: { message: 'Mã OTP không đúng. Hãy nhập 123456 để test.' } };
+        throw err;
+      }
       return { data: { success: true } };
     }
     const response = await apiClient.post('/auth/phone/verify-otp', { challenge_id, otp });
@@ -83,8 +428,8 @@ export const authApi = {
   },
 
   forgotPassword: async (identifier) => {
-    if (USE_MOCK) {
-      await delay(1000);
+    if (isMockMode()) {
+      await delay(700);
       return { data: { success: true } };
     }
     const isEmail = identifier.includes('@');
@@ -94,8 +439,8 @@ export const authApi = {
   },
 
   resetPassword: async (token, newPassword) => {
-    if (USE_MOCK) {
-      await delay(1000);
+    if (isMockMode()) {
+      await delay(700);
       return { data: { success: true } };
     }
     const response = await apiClient.post('/auth/password/reset', { token, password: newPassword });
@@ -103,10 +448,18 @@ export const authApi = {
   },
 
   getProfile: async () => {
-    if (USE_MOCK) {
-      await delay(500);
+    if (isMockMode()) {
+      await delay(400);
       const savedUser = localStorage.getItem('taca_user');
-      const user = savedUser ? JSON.parse(savedUser) : { id: 1, full_name: 'Nguyễn Minh Anh (Mock)', email: 'test@taca.vn', phone: '0909 123 456', email_verified: false, phone_verified: false, date_of_birth: '1995-01-01' };
+      const user = savedUser ? JSON.parse(savedUser) : {
+        id: '01912f31-7a1b-7c12-9c55-8b1c34a6d001',
+        full_name: 'Nguyễn Minh Anh',
+        email: 'test@taca.vn',
+        phone: '0909 123 456',
+        email_verified: true,
+        phone_verified: false,
+        date_of_birth: '1995-01-01'
+      };
       return {
         data: { user }
       };
@@ -116,10 +469,10 @@ export const authApi = {
   },
 
   updateProfile: async (data) => {
-    if (USE_MOCK) {
-      await delay(1000);
+    if (isMockMode()) {
+      await delay(700);
       const savedUser = localStorage.getItem('taca_user');
-      const currentUser = savedUser ? JSON.parse(savedUser) : { id: 1, email_verified: false, phone_verified: true };
+      const currentUser = savedUser ? JSON.parse(savedUser) : { id: '01912f31-7a1b-7c12-9c55-8b1c34a6d001', email_verified: true, phone_verified: true };
       const updatedUser = { ...currentUser, ...data };
       localStorage.setItem('taca_user', JSON.stringify(updatedUser));
       return { data: { user: updatedUser } };

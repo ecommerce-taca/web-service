@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Button, Input } from '@taca/ui-components';
 import { authApi } from '../services/auth.api';
+import { getAuthErrorMessage } from '../utils/authError';
 
 const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams();
@@ -45,10 +46,7 @@ const ResetPasswordPage = () => {
       setMessage('Đặt lại mật khẩu thành công! Bạn có thể quay về trang chủ và đăng nhập bằng mật khẩu mới.');
     } catch (err) {
       setStatus('error');
-      const errorMsg = err.response?.status === 404 
-        ? 'Chưa kết nối Backend (Lỗi 404)' 
-        : (err.message || 'Đặt lại mật khẩu thất bại, mã xác thực có thể đã hết hạn.');
-      setMessage(errorMsg);
+      setMessage(getAuthErrorMessage(err, 'reset'));
     }
   };
 

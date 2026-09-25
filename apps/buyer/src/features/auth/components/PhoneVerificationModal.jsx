@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Modal, Input, Button } from '@taca/ui-components';
 import { authApi } from '../services/auth.api';
+import { getAuthErrorMessage } from '../utils/authError';
 
 const PhoneVerificationModal = ({ isOpen, onClose, phone, onVerificationSuccess }) => {
   const [otp, setOtp] = useState('');
@@ -53,11 +54,7 @@ const PhoneVerificationModal = ({ isOpen, onClose, phone, onVerificationSuccess 
       setCountdown(60);
     } catch (err) {
       if (currentRequest !== requestRef.current) return;
-      setError(
-        err.response?.status === 429 
-          ? 'Bạn yêu cầu quá nhiều lần. Vui lòng thử lại sau 60s.' 
-          : (err.response?.data?.message || err.message || 'Không thể gửi mã OTP. Vui lòng thử lại sau.')
-      );
+      setError(getAuthErrorMessage(err, 'verify'));
     } finally {
       if (currentRequest === requestRef.current) {
         setIsResending(false);
@@ -87,7 +84,7 @@ const PhoneVerificationModal = ({ isOpen, onClose, phone, onVerificationSuccess 
       onVerificationSuccess();
       handleClose();
     } catch (err) {
-      setError(err.message || 'Mã OTP không chính xác hoặc đã hết hạn.');
+      setError(getAuthErrorMessage(err, 'verify'));
     } finally {
       setLoading(false);
     }
