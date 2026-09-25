@@ -390,6 +390,26 @@ export const authApi = {
   resendEmailVerification: async () => {
     if (isMockMode()) {
       await delay(700);
+      const savedUser = localStorage.getItem('taca_user');
+      let currentUser = null;
+      try {
+        currentUser = savedUser ? JSON.parse(savedUser) : null;
+      } catch {
+        // ignore
+      }
+      if (currentUser?.email_verified) {
+        const err = new Error('Tài khoản này đã được xác thực trước đó.');
+        err.response = {
+          status: 409,
+          data: {
+            error: {
+              code: 'AUTH_VERIFICATION_ALREADY_COMPLETE',
+              message: 'Tài khoản này đã được xác thực trước đó.'
+            }
+          }
+        };
+        throw err;
+      }
       return {
         data: {
           accepted: true,

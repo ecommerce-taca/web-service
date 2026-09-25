@@ -442,19 +442,7 @@ const AuthModal = () => {
             {error && (
               <div className="bg-taca-sale/10 text-taca-sale p-3 text-[14px] rounded-lg font-medium border border-taca-sale/20 mb-4">
                 <div>{error}</div>
-                {/* Nếu tài khoản đã tồn tại khi đang đăng ký -> gợi ý chuyển sang đăng nhập */}
-                {(error.includes('đã tồn tại') || error.includes('đã có')) && !isSignIn && !isForgot && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMode('signin');
-                      setError('');
-                    }}
-                    className="mt-2 inline-flex items-center gap-1 text-[13px] font-bold text-taca-primary hover:underline cursor-pointer"
-                  >
-                    Đã có tài khoản? Nhấn để chuyển sang Đăng nhập &rarr;
-                  </button>
-                )}
+
                 {/* Nếu tài khoản chưa kích hoạt khi đăng nhập -> chuyển sang màn hình hướng dẫn link xác thực */}
                 {(error.includes('chưa được xác thực email') || error.includes('chưa được kích hoạt') || error.includes('link xác nhận')) && isSignIn && (
                   <button

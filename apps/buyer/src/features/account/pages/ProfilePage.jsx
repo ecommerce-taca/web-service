@@ -7,74 +7,192 @@ import { authApi } from '../../auth/services/auth.api';
 import PhoneVerificationModal from '../../auth/components/PhoneVerificationModal';
 import { addressApi } from '../services/address.api';
 import AddressFormModal from '../components/AddressFormModal';
+import { getAuthErrorMessage } from '../../auth/utils/authError';
+import PropTypes from 'prop-types';
 
 const DateInput = ({ value, onChange }) => {
-  const [inputValue, setInputValue] = useState('');
+  const [day, setDay] = useState('');
+  const [month, setMonth] = useState('');
+  const [year, setYear] = useState('');
   const [error, setError] = useState('');
-  
+
+  // Đồng bộ giá trị từ prop value (định dạng YYYY-MM-DD hoặc ISO string)
   useEffect(() => {
     if (value && value !== 'INVALID' && value.includes('-')) {
-      const p = value.split('T')[0].split('-');
-      if (p.length === 3) {
-        const newFormatted = `${p[2]}/${p[1]}/${p[0]}`;
-        // Chỉ update inputValue nếu nó khác với giá trị hiện tại (để tránh ghi đè khi đang gõ)
-        setInputValue(prev => {
-          if (prev.replace(/\D/g, '') === newFormatted.replace(/\D/g, '')) return prev;
-          return newFormatted;
-        });
+      const parts = value.split('T')[0].split('-');
+      if (parts.length === 3) {
+        const parsedYear = String(parseInt(parts[0], 10));
+        const parsedMonth = String(parseInt(parts[1], 10));
+        const parsedDay = String(parseInt(parts[2], 10));
+        setYear(parsedYear);
+        setMonth(parsedMonth);
+        setDay(parsedDay);
+        setError('');
       }
     } else if (!value) {
-      setInputValue('');
+      setDay('');
+      setMonth('');
+      setYear('');
+      setError('');
     }
   }, [value]);
 
-  const handleTextChange = (e) => {
-    let val = e.target.value.replace(/\D/g, '');
-    if (val.length > 8) val = val.slice(0, 8);
-    let formatted = val;
-    if (val.length > 4) {
-      formatted = `${val.slice(0,2)}/${val.slice(2,4)}/${val.slice(4)}`;
-    } else if (val.length > 2) {
-      formatted = `${val.slice(0,2)}/${val.slice(2)}`;
-    }
-    setInputValue(formatted);
+  const currentYear = new Date().getFullYear();
+  const maxYear = currentYear - 14;
+  const minYear = currentYear - 120;
+  const years = [];
+  for (let y = maxYear; y >= minYear; y--) {
+    years.push(y);
+  }
 
-    if (val.length === 8) {
-      const d = val.slice(0, 2);
-      const m = val.slice(2, 4);
-      const y = val.slice(4, 8);
-      
-      const date = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
-      if (date.getFullYear() === parseInt(y, 10) && date.getMonth() === parseInt(m, 10) - 1 && date.getDate() === parseInt(d, 10)) {
-         onChange(`${y}-${m}-${d}`);
-         setError('');
-      } else {
-         onChange('INVALID');
-         setError('Ngày không hợp lệ');
+  // Tính số ngày tối đa theo tháng và năm
+  const getMaxDays = (m, y) => {
+    if (!m) return 31;
+    const yearVal = y ? parseInt(y, 10) : 2024; // mặc định năm nhuận nếu chưa chọn năm
+    return new Date(yearVal, parseInt(m, 10), 0).getDate();
+  };
+
+  const daysCount = getMaxDays(month, year);
+  const days = Array.from({ length: daysCount }, (_, i) => i + 1);
+
+  const handleDateChange = (newDay, newMonth, newYear) => {
+    // Tự động điều chỉnh ngày nếu vượt quá số ngày tối đa của tháng (vd: 31 chuyển sang tháng 4)
+    let validDay = newDay;
+    if (newDay && newMonth) {
+      const maxD = getMaxDays(newMonth, newYear);
+      if (parseInt(newDay, 10) > maxD) {
+        validDay = String(maxD);
+        setDay(validDay);
       }
-      return;
-    } else if (val.length > 0) {
-      onChange('INVALID');
+    }
+
+    if (!validDay && !newMonth && !newYear) {
       setError('');
+      onChange('');
       return;
     }
-    onChange('');
+
+    if (!validDay || !newMonth || !newYear) {
+      setError('Vui lòng chọn đầy đủ ngày, tháng và năm sinh.');
+      onChange('INVALID');
+      return;
+    }
+
+    const d = parseInt(validDay, 10);
+    const m = parseInt(newMonth, 10);
+    const y = parseInt(newYear, 10);
+
+    const dob = new Date(y, m - 1, d);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+
+    if (age < 14 || age > 120) {
+      setError('Độ tuổi phải từ 14 đến 120 tuổi.');
+      onChange('INVALID');
+      return;
+    }
+
     setError('');
+    const formatted = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    onChange(formatted);
+  };
+
+  const handleDaySelect = (e) => {
+    const val = e.target.value;
+    setDay(val);
+    handleDateChange(val, month, year);
+  };
+
+  const handleMonthSelect = (e) => {
+    const val = e.target.value;
+    setMonth(val);
+    handleDateChange(day, val, year);
+  };
+
+  const handleYearSelect = (e) => {
+    const val = e.target.value;
+    setYear(val);
+    handleDateChange(day, month, val);
   };
 
   return (
-    <div className="flex flex-col gap-1 w-full max-w-[320px]">
-      <input 
-        type="text"
-        inputMode="numeric"
-        placeholder="DD/MM/YYYY"
-        value={inputValue}
-        onChange={handleTextChange}
-        className="w-full h-11 px-4 border border-taca-border rounded-lg text-[14px] bg-white outline-none focus:border-taca-primary focus:ring-1 focus:ring-taca-primary transition-all text-taca-text-main tracking-[1px]"
-      />
-      {error && <span className="text-[12px] text-taca-sale">{error}</span>}
+    <div className="flex flex-col gap-1.5 w-full max-w-[360px]">
+      <div className="grid grid-cols-3 gap-2.5 w-full">
+        {/* Ngày */}
+        <div className="relative">
+          <select
+            value={day}
+            onChange={handleDaySelect}
+            className="w-full h-11 px-3 pr-8 border border-taca-border rounded-lg text-[14px] bg-white text-taca-text-main outline-none focus:border-taca-primary focus:ring-1 focus:ring-taca-primary cursor-pointer transition-all appearance-none"
+          >
+            <option value="">Ngày</option>
+            {days.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-gray-400">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Tháng */}
+        <div className="relative">
+          <select
+            value={month}
+            onChange={handleMonthSelect}
+            className="w-full h-11 px-3 pr-8 border border-taca-border rounded-lg text-[14px] bg-white text-taca-text-main outline-none focus:border-taca-primary focus:ring-1 focus:ring-taca-primary cursor-pointer transition-all appearance-none"
+          >
+            <option value="">Tháng</option>
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+              <option key={m} value={m}>
+                Tháng {m}
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-gray-400">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Năm */}
+        <div className="relative">
+          <select
+            value={year}
+            onChange={handleYearSelect}
+            className="w-full h-11 px-3 pr-8 border border-taca-border rounded-lg text-[14px] bg-white text-taca-text-main outline-none focus:border-taca-primary focus:ring-1 focus:ring-taca-primary cursor-pointer transition-all appearance-none"
+          >
+            <option value="">Năm</option>
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-gray-400">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+      </div>
+      {error && <span className="text-[12px] text-taca-sale font-medium">{error}</span>}
     </div>
   );
+};
+
+DateInput.propTypes = {
+  value: PropTypes.string,
+  onChange: PropTypes.func.isRequired,
 };
 
 const ProfilePage = () => {
@@ -93,20 +211,14 @@ const ProfilePage = () => {
 
   const [isPhoneModalOpen, setPhoneModalOpen] = useState(false);
   const [isNewPhoneVerified, setIsNewPhoneVerified] = useState(false);
-  const [isNewEmailVerified, setIsNewEmailVerified] = useState(false);
-  const [emailResendStatus, setEmailResendStatus] = useState(''); // 'sending', 'success', 'error'
-  const [emailResendMessage, setEmailResendMessage] = useState('');
   
   const [addresses, setAddresses] = useState([]);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(null);
 
   const isPhoneChanged = formData.phone !== (user?.phone || '');
-
-  const isEmailChanged = formData.email !== (user?.email || '');
   const needsPhoneVerification = isPhoneChanged && !isNewPhoneVerified;
-  const needsEmailVerification = isEmailChanged && !isNewEmailVerified;
-  const needsVerification = needsPhoneVerification || needsEmailVerification;
+  const needsVerification = needsPhoneVerification;
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -159,9 +271,6 @@ const ProfilePage = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
     if (name === 'phone') {
       setIsNewPhoneVerified(false);
-    }
-    if (name === 'email') {
-      setIsNewEmailVerified(false);
     }
   };
 
@@ -238,27 +347,9 @@ const ProfilePage = () => {
       setMessage('Cập nhật hồ sơ thành công.');
       await fetchProfile(); // refresh data
     } catch (err) {
-      setError(err.message || 'Có lỗi xảy ra khi cập nhật hồ sơ.');
+      setError(getAuthErrorMessage(err, 'profile'));
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleResendEmail = async () => {
-    setEmailResendStatus('sending');
-    setEmailResendMessage('');
-    try {
-      await authApi.resendEmailVerification();
-      setEmailResendStatus('success');
-      setEmailResendMessage('Đã gửi email xác nhận. Vui lòng kiểm tra hộp thư.');
-      // Giả lập xác thực email thành công sau 2s để test UI
-      setTimeout(() => {
-        setIsNewEmailVerified(true);
-        setEmailResendMessage('Đã giả lập xác thực email thành công.');
-      }, 2000);
-    } catch (err) {
-      setEmailResendStatus('error');
-      setEmailResendMessage(err.message || 'Lỗi khi gửi email xác nhận.');
     }
   };
 
@@ -321,40 +412,16 @@ const ProfilePage = () => {
               />
             </div>
             
-            <div className="grid grid-cols-[120px_1fr] items-start gap-4">
-              <label className="text-[14px] text-taca-text-muted mt-2">Email</label>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-3">
-                  <Input 
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="!rounded-lg max-w-[200px]"
-                  />
-                  {(!user || !user.email_verified || isEmailChanged) && (
-                    <button 
-                      type="button"
-                      onClick={handleResendEmail}
-                      disabled={!formData.email || emailResendStatus === 'sending'}
-                      className="text-[13px] font-bold text-taca-primary hover:text-taca-primary-hover underline whitespace-nowrap disabled:opacity-50 disabled:no-underline"
-                    >
-                      {emailResendStatus === 'sending' ? 'Đang gửi...' : (isEmailChanged ? 'Xác thực ngay' : 'Gửi lại email xác nhận')}
-                    </button>
-                  )}
-                  {user?.email_verified && !isEmailChanged && (
-                    <span className="text-[13px] text-green-600 font-medium whitespace-nowrap bg-green-50 px-2 py-1 rounded">
-                      ✓ Đã xác thực
-                    </span>
-                  )}
-                </div>
-                {emailResendStatus === 'success' && (
-                  <span className="text-[12px] text-green-600">{emailResendMessage}</span>
-                )}
-                {emailResendStatus === 'error' && (
-                  <span className="text-[12px] text-taca-sale">{emailResendMessage}</span>
-                )}
-              </div>
+            <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+              <label className="text-[14px] text-taca-text-muted">Email</label>
+              <Input 
+                name="email"
+                type="email"
+                value={formData.email}
+                disabled
+                readOnly
+                className="!rounded-lg !bg-gray-100 !text-gray-500 cursor-not-allowed select-none border-gray-200"
+              />
             </div>
             
             <div className="grid grid-cols-[120px_1fr] items-center gap-4">
@@ -394,8 +461,8 @@ const ProfilePage = () => {
               </div>
             </div>
             
-            <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-              <label className="text-[14px] text-taca-text-muted">Ngày sinh</label>
+            <div className="grid grid-cols-[120px_1fr] items-start gap-4">
+              <label className="text-[14px] text-taca-text-muted mt-2.5">Ngày sinh</label>
               <DateInput 
                 value={formData.date_of_birth}
                 onChange={(val) => setFormData(prev => ({...prev, date_of_birth: val}))}
@@ -407,11 +474,6 @@ const ProfilePage = () => {
                 {needsPhoneVerification && (
                   <p className="text-taca-sale text-[13px] mb-3">
                     * Vui lòng nhấn "Xác thực ngay" số điện thoại mới trước khi lưu thay đổi.
-                  </p>
-                )}
-                {needsEmailVerification && (
-                  <p className="text-taca-sale text-[13px] mb-3">
-                    * Vui lòng nhấn "Xác thực ngay" email mới trước khi lưu thay đổi.
                   </p>
                 )}
                 <Button 

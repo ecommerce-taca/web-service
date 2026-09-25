@@ -56,7 +56,10 @@ export const getAuthErrorMessage = (err, context = 'signin') => {
     return 'Đường dẫn xác thực không hợp lệ, đã hết hạn hoặc đã được sử dụng.';
   }
 
-  if (upperCode === 'AUTH_VERIFICATION_ALREADY_COMPLETE') {
+  if (upperCode === 'AUTH_VERIFICATION_ALREADY_COMPLETE' || lowerMsg.includes('already complete') || lowerMsg.includes('already verified')) {
+    if (context === 'resend' || context === 'profile') {
+      return 'Email của tài khoản này đã được xác thực trước đó.';
+    }
     return 'Tài khoản này đã được xác thực trước đó. Bạn có thể đăng nhập ngay.';
   }
 
@@ -75,9 +78,15 @@ export const getAuthErrorMessage = (err, context = 'signin') => {
     return 'Thông tin nhập vào không hợp lệ. Vui lòng kiểm tra lại.';
   }
 
-  // 2. Nhận diện lỗi tài khoản đã tồn tại qua status code 409 hoặc thông điệp
+  // 2. Nhận diện lỗi Conflict 409 hoặc tài khoản đã tồn tại
+  if (status === 409) {
+    if (context === 'resend' || context === 'verify' || context === 'profile') {
+      return 'Email của tài khoản này đã được xác thực trước đó.';
+    }
+    return 'Tài khoản hoặc email này đã tồn tại trong hệ thống. Vui lòng đăng nhập.';
+  }
+
   if (
-    status === 409 ||
     lowerMsg.includes('already exists') ||
     lowerMsg.includes('tồn tại') ||
     lowerMsg.includes('already registered') ||
@@ -154,6 +163,10 @@ export const getAuthErrorMessage = (err, context = 'signin') => {
       return 'Đăng ký không thành công. Vui lòng kiểm tra lại thông tin.';
     case 'verify':
       return 'Đường dẫn xác thực không hợp lệ hoặc đã hết hạn.';
+    case 'resend':
+      return 'Không thể gửi lại email xác thực. Vui lòng thử lại sau.';
+    case 'profile':
+      return 'Cập nhật thông tin hồ sơ thất bại. Vui lòng thử lại.';
     case 'forgot':
       return 'Không thể gửi yêu cầu đặt lại mật khẩu. Vui lòng thử lại.';
     case 'reset':
