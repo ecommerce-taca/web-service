@@ -196,7 +196,7 @@ DateInput.propTypes = {
 };
 
 const ProfilePage = () => {
-  const { user, login } = useAuth(); // login handles updating the user context
+  const { user } = useAuth();
   
   const [formData, setFormData] = useState({
     full_name: '',
@@ -230,13 +230,10 @@ const ProfilePage = () => {
         phone: fetchedUser.phone || '',
         date_of_birth: fetchedUser.date_of_birth || ''
       });
-      if (login) {
-        login(fetchedUser, response.data.tokens || null);
-      }
     } catch (err) {
       console.error('Failed to fetch profile', err);
     }
-  }, [login]);
+  }, []);
 
   const fetchAddresses = useCallback(async () => {
     try {

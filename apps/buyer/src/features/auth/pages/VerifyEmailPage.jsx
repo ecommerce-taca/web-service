@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { Button } from '@taca/ui-components';
 import { authApi } from '../services/auth.api';
 import { useAuth } from '../hooks/useAuth';
@@ -8,11 +8,11 @@ import { getAuthErrorMessage } from '../utils/authError';
 const VerifyEmailPage = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('t') || searchParams.get('token');
-  const navigate = useNavigate();
-  const { user, login, openAuthModal } = useAuth();
+  const { user, openAuthModal } = useAuth();
   
   const [status, setStatus] = useState('verifying'); // 'verifying', 'success', 'error'
   const [message, setMessage] = useState('Đang xác thực email của bạn...');
+  const [verifiedEmail, setVerifiedEmail] = useState('');
   const verifyAttempted = useRef(false);
 
   useEffect(() => {
@@ -28,21 +28,17 @@ const VerifyEmailPage = () => {
 
       try {
         const res = await authApi.verifyEmail(token);
-        
-        // Broadcast sự kiện kích hoạt thành công sang các tab/modal khác
-        window.dispatchEvent(new CustomEvent('auth:email_verified'));
-        localStorage.setItem('taca_auth_verified_event', Date.now().toString());
+        const email = res.data?.user?.email || '';
+        if (email) {
+          setVerifiedEmail(email);
+        }
+
+        // Broadcast sự kiện kích hoạt thành công sang các tab/modal khác kèm email
+        window.dispatchEvent(new CustomEvent('auth:email_verified', { detail: { email } }));
+        localStorage.setItem('taca_auth_verified_event', JSON.stringify({ email, time: Date.now() }));
 
         setStatus('success');
-        if (res.data?.user && res.data?.tokens) {
-          login(res.data.user, res.data.tokens);
-          setMessage('Xác thực email thành công! Tài khoản của bạn đã được kích hoạt. Đang chuyển hướng...');
-          setTimeout(() => {
-            navigate('/');
-          }, 2000);
-        } else {
-          setMessage('Xác thực email thành công! Tài khoản của bạn đã được kích hoạt. Bạn có thể đăng nhập ngay bây giờ.');
-        }
+        setMessage('Xác thực email thành công! Tài khoản của bạn đã được kích hoạt. Vui lòng bấm Đăng nhập bên dưới.');
       } catch (err) {
         setStatus('error');
         setMessage(getAuthErrorMessage(err, 'verify'));
@@ -50,7 +46,7 @@ const VerifyEmailPage = () => {
     };
 
     verifyToken();
-  }, [token, login, navigate]);
+  }, [token]);
 
   return (
     <div className="flex items-center justify-center min-h-[500px] py-12 px-4 sm:px-6 lg:px-8">
@@ -73,10 +69,10 @@ const VerifyEmailPage = () => {
             <h2 className="text-[20px] font-bold text-gray-900 mb-2">Xác thực thành công!</h2>
             <p className="text-[14px] text-taca-text-muted mb-6">{message}</p>
             
-            {user?.email && (
+            {(verifiedEmail || user?.email) && (
               <div className="mb-6 flex flex-col items-center justify-center gap-2">
                 <div className="text-[16px] font-medium text-taca-text-main">
-                  {user.email}
+                  {verifiedEmail || user?.email}
                 </div>
                 <div className="inline-flex items-center gap-1 text-[13px] text-green-600 font-medium bg-green-50 px-3 py-1 rounded-full">
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,13 +84,11 @@ const VerifyEmailPage = () => {
             )}
             
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              {!user && (
-                <Button onClick={() => openAuthModal()} className="w-full sm:w-auto">
-                  Đăng nhập ngay
-                </Button>
-              )}
+              <Button onClick={() => openAuthModal()} className="w-full sm:w-auto">
+                Đăng nhập ngay
+              </Button>
               <Link to="/">
-                <Button variant={!user ? "outline" : "default"} className="w-full sm:w-auto">
+                <Button variant="outline" className="w-full sm:w-auto">
                   Về trang chủ
                 </Button>
               </Link>

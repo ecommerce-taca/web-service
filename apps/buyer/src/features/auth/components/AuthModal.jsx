@@ -64,29 +64,46 @@ const AuthModal = () => {
     closeAuthModal();
   }, [resetState, closeAuthModal]);
 
-  // Lắng nghe sự kiện xác thực thành công từ tab khác hoặc từ VerifyEmailPage
+  // Lắng nghe sự kiện xác thực thành công từ VerifyEmailPage (ở tab khác hoặc cùng tab)
   useEffect(() => {
-    if (!isWaitingEmailLink) return;
+    if (!isWaitingEmailLink || !pendingEmail) return;
+
+    const handleEmailVerifiedEvent = (verifiedEmail) => {
+      if (!verifiedEmail) return;
+      if (verifiedEmail.toLowerCase() === pendingEmail.toLowerCase()) {
+        setSuccessMessage('Xác thực email thành công! Tài khoản đã được kích hoạt. Đang chuyển về màn hình Đăng nhập...');
+        setTimeout(() => {
+          setMode('signin');
+          setIdentifier(pendingEmail);
+          setPassword('');
+          setError('');
+          setSuccessMessage('Xác thực email thành công! Bạn có thể đăng nhập ngay bây giờ.');
+        }, 1200);
+      }
+    };
 
     const handleStorageChange = (e) => {
-      if (e.key === 'taca_user' && e.newValue) {
+      if (e.key === 'taca_auth_verified_event' && e.newValue) {
         try {
-          const userObj = JSON.parse(e.newValue);
-          if (userObj && userObj.email_verified) {
-            setSuccessMessage('Xác thực email thành công! Đang chuyển hướng...');
-            setTimeout(() => {
-              handleClose();
-            }, 1500);
-          }
+          const eventData = JSON.parse(e.newValue);
+          handleEmailVerifiedEvent(eventData?.email);
         } catch {
           // ignore
         }
       }
     };
 
+    const handleCustomEvent = (e) => {
+      handleEmailVerifiedEvent(e.detail?.email);
+    };
+
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [isWaitingEmailLink, handleClose]);
+    window.addEventListener('auth:email_verified', handleCustomEvent);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth:email_verified', handleCustomEvent);
+    };
+  }, [isWaitingEmailLink, pendingEmail]);
 
   const validatePassword = (pwd) => {
     return pwd.length >= 12 && pwd.length <= 72;
@@ -157,6 +174,14 @@ const AuthModal = () => {
       
       const userFromLogin = response.data?.user || response.user;
       const tokens = response.data?.tokens || response.tokens;
+
+      // Chặn đăng nhập nếu tài khoản chưa được xác thực email
+      if (userFromLogin && userFromLogin.email_verified === false) {
+        setError('Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email và nhấp vào đường link xác nhận.');
+        setPendingEmail(userFromLogin.email || finalIdentifier);
+        return;
+      }
+
       login(userFromLogin, tokens);
 
       try {

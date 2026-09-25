@@ -81,52 +81,19 @@ export const authApi = {
   login: async (credentials) => {
     if (isMockMode()) {
       await delay(600);
-      const users = getMockUsers();
       const rawId = (credentials.identifier || '').trim().toLowerCase();
       const isEmail = rawId.includes('@');
 
-      const user = users.find(u => {
-        if (isEmail) {
-          return (u.email || '').toLowerCase() === rawId;
-        }
-        const cleanUserPhone = (u.phone || '').replace(/\D/g, '');
+      // 1. Kiểm tra danh sách người dùng đang chờ kích hoạt email (pending)
+      const pendings = getMockPending();
+      const pendingUser = pendings.find(p => {
+        if (isEmail) return (p.email || '').toLowerCase() === rawId;
+        const cleanUserPhone = (p.phone || '').replace(/\D/g, '');
         const cleanInputPhone = rawId.replace(/\D/g, '');
         return cleanUserPhone && cleanInputPhone && cleanUserPhone.endsWith(cleanInputPhone.slice(-9));
       });
 
-      if (!user) {
-        // Kiểm tra xem có đang chờ xác thực email không
-        const pendings = getMockPending();
-        const pendingUser = pendings.find(p => (p.email || '').toLowerCase() === rawId);
-        if (pendingUser) {
-          const err = new Error('Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email và nhấp vào đường link xác nhận.');
-          err.response = {
-            status: 403,
-            data: {
-              error: {
-                code: 'AUTH_EMAIL_NOT_VERIFIED',
-                message: 'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email và nhấp vào đường link xác nhận.'
-              }
-            }
-          };
-          throw err;
-        }
-
-        const err = new Error('Email/Số điện thoại hoặc mật khẩu không chính xác.');
-        err.response = {
-          status: 401,
-          data: {
-            error: {
-              code: 'AUTH_INVALID_CREDENTIALS',
-              message: 'Email/Số điện thoại hoặc mật khẩu không chính xác.'
-            }
-          }
-        };
-        throw err;
-      }
-
-      // Kiểm tra trạng thái xác thực email
-      if (!user.email_verified) {
+      if (pendingUser) {
         const err = new Error('Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email và nhấp vào đường link xác nhận.');
         err.response = {
           status: 403,
@@ -140,7 +107,47 @@ export const authApi = {
         throw err;
       }
 
-      // Kiểm tra mật khẩu
+      // 2. Tìm trong danh sách users chính thức
+      const users = getMockUsers();
+      const user = users.find(u => {
+        if (isEmail) {
+          return (u.email || '').toLowerCase() === rawId;
+        }
+        const cleanUserPhone = (u.phone || '').replace(/\D/g, '');
+        const cleanInputPhone = rawId.replace(/\D/g, '');
+        return cleanUserPhone && cleanInputPhone && cleanUserPhone.endsWith(cleanInputPhone.slice(-9));
+      });
+
+      if (!user) {
+        const err = new Error('Email/Số điện thoại hoặc mật khẩu không chính xác.');
+        err.response = {
+          status: 401,
+          data: {
+            error: {
+              code: 'AUTH_INVALID_CREDENTIALS',
+              message: 'Email/Số điện thoại hoặc mật khẩu không chính xác.'
+            }
+          }
+        };
+        throw err;
+      }
+
+      // 3. Kiểm tra trạng thái xác thực email
+      if (user.email_verified === false) {
+        const err = new Error('Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email và nhấp vào đường link xác nhận.');
+        err.response = {
+          status: 403,
+          data: {
+            error: {
+              code: 'AUTH_EMAIL_NOT_VERIFIED',
+              message: 'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email và nhấp vào đường link xác nhận.'
+            }
+          }
+        };
+        throw err;
+      }
+
+      // 4. Kiểm tra mật khẩu
       if (user.password && credentials.password !== user.password) {
         const err = new Error('Email/Số điện thoại hoặc mật khẩu không chính xác.');
         err.response = {
@@ -183,6 +190,20 @@ export const authApi = {
       remember_me: credentials.remember_me !== false
     };
     const response = await apiClient.post('/auth/signin', payload);
+    const loggedUser = response.data?.user || response.user;
+    if (loggedUser && loggedUser.email_verified === false) {
+      const err = new Error('Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email và nhấp vào đường link xác nhận.');
+      err.response = {
+        status: 403,
+        data: {
+          error: {
+            code: 'AUTH_EMAIL_NOT_VERIFIED',
+            message: 'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email và nhấp vào đường link xác nhận.'
+          }
+        }
+      };
+      throw err;
+    }
     return response;
   },
 
@@ -301,7 +322,7 @@ export const authApi = {
       }
 
       const pendings = getMockPending();
-      const pendingIndex = pendings.findIndex(p => p.token === cleanToken || cleanToken.startsWith('mock_token'));
+      const pendingIndex = pendings.findIndex(p => p.token === cleanToken);
 
       if (pendingIndex !== -1) {
         const pendingUser = pendings[pendingIndex];
@@ -317,7 +338,7 @@ export const authApi = {
         };
 
         const users = getMockUsers();
-        const updatedUsers = users.filter(u => (u.email || '').toLowerCase() !== pendingUser.email);
+        const updatedUsers = users.filter(u => (u.email || '').toLowerCase() !== (pendingUser.email || '').toLowerCase());
         updatedUsers.push(activatedUser);
         saveMockUsers(updatedUsers);
 
@@ -337,31 +358,8 @@ export const authApi = {
               phone: activatedUser.phone,
               email_verified: true,
               phone_verified: false
-            },
-            tokens: {
-              access_token: `mock_access_${Date.now()}`,
-              refresh_token: `mock_refresh_${Date.now()}`
             }
-          }
-        };
-      }
-
-      // Kiểm tra nếu đã kích hoạt trước đó
-      const users = getMockUsers();
-      const existingUser = cleanToken.startsWith('mock_token') ? users.find(u => !u.email_verified) : null;
-      if (existingUser) {
-        existingUser.email_verified = true;
-        saveMockUsers(users);
-        return {
-          data: {
-            user_id: existingUser.id,
-            email_verified: true,
-            verified_at: new Date().toISOString(),
-            user: existingUser,
-            tokens: {
-              access_token: `mock_access_${Date.now()}`,
-              refresh_token: `mock_refresh_${Date.now()}`
-            }
+            // Không trả về tokens theo chuẩn Section 2.5 auth-user.md
           }
         };
       }
@@ -471,17 +469,21 @@ export const authApi = {
     if (isMockMode()) {
       await delay(400);
       const savedUser = localStorage.getItem('taca_user');
-      const user = savedUser ? JSON.parse(savedUser) : {
-        id: '01912f31-7a1b-7c12-9c55-8b1c34a6d001',
-        full_name: 'Nguyễn Minh Anh',
-        email: 'test@taca.vn',
-        phone: '0909 123 456',
-        email_verified: true,
-        phone_verified: false,
-        date_of_birth: '1995-01-01'
-      };
+      if (!savedUser) {
+        const err = new Error('Phiên làm việc đã hết hạn hoặc bạn chưa đăng nhập.');
+        err.response = {
+          status: 401,
+          data: {
+            error: {
+              code: 'AUTH_UNAUTHORIZED',
+              message: 'Phiên làm việc đã hết hạn hoặc bạn chưa đăng nhập.'
+            }
+          }
+        };
+        throw err;
+      }
       return {
-        data: { user }
+        data: { user: JSON.parse(savedUser) }
       };
     }
     const response = await apiClient.get('/users/me');
