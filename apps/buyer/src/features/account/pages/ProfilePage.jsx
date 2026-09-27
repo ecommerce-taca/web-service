@@ -481,8 +481,8 @@ const ProfilePage = () => {
         <div className="w-full h-[1px] bg-taca-border my-8"></div>
 
         {/* Password & Security Section */}
-        <section className="mb-10 max-w-[500px]">
-          <div className="flex items-center justify-between mb-4">
+        <section className="max-w-[500px]">
+          <div className="flex items-center justify-between">
             <div>
               <h2 className="text-[16px] font-bold text-taca-text-main">Mật khẩu & Bảo mật</h2>
               <p className="text-[13px] text-taca-text-muted mt-1">
@@ -493,28 +493,10 @@ const ProfilePage = () => {
               type="button"
               variant="secondary"
               onClick={() => setIsPasswordModalOpen(true)}
-              className="!py-1.5 !px-4 text-[14px] !rounded-lg border-taca-border bg-white text-taca-text-main hover:border-taca-primary hover:text-taca-primary cursor-pointer"
+              className="!py-1.5 !px-4 text-[14px] !rounded-lg border-taca-border bg-white text-taca-text-main hover:border-taca-primary hover:text-taca-primary cursor-pointer whitespace-nowrap"
             >
               Đổi mật khẩu
             </Button>
-          </div>
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 font-bold text-lg">
-                🔒
-              </div>
-              <div>
-                <div className="text-[14px] font-bold text-taca-text-main">Mật khẩu tài khoản</div>
-                <div className="text-[12px] text-taca-text-muted">Độ dài từ 12 - 72 ký tự theo chuẩn mã hóa Argon2id</div>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsPasswordModalOpen(true)}
-              className="text-[13px] font-bold text-taca-primary hover:underline cursor-pointer"
-            >
-              Cập nhật
-            </button>
           </div>
         </section>
 
