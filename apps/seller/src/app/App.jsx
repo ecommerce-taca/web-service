@@ -1,12 +1,40 @@
+import { BrowserRouter, useInRouterContext, Routes, Route, Navigate } from 'react-router-dom';
+import SellerLayout from '../components/layout/SellerLayout';
+import DashboardPage from '../features/dashboard/pages/DashboardPage';
+import ProductsPage from '../features/products/pages/ProductsPage';
+import OrdersPage from '../features/orders/pages/OrdersPage';
+import VouchersPage from '../features/vouchers/pages/VouchersPage';
+import FinancePage from '../features/finance/pages/FinancePage';
+import SettingsPage from '../features/settings/pages/SettingsPage';
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route element={<SellerLayout />}>
+        <Route index element={<DashboardPage />} />
+        <Route path="products" element={<ProductsPage />} />
+        <Route path="orders" element={<OrdersPage />} />
+        <Route path="vouchers" element={<VouchersPage />} />
+        <Route path="finance" element={<FinancePage />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
+    </Routes>
+  );
+}
 
 export default function App() {
+  // useInRouterContext returns false when outside a Router, true when inside
+  const inRouter = useInRouterContext();
+
+  if (inRouter) {
+    return <AppRoutes />;
+  }
+
+  // Standalone mode (direct visit on port 5175)
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-8">
-      <div className="bg-white shadow rounded p-8 max-w-lg w-full text-center border-t-4 border-primary">
-        <h1 className="text-2xl font-bold mb-4">Seller Dashboard</h1>
-        <p className="text-gray-600">This is the Seller Micro-Frontend App.</p>
-        <p className="text-sm mt-4 text-primary">Running on Port 5175</p>
-      </div>
-    </div>
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
   );
 }
