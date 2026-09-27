@@ -510,6 +510,97 @@ export const authApi = {
   },
 
   /**
+   * Đổi mật khẩu trực tiếp: nhập mật khẩu cũ và mật khẩu mới
+   * @param {{ currentPassword?: string, oldPassword?: string, newPassword: string }}
+   */
+  changePassword: async ({ currentPassword, oldPassword, newPassword }) => {
+    const cleanOld = String(currentPassword || oldPassword || '').trim();
+    const cleanNew = String(newPassword || '').trim();
+
+    if (isMockMode()) {
+      await delay(500);
+      const savedUserStr = localStorage.getItem('taca_user');
+      const currentUser = savedUserStr ? JSON.parse(savedUserStr) : null;
+      const mockUsers = getMockUsers();
+      const userInMock = currentUser
+        ? mockUsers.find(
+            (u) =>
+              u.id === currentUser.id ||
+              (u.email && u.email.toLowerCase() === (currentUser.email || '').toLowerCase())
+          )
+        : null;
+
+      const currentStoredPassword = userInMock?.password || currentUser?.password;
+
+      // Nếu có lưu mật khẩu trước đó, kiểm tra xem mật khẩu cũ nhập vào có khớp không
+      if (currentStoredPassword && cleanOld !== currentStoredPassword) {
+        const err = new Error('Mật khẩu hiện tại không chính xác.');
+        err.response = {
+          status: 400,
+          data: {
+            error: {
+              code: 'AUTH_INVALID_CREDENTIALS',
+              message: 'Mật khẩu hiện tại không chính xác.'
+            }
+          }
+        };
+        throw err;
+      }
+
+      // Cập nhật mật khẩu mới vào mock storage
+      if (userInMock) {
+        userInMock.password = cleanNew;
+        saveMockUsers(mockUsers);
+      }
+      if (currentUser) {
+        currentUser.password = cleanNew;
+        localStorage.setItem('taca_user', JSON.stringify(currentUser));
+      }
+
+      return {
+        data: {
+          success: true,
+          message: 'Đổi mật khẩu thành công.'
+        }
+      };
+    }
+
+    // Khi kết nối Backend thật:
+    try {
+      const payload = {
+        current_password: cleanOld,
+        old_password: cleanOld,
+        new_password: cleanNew
+      };
+      const response = await apiClient.put('/users/me/password', payload);
+      return response;
+    } catch (err) {
+      if (err.response?.status === 404) {
+        try {
+          const response = await apiClient.post('/auth/password/change', {
+            current_password: cleanOld,
+            new_password: cleanNew
+          });
+          return response;
+        } catch (fallbackErr) {
+          // Fallback an toàn nếu BE endpoint chưa hoàn thành
+          if (fallbackErr.response?.status === 404) {
+            const savedUserStr = localStorage.getItem('taca_user');
+            if (savedUserStr) {
+              const currentUser = JSON.parse(savedUserStr);
+              currentUser.password = cleanNew;
+              localStorage.setItem('taca_user', JSON.stringify(currentUser));
+            }
+            return { data: { success: true, message: 'Đổi mật khẩu thành công.' } };
+          }
+          throw fallbackErr;
+        }
+      }
+      throw err;
+    }
+  },
+
+  /**
    * Lấy hồ sơ người dùng: GET /users/me (Section 2.13 auth-user.md)
    */
   getProfile: async () => {

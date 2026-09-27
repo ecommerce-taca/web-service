@@ -570,7 +570,10 @@ const ProfilePage = () => {
       <ChangePasswordModal
         isOpen={isPasswordModalOpen}
         onClose={() => setIsPasswordModalOpen(false)}
-        email={formData.email || user?.email}
+        onSuccess={() => {
+          setMessage('Đổi mật khẩu tài khoản thành công!');
+          setTimeout(() => setMessage(''), 4000);
+        }}
       />
     </div>
   );
