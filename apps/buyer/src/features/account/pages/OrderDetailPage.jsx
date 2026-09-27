@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { orderApi } from '../services/order.api';
 import Button from '../../../../../../shared/ui-components/src/components/Button';
+import { formatPhoneDisplay } from '../../../../../../shared/utils/phone';
 
 const OrderDetailPage = () => {
   const { id } = useParams();
@@ -124,7 +125,7 @@ const OrderDetailPage = () => {
             <div className="border border-gray-200 rounded-lg p-6">
               <h2 className="text-[14px] font-bold text-taca-text-main uppercase mb-4 m-0">ĐỊA CHỈ NHẬN HÀNG</h2>
               <div className="text-[14px] text-taca-text-main leading-relaxed">
-                <span className="font-semibold">{order.shipping_address?.name || 'Nguyễn Minh Anh'}</span> - {order.shipping_address?.phone || '0909 123 456'}<br />
+                <span className="font-semibold">{order.shipping_address?.name || 'Nguyễn Minh Anh'}</span> - {formatPhoneDisplay(order.shipping_address?.phone) || '0909 123 456'}<br />
                 {order.shipping_address?.detail_address || '28 Nguyễn Huệ, P. Bến Nghé, Quận 1, TP.HCM'}
               </div>
             </div>

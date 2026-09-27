@@ -7,7 +7,9 @@ import { authApi } from '../../auth/services/auth.api';
 import PhoneVerificationModal from '../../auth/components/PhoneVerificationModal';
 import { addressApi } from '../services/address.api';
 import AddressFormModal from '../components/AddressFormModal';
+import ChangePasswordModal from '../components/ChangePasswordModal';
 import { getAuthErrorMessage } from '../../auth/utils/authError';
+import { formatPhoneDisplay, toBackendPhone, isValidVietnamesePhone } from '../../../../../../shared/utils/phone';
 import PropTypes from 'prop-types';
 
 const DateInput = ({ value, onChange }) => {
@@ -48,7 +50,7 @@ const DateInput = ({ value, onChange }) => {
   // Tính số ngày tối đa theo tháng và năm
   const getMaxDays = (m, y) => {
     if (!m) return 31;
-    const yearVal = y ? parseInt(y, 10) : 2024; // mặc định năm nhuận nếu chưa chọn năm
+    const yearVal = y ? parseInt(y, 10) : 2024;
     return new Date(yearVal, parseInt(m, 10), 0).getDate();
   };
 
@@ -56,7 +58,6 @@ const DateInput = ({ value, onChange }) => {
   const days = Array.from({ length: daysCount }, (_, i) => i + 1);
 
   const handleDateChange = (newDay, newMonth, newYear) => {
-    // Tự động điều chỉnh ngày nếu vượt quá số ngày tối đa của tháng (vd: 31 chuyển sang tháng 4)
     let validDay = newDay;
     if (newDay && newMonth) {
       const maxD = getMaxDays(newMonth, newYear);
@@ -196,7 +197,7 @@ DateInput.propTypes = {
 };
 
 const ProfilePage = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   
   const [formData, setFormData] = useState({
     full_name: '',
@@ -216,52 +217,60 @@ const ProfilePage = () => {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(null);
 
-  const isPhoneChanged = formData.phone !== (user?.phone || '');
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
+  const userDisplayPhone = formatPhoneDisplay(user?.phone || '');
+  const formDisplayPhone = formatPhoneDisplay(formData.phone || '');
+  const isPhoneChanged = Boolean(formDisplayPhone && formDisplayPhone !== userDisplayPhone);
   const needsPhoneVerification = isPhoneChanged && !isNewPhoneVerified;
   const needsVerification = needsPhoneVerification;
 
+  // Lấy dữ liệu profile đầy đủ từ server và đồng bộ vào Context + localStorage
   const fetchProfile = useCallback(async () => {
     try {
       const response = await authApi.getProfile();
-      const fetchedUser = response.data.user || response.data;
-      setFormData({
-        full_name: fetchedUser.full_name || '',
-        email: fetchedUser.email || '',
-        phone: fetchedUser.phone || '',
-        date_of_birth: fetchedUser.date_of_birth || ''
-      });
+      const fetchedUser = response?.data?.user || response?.data?.data || response?.data || response?.user || response;
+      if (fetchedUser && typeof fetchedUser === 'object') {
+        const dob = fetchedUser.date_of_birth ? String(fetchedUser.date_of_birth).split('T')[0] : '';
+        setFormData({
+          full_name: fetchedUser.full_name || '',
+          email: fetchedUser.email || '',
+          phone: formatPhoneDisplay(fetchedUser.phone || ''),
+          date_of_birth: dob
+        });
+        updateUser?.(fetchedUser);
+      }
     } catch (err) {
       console.error('Failed to fetch profile', err);
     }
-  }, []);
+  }, [updateUser]);
 
   const fetchAddresses = useCallback(async () => {
     try {
       const response = await addressApi.getAddresses();
-      setAddresses(response.data.data || response.data || []);
+      setAddresses(response?.data?.data || response?.data || []);
     } catch (err) {
       console.error('Failed to fetch addresses', err);
     }
   }, []);
 
+  // Đồng bộ từ user khi đăng nhập hoặc dữ liệu user thay đổi
   useEffect(() => {
     if (user) {
-      setTimeout(() => {
-        setFormData({
-          full_name: user.full_name || '',
-          email: user.email || '',
-          phone: user.phone || '',
-          date_of_birth: user.date_of_birth || ''
-        });
-      }, 0);
-    } else {
-      setTimeout(() => {
-        fetchProfile();
-      }, 0);
+      setFormData(prev => ({
+        full_name: prev.full_name || user.full_name || '',
+        email: user.email || prev.email || '',
+        phone: prev.phone || formatPhoneDisplay(user.phone || ''),
+        date_of_birth: prev.date_of_birth || (user.date_of_birth ? String(user.date_of_birth).split('T')[0] : '')
+      }));
     }
-     
+  }, [user]);
+
+  // Luôn tải bản cập nhật mới nhất từ backend khi reload trang
+  useEffect(() => {
+    fetchProfile();
     fetchAddresses();
-  }, [user, fetchProfile, fetchAddresses]);
+  }, [fetchProfile, fetchAddresses]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -281,19 +290,12 @@ const ProfilePage = () => {
       let finalPhone = formData.phone ? formData.phone.trim() : null;
       if (finalPhone) {
         const cleanPhone = finalPhone.replace(/\s+/g, '');
-        const phoneRegex = /^(0|84|\+84)[35789][0-9]{8}$/;
-        if (!phoneRegex.test(cleanPhone)) {
-          setError('Số điện thoại không hợp lệ.');
+        if (!isValidVietnamesePhone(cleanPhone)) {
+          setError('Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam (10 số, ví dụ: 0901234567).');
           setLoading(false);
           return;
         }
-        if (cleanPhone.startsWith('0')) {
-          finalPhone = '+84' + cleanPhone.slice(1);
-        } else if (cleanPhone.startsWith('84')) {
-          finalPhone = '+' + cleanPhone;
-        } else {
-          finalPhone = cleanPhone;
-        }
+        finalPhone = toBackendPhone(cleanPhone);
       }
 
       if (formData.date_of_birth === 'INVALID') {
@@ -312,9 +314,9 @@ const ProfilePage = () => {
         
         const parts = formData.date_of_birth.split('-');
         if (
-          dob.getFullYear() !== parseInt(parts[0]) ||
-          dob.getMonth() + 1 !== parseInt(parts[1]) ||
-          dob.getDate() !== parseInt(parts[2])
+          dob.getFullYear() !== parseInt(parts[0], 10) ||
+          dob.getMonth() + 1 !== parseInt(parts[1], 10) ||
+          dob.getDate() !== parseInt(parts[2], 10)
         ) {
           setError('Ngày sinh không tồn tại (ví dụ: ngày 31 tháng 2).');
           setLoading(false);
@@ -334,15 +336,17 @@ const ProfilePage = () => {
         }
       }
 
+      // Theo quy ước Section 2.14 auth-user.md:
+      // PUT /users/me chỉ gửi full_name, phone, date_of_birth
       const payload = {
-        full_name: formData.full_name,
-        date_of_birth: formData.date_of_birth || null,
+        full_name: formData.full_name.trim(),
+        date_of_birth: formData.date_of_birth && formData.date_of_birth !== 'INVALID' ? formData.date_of_birth : null,
         phone: finalPhone
       };
 
       await authApi.updateProfile(payload);
       setMessage('Cập nhật hồ sơ thành công.');
-      await fetchProfile(); // refresh data
+      await fetchProfile(); // Làm mới dữ liệu và đồng bộ vào Context / localStorage
     } catch (err) {
       setError(getAuthErrorMessage(err, 'profile'));
     } finally {
@@ -371,7 +375,8 @@ const ProfilePage = () => {
         await addressApi.deleteAddress(addressId);
         fetchAddresses();
       } catch (err) {
-        alert(err.message || 'Có lỗi xảy ra khi xóa địa chỉ.');
+        console.error('Lỗi xóa địa chỉ:', err);
+        alert('Không thể xóa địa chỉ. Vui lòng thử lại.');
       }
     }
   };
@@ -429,31 +434,18 @@ const ProfilePage = () => {
                   type="tel"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="!rounded-lg max-w-[200px]"
+                  placeholder="Nhập số điện thoại"
+                  className="!rounded-lg flex-1"
                 />
-                {(!user || !user.phone_verified || isPhoneChanged) && (
-                  <button 
-                    type="button"
-                    onClick={() => {
-                      const cleanPhone = formData.phone.replace(/\s+/g, '');
-                      const phoneRegex = /^(0|84|\+84)[35789][0-9]{8}$/;
-                      if (!phoneRegex.test(cleanPhone)) {
-                        setError('Số điện thoại không hợp lệ (Ví dụ: 0912345678).');
-                      } else {
-                        setError('');
-                        setPhoneModalOpen(true);
-                      }
-                    }}
-                    disabled={!formData.phone}
-                    className="text-[13px] font-bold text-taca-primary hover:text-taca-primary-hover underline whitespace-nowrap disabled:opacity-50 disabled:no-underline"
+                {needsPhoneVerification && (
+                  <Button 
+                    type="button" 
+                    variant="secondary"
+                    onClick={() => setPhoneModalOpen(true)}
+                    className="whitespace-nowrap !py-2 !px-3 text-[13px] !rounded-lg text-taca-primary border-taca-primary"
                   >
                     Xác thực ngay
-                  </button>
-                )}
-                {user?.phone_verified && !isPhoneChanged && (
-                  <span className="text-[13px] text-green-600 font-medium whitespace-nowrap bg-green-50 px-2 py-1 rounded">
-                    ✓ Đã xác thực
-                  </span>
+                  </Button>
                 )}
               </div>
             </div>
@@ -487,6 +479,46 @@ const ProfilePage = () => {
 
         <div className="w-full h-[1px] bg-taca-border my-8"></div>
 
+        {/* Password & Security Section */}
+        <section className="mb-10 max-w-[500px]">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-[16px] font-bold text-taca-text-main">Mật khẩu & Bảo mật</h2>
+              <p className="text-[13px] text-taca-text-muted mt-1">
+                Quản lý mật khẩu đăng nhập để bảo vệ an toàn cho tài khoản của bạn.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setIsPasswordModalOpen(true)}
+              className="!py-1.5 !px-4 text-[14px] !rounded-lg border-taca-border bg-white text-taca-text-main hover:border-taca-primary hover:text-taca-primary cursor-pointer"
+            >
+              Đổi mật khẩu
+            </Button>
+          </div>
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 font-bold text-lg">
+                🔒
+              </div>
+              <div>
+                <div className="text-[14px] font-bold text-taca-text-main">Mật khẩu tài khoản</div>
+                <div className="text-[12px] text-taca-text-muted">Độ dài từ 12 - 72 ký tự theo chuẩn mã hóa Argon2id</div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsPasswordModalOpen(true)}
+              className="text-[13px] font-bold text-taca-primary hover:underline cursor-pointer"
+            >
+              Cập nhật
+            </button>
+          </div>
+        </section>
+
+        <div className="w-full h-[1px] bg-taca-border my-8"></div>
+
         {/* Address Book Section */}
         <section>
           <div className="flex items-center justify-between mb-6">
@@ -508,7 +540,17 @@ const ProfilePage = () => {
                   isDefault={address.is_default}
                   name={address.recipient || address.name || formData.full_name}
                   phone={address.phone || formData.phone}
-                  address={address.detail_address || [address.line1, address.ward, address.district, address.province, address.country || 'Việt Nam'].filter(Boolean).join(', ')}
+                  address={
+                    address.detail_address ||
+                    [
+                      address.line1,
+                      address.line2,
+                      address.ward,
+                      address.district,
+                      address.province,
+                      address.country_code === 'VN' ? 'Việt Nam' : (address.country || 'Việt Nam')
+                    ].filter(Boolean).join(', ')
+                  }
                   onEdit={() => handleEditAddress(address)}
                   onDelete={() => handleDeleteAddress(address.id)}
                 />
@@ -525,7 +567,7 @@ const ProfilePage = () => {
       <PhoneVerificationModal 
         isOpen={isPhoneModalOpen}
         onClose={() => setPhoneModalOpen(false)}
-        phone={formData.phone}
+        phone={toBackendPhone(formData.phone)}
         onVerificationSuccess={handlePhoneVerificationSuccess}
       />
       <AddressFormModal 
@@ -533,6 +575,11 @@ const ProfilePage = () => {
         onClose={() => setIsAddressModalOpen(false)}
         addressData={selectedAddress}
         onSuccess={fetchAddresses}
+      />
+      <ChangePasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        email={formData.email || user?.email}
       />
     </div>
   );

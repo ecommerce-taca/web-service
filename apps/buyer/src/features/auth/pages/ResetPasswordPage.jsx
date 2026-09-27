@@ -6,7 +6,7 @@ import { getAuthErrorMessage } from '../utils/authError';
 
 const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
+  const token = searchParams.get('t') || searchParams.get('token');
   
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

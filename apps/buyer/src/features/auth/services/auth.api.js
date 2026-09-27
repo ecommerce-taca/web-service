@@ -1,4 +1,5 @@
 import apiClient from '../../../../../../shared/utils/api-client';
+import { toBackendPhone } from '../../../../../../shared/utils/phone';
 
 /**
  * Kiểm tra xem ứng dụng có đang chạy ở chế độ Mock hay không.
@@ -184,8 +185,11 @@ export const authApi = {
     }
 
     // Kết nối Backend thật
+    const rawId = (credentials.identifier || '').trim();
+    const isEmail = rawId.includes('@');
+    const finalId = isEmail ? rawId : toBackendPhone(rawId);
     const payload = {
-      identifier: credentials.identifier,
+      identifier: finalId,
       password: credentials.password,
       remember_me: credentials.remember_me !== false
     };
@@ -274,11 +278,13 @@ export const authApi = {
     }
 
     // Kết nối Backend thật: chỉ gửi phone nếu người dùng có nhập
+    const rawPhone = userData.phone ? userData.phone.trim() : '';
+    const finalPhone = rawPhone ? toBackendPhone(rawPhone) : null;
     const payload = {
       full_name: userData.full_name,
       email: userData.email,
       password: userData.password,
-      ...(userData.phone && userData.phone.trim() ? { phone: userData.phone.trim() } : {})
+      ...(finalPhone ? { phone: finalPhone } : {})
     };
     const response = await apiClient.post('/auth/signup', payload);
     return response;
@@ -423,11 +429,12 @@ export const authApi = {
   },
 
   requestPhoneOtp: async (phone) => {
+    const finalPhone = toBackendPhone(phone);
     if (isMockMode()) {
       await delay(700);
       return { data: { challenge_id: 'mock_challenge_123' } };
     }
-    const response = await apiClient.post('/auth/phone/request-otp', { phone });
+    const response = await apiClient.post('/auth/phone/request-otp', { phone: finalPhone });
     return response;
   },
 
@@ -445,26 +452,66 @@ export const authApi = {
     return response;
   },
 
+  /**
+   * Khởi tạo reset mật khẩu: POST /auth/password/forgot (Section 2.9 auth-user.md)
+   * Request body: { "identifier": "email hoặc phone" }
+   */
   forgotPassword: async (identifier) => {
+    const rawId = String(identifier || '').trim();
+    const cleanId = rawId.includes('@') ? rawId : toBackendPhone(rawId);
     if (isMockMode()) {
       await delay(700);
-      return { data: { success: true } };
+      const token = 'mock_reset_token_' + Date.now();
+      const mockPendingResets = JSON.parse(localStorage.getItem('taca_mock_resets') || '{}');
+      mockPendingResets[token] = cleanId;
+      localStorage.setItem('taca_mock_resets', JSON.stringify(mockPendingResets));
+      return {
+        data: {
+          accepted: true,
+          message: 'Nếu tài khoản tồn tại, hướng dẫn đặt lại mật khẩu sẽ được gửi.',
+          mock_token: token,
+          mock_reset_url: `/reset-password?t=${token}`
+        }
+      };
     }
-    const isEmail = identifier.includes('@');
-    const payload = isEmail ? { email: identifier } : { phone: identifier };
-    const response = await apiClient.post('/auth/password/forgot', payload);
+    const response = await apiClient.post('/auth/password/forgot', { identifier: cleanId });
     return response;
   },
 
+  /**
+   * Đặt lại mật khẩu mới: POST /auth/password/reset (Section 2.10 auth-user.md)
+   * Request body: { "token": "...", "new_password": "..." } (12-72 ký tự)
+   */
   resetPassword: async (token, newPassword) => {
     if (isMockMode()) {
       await delay(700);
+      const mockPendingResets = JSON.parse(localStorage.getItem('taca_mock_resets') || '{}');
+      const identifier = mockPendingResets[token];
+      if (identifier) {
+        const users = getMockUsers();
+        const user = users.find(u => 
+          (u.email || '').toLowerCase() === identifier.toLowerCase() || 
+          (u.phone || '').replace(/\D/g, '') === identifier.replace(/\D/g, '')
+        );
+        if (user) {
+          user.password = newPassword;
+          saveMockUsers(users);
+        }
+        delete mockPendingResets[token];
+        localStorage.setItem('taca_mock_resets', JSON.stringify(mockPendingResets));
+      }
       return { data: { success: true } };
     }
-    const response = await apiClient.post('/auth/password/reset', { token, password: newPassword });
+    const response = await apiClient.post('/auth/password/reset', {
+      token: String(token || '').trim(),
+      new_password: newPassword
+    });
     return response;
   },
 
+  /**
+   * Lấy hồ sơ người dùng: GET /users/me (Section 2.13 auth-user.md)
+   */
   getProfile: async () => {
     if (isMockMode()) {
       await delay(400);
@@ -482,24 +529,61 @@ export const authApi = {
         };
         throw err;
       }
+      const parsed = JSON.parse(savedUser);
       return {
-        data: { user: JSON.parse(savedUser) }
+        data: { user: parsed, data: parsed }
       };
     }
     const response = await apiClient.get('/users/me');
+    // Chuẩn hóa và đồng bộ vào localStorage
+    const rawData = response?.data || response?.user || response;
+    if (rawData && typeof rawData === 'object' && rawData.id) {
+      try {
+        const saved = localStorage.getItem('taca_user');
+        const merged = saved ? { ...JSON.parse(saved), ...rawData } : rawData;
+        localStorage.setItem('taca_user', JSON.stringify(merged));
+      } catch {
+        localStorage.setItem('taca_user', JSON.stringify(rawData));
+      }
+    }
     return response;
   },
 
+  /**
+   * Cập nhật hồ sơ: PUT /users/me (Section 2.14 auth-user.md)
+   * Request body chỉ nhận: full_name, phone, date_of_birth
+   */
   updateProfile: async (data) => {
+    const payload = { ...data };
+    if (payload.phone) {
+      payload.phone = toBackendPhone(payload.phone);
+    }
     if (isMockMode()) {
       await delay(700);
       const savedUser = localStorage.getItem('taca_user');
       const currentUser = savedUser ? JSON.parse(savedUser) : { id: '01912f31-7a1b-7c12-9c55-8b1c34a6d001', email_verified: true, phone_verified: true };
-      const updatedUser = { ...currentUser, ...data };
+      const updatedUser = { ...currentUser, ...payload };
       localStorage.setItem('taca_user', JSON.stringify(updatedUser));
-      return { data: { user: updatedUser } };
+      
+      const mockUsers = getMockUsers();
+      const uIdx = mockUsers.findIndex(u => u.id === updatedUser.id || (u.email && u.email.toLowerCase() === (updatedUser.email || '').toLowerCase()));
+      if (uIdx !== -1) {
+        mockUsers[uIdx] = { ...mockUsers[uIdx], ...payload };
+        saveMockUsers(mockUsers);
+      }
+      return { data: { user: updatedUser, data: updatedUser } };
     }
-    const response = await apiClient.put('/users/me', data);
+    const response = await apiClient.put('/users/me', payload);
+    const updatedData = response?.data || response?.user || response;
+    if (updatedData && typeof updatedData === 'object') {
+      try {
+        const saved = localStorage.getItem('taca_user');
+        const merged = saved ? { ...JSON.parse(saved), ...updatedData } : updatedData;
+        localStorage.setItem('taca_user', JSON.stringify(merged));
+      } catch {
+        localStorage.setItem('taca_user', JSON.stringify(updatedData));
+      }
+    }
     return response;
   }
 };

@@ -5,8 +5,12 @@ import { authApi } from '../services/auth.api';
 
 const initialState = {
   user: (() => {
-    const savedUser = localStorage.getItem('taca_user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    try {
+      const savedUser = localStorage.getItem('taca_user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
   })(),
   isAuthenticated: !!localStorage.getItem('taca_user'),
   isAuthModalOpen: false,
@@ -14,7 +18,7 @@ const initialState = {
 
 function authReducer(state, action) {
   switch (action.type) {
-    case 'LOGIN':
+    case 'LOGIN': {
       localStorage.setItem('taca_user', JSON.stringify(action.payload.user));
       if (action.payload.tokens) {
         localStorage.setItem('taca_access_token', action.payload.tokens.access_token);
@@ -25,6 +29,16 @@ function authReducer(state, action) {
         user: action.payload.user,
         isAuthenticated: true,
       };
+    }
+    case 'UPDATE_USER': {
+      const updatedUser = { ...(state.user || {}), ...(action.payload || {}) };
+      localStorage.setItem('taca_user', JSON.stringify(updatedUser));
+      return {
+        ...state,
+        user: updatedUser,
+        isAuthenticated: true,
+      };
+    }
     case 'LOGOUT':
       localStorage.removeItem('taca_user');
       localStorage.removeItem('taca_access_token');
@@ -48,6 +62,10 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback((userData, tokens) => {
     dispatch({ type: 'LOGIN', payload: { user: userData, tokens } });
+  }, []);
+
+  const updateUser = useCallback((userData) => {
+    dispatch({ type: 'UPDATE_USER', payload: userData });
   }, []);
 
   const logout = useCallback(async () => {
@@ -77,10 +95,11 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: state.isAuthenticated,
     isAuthModalOpen: state.isAuthModalOpen,
     login,
+    updateUser,
     logout,
     openAuthModal,
     closeAuthModal
-  }), [state.user, state.isAuthenticated, state.isAuthModalOpen, login, logout, openAuthModal, closeAuthModal]);
+  }), [state.user, state.isAuthenticated, state.isAuthModalOpen, login, updateUser, logout, openAuthModal, closeAuthModal]);
 
   return (
     <AuthContext.Provider value={contextValue}>

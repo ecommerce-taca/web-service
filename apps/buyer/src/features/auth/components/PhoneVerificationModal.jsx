@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Modal, Input, Button } from '@taca/ui-components';
 import { authApi } from '../services/auth.api';
 import { getAuthErrorMessage } from '../utils/authError';
+import { formatPhoneDisplay, toBackendPhone, isValidVietnamesePhone } from '../../../../../../shared/utils/phone';
 
 const PhoneVerificationModal = ({ isOpen, onClose, phone, onVerificationSuccess }) => {
   const [otp, setOtp] = useState('');
@@ -30,23 +31,16 @@ const PhoneVerificationModal = ({ isOpen, onClose, phone, onVerificationSuccess 
     setError('');
     setIsResending(true);
     try {
-      let finalPhone = phone.replace(/\s+/g, '');
-      const phoneRegex = /^(0|84|\+84)[35789][0-9]{8}$/;
-      
-      if (!phoneRegex.test(finalPhone)) {
+      const cleanPhone = (phone || '').replace(/\s+/g, '');
+      if (!isValidVietnamesePhone(cleanPhone)) {
         if (currentRequest === requestRef.current) {
           setError('Số điện thoại không hợp lệ (Ví dụ: 0912345678).');
           setIsResending(false);
         }
         return;
       }
-      
-      if (finalPhone.startsWith('0')) {
-        finalPhone = '+84' + finalPhone.slice(1);
-      } else if (finalPhone.startsWith('84')) {
-        finalPhone = '+' + finalPhone;
-      }
-      
+
+      const finalPhone = toBackendPhone(cleanPhone);
       const response = await authApi.requestPhoneOtp(finalPhone);
       if (currentRequest !== requestRef.current) return;
       
@@ -111,7 +105,7 @@ const PhoneVerificationModal = ({ isOpen, onClose, phone, onVerificationSuccess 
         </h2>
         <p className="text-[14px] text-taca-text-muted mb-6">
           Mã xác thực gồm 6 số đã được gửi tới số điện thoại <br />
-          <span className="font-bold text-taca-text-main">{phone}</span>
+          <span className="font-bold text-taca-text-main">{formatPhoneDisplay(phone)}</span>
         </p>
 
         {error && (
