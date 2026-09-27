@@ -1,5 +1,5 @@
 import apiClient from '../../../../../../shared/utils/api-client';
-import { ALL_63_PROVINCES, getLocalWardsByProvince } from './location.api';
+import { ALL_PROVINCES, getLocalWardsByProvince } from './location.api';
 
 const isMockMode = () => {
   if (typeof window !== 'undefined') {
@@ -13,12 +13,12 @@ const isMockMode = () => {
 const resolveMockLocationNames = (provinceCode, wardCode) => {
   const normProv = String(provinceCode || '').padStart(2, '0');
   const normWard = String(wardCode || '').padStart(5, '0');
-  const prov = ALL_63_PROVINCES.find((p) => p.code === normProv);
+  const prov = ALL_PROVINCES.find((p) => p.code === normProv);
   const wards = getLocalWardsByProvince(normProv);
   const ward = wards.find((w) => w.code === normWard);
   return {
     province: prov?.name || 'Việt Nam',
-    district: ward?.district_name || null,
+    district: null,
     ward: ward?.name || ''
   };
 };

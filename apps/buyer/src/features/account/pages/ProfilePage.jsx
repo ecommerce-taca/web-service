@@ -10,6 +10,7 @@ import AddressFormModal from '../components/AddressFormModal';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import { getAuthErrorMessage } from '../../auth/utils/authError';
 import { formatPhoneDisplay, toBackendPhone, isValidVietnamesePhone } from '../../../../../../shared/utils/phone';
+import { formatAddressSummary } from '../services/location.api';
 import PropTypes from 'prop-types';
 
 const DateInput = ({ value, onChange }) => {
@@ -540,17 +541,7 @@ const ProfilePage = () => {
                   isDefault={address.is_default}
                   name={address.recipient || address.name || formData.full_name}
                   phone={address.phone || formData.phone}
-                  address={
-                    address.detail_address ||
-                    [
-                      address.line1,
-                      address.line2,
-                      address.ward,
-                      address.district,
-                      address.province,
-                      address.country_code === 'VN' ? 'Việt Nam' : (address.country || 'Việt Nam')
-                    ].filter(Boolean).join(', ')
-                  }
+                  address={formatAddressSummary(address)}
                   onEdit={() => handleEditAddress(address)}
                   onDelete={() => handleDeleteAddress(address.id)}
                 />
