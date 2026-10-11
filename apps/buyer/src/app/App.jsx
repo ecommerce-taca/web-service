@@ -18,6 +18,7 @@ import OrderDetailPage from '../features/account/pages/OrderDetailPage';
 import ReviewsPage from '../features/account/pages/ReviewsPage';
 import VouchersPage from '../features/account/pages/VouchersPage';
 import WishlistPage from '../features/account/pages/WishlistPage';
+import SellerRegisterPage from '../features/account/pages/SellerRegisterPage';
 import CartPage from '../features/cart/pages/CartPage';
 import CheckoutPage from '../features/checkout/pages/CheckoutPage';
 import ScrollToTop from '../components/common/ScrollToTop';
@@ -51,6 +52,7 @@ function AppContent() {
             <Route path="reviews" element={<ReviewsPage />} />
             <Route path="vouchers" element={<VouchersPage />} />
             <Route path="wishlist" element={<WishlistPage />} />
+            <Route path="seller-register" element={<SellerRegisterPage />} />
           </Route>
         </Route>
       </Routes>

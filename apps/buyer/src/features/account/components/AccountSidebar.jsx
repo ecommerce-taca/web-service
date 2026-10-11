@@ -61,9 +61,30 @@ const AccountSidebar = () => {
           </NavLink>
         ))}
 
+        <div className="pt-2 border-t border-slate-100">
+          <NavLink
+            to="/account/seller-register"
+            className={({ isActive }) =>
+              `flex items-center gap-3.5 px-6 py-3 text-[13px] font-bold rounded-xl transition-colors mx-2 no-underline ${
+                isActive
+                  ? 'bg-indigo-50 text-[#4F46E5]'
+                  : 'text-[#4F46E5] hover:bg-indigo-50/60'
+              }`
+            }
+          >
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-[#4F46E5] flex items-center justify-center text-base shrink-0">
+              🏪
+            </div>
+            <div>
+              <div className="leading-tight">Đăng ký Bán hàng</div>
+              <div className="text-[11px] text-slate-400 font-normal">Kênh Người Bán & Xét duyệt ↗</div>
+            </div>
+          </NavLink>
+        </div>
+
         <button
           onClick={handleLogout}
-          className="flex items-center gap-4 px-6 py-3 text-[14px] font-medium text-taca-text-main hover:bg-gray-50 hover:text-taca-primary text-left transition-colors mt-2"
+          className="flex items-center gap-4 px-6 py-3 text-[14px] font-medium text-taca-text-main hover:bg-gray-50 hover:text-taca-primary text-left transition-colors mt-1"
         >
           <div className="w-8 h-8 rounded flex items-center justify-center text-lg text-gray-400">
             ↗

@@ -43,6 +43,9 @@ function authReducer(state, action) {
       localStorage.removeItem('taca_user');
       localStorage.removeItem('taca_access_token');
       localStorage.removeItem('taca_refresh_token');
+      localStorage.removeItem('taca_seller_kyc_documents');
+      localStorage.removeItem('taca_seller_onboarding_data');
+      localStorage.removeItem('taca_seller_shop_data');
       return {
         ...state,
         user: null,

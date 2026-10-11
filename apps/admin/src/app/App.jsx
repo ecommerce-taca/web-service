@@ -1,12 +1,33 @@
+import { BrowserRouter, useInRouterContext, Routes, Route, Navigate } from 'react-router-dom';
+import AdminLayout from '../layouts/AdminLayout';
+import AdminKycPage from '../features/kyc/pages/AdminKycPage';
+import AdminUsersRolesPage from '../features/users/pages/AdminUsersRolesPage';
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route element={<AdminLayout />}>
+        <Route index element={<AdminKycPage />} />
+        <Route path="shops/kyc" element={<AdminKycPage />} />
+        <Route path="users/roles" element={<AdminUsersRolesPage />} />
+        <Route path="dashboard" element={<AdminKycPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
+    </Routes>
+  );
+}
 
 export default function App() {
+  const inRouter = useInRouterContext();
+
+  if (inRouter) {
+    return <AppRoutes />;
+  }
+
+  // Standalone mode on port 5176
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-8">
-      <div className="bg-slate-800 shadow rounded p-8 max-w-lg w-full text-center border-t-4 border-sale">
-        <h1 className="text-2xl font-bold mb-4 text-white">Admin Portal</h1>
-        <p className="text-gray-400">This is the Admin Micro-Frontend App.</p>
-        <p className="text-sm mt-4 text-sale">Running on Port 5176</p>
-      </div>
-    </div>
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
   );
 }

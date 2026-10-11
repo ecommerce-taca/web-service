@@ -64,10 +64,48 @@ const DEFAULT_ONBOARDING_DATA = {
   blockers: [],
 };
 
+const getCurrentUser = () => {
+  try {
+    const raw = localStorage.getItem('taca_user');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
 const getStoredShop = () => {
   try {
+    const user = getCurrentUser();
+    // 1. Nếu có user đang đăng nhập, ưu tiên tìm shop của chính user đó
+    if (user?.id) {
+      const userShopRaw = localStorage.getItem(`${STORAGE_KEY_SHOP}_${user.id}`);
+      if (userShopRaw) return JSON.parse(userShopRaw);
+    }
+
     const raw = localStorage.getItem(STORAGE_KEY_SHOP);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const shop = JSON.parse(raw);
+      // Nếu shop trong storage thuộc về user khác mà user hiện tại đang login -> user hiện tại chưa có shop
+      if (user?.id && shop.owner_user_id && shop.owner_user_id !== user.id) {
+        return {
+          id: null,
+          name: '',
+          status: 'DRAFT',
+          kyc_status: 'NOT_REGISTERED',
+        };
+      }
+      return shop;
+    }
+
+    // Nếu có user đang đăng nhập nhưng không có vai trò SELLER và chưa có shop
+    if (user?.id && !user.roles?.includes('SELLER')) {
+      return {
+        id: null,
+        name: '',
+        status: 'DRAFT',
+        kyc_status: 'NOT_REGISTERED',
+      };
+    }
   } catch (err) {
     console.error('Lỗi đọc mock shop data:', err);
   }
@@ -76,7 +114,12 @@ const getStoredShop = () => {
 
 const saveStoredShop = (data) => {
   try {
-    localStorage.setItem(STORAGE_KEY_SHOP, JSON.stringify(data));
+    const user = getCurrentUser();
+    if (user?.id) {
+      localStorage.setItem(`${STORAGE_KEY_SHOP}_${user.id}`, JSON.stringify(data));
+    } else {
+      localStorage.setItem(STORAGE_KEY_SHOP, JSON.stringify(data));
+    }
   } catch (err) {
     console.error('Lỗi lưu mock shop data:', err);
   }
@@ -84,6 +127,48 @@ const saveStoredShop = (data) => {
 
 const getStoredOnboarding = () => {
   try {
+    const user = getCurrentUser();
+    if (user?.id) {
+      const userOnboardingRaw = localStorage.getItem(`${STORAGE_KEY_ONBOARDING}_${user.id}`);
+      if (userOnboardingRaw) return JSON.parse(userOnboardingRaw);
+
+      // Nếu user có id nhưng chưa có onboarding riêng -> kiểm tra trạng thái shop của user đó
+      const userShop = getStoredShop();
+      if (!userShop?.id || userShop.status === 'NOT_REGISTERED' || userShop.kyc_status === 'NOT_REGISTERED') {
+        return {
+          shop_id: null,
+          current_step: 'PROFILE',
+          steps: [
+            { key: 'PROFILE', completed: false },
+            { key: 'KYC', completed: false },
+            { key: 'WAREHOUSE', completed: false },
+            { key: 'BANK', completed: false },
+            { key: 'FIRST_PRODUCT', completed: false },
+          ],
+          shop_status: 'DRAFT',
+          kyc_status: 'NOT_REGISTERED',
+          blockers: ['SHOP_NOT_REGISTERED'],
+        };
+      }
+
+      // Nếu shop đang tồn tại nhưng chưa có file lưu riêng
+      return {
+        shop_id: userShop.id,
+        owner_user_id: user.id,
+        current_step: 'PROFILE',
+        steps: [
+          { key: 'PROFILE', completed: false },
+          { key: 'KYC', completed: false },
+          { key: 'WAREHOUSE', completed: false },
+          { key: 'BANK', completed: false },
+          { key: 'FIRST_PRODUCT', completed: false },
+        ],
+        shop_status: userShop.status || 'DRAFT',
+        kyc_status: userShop.kyc_status || 'DRAFT',
+        blockers: ['KYC_DOCUMENT_REQUIRED'],
+      };
+    }
+
     const raw = localStorage.getItem(STORAGE_KEY_ONBOARDING);
     if (raw) return JSON.parse(raw);
   } catch (err) {
@@ -94,7 +179,12 @@ const getStoredOnboarding = () => {
 
 const saveStoredOnboarding = (data) => {
   try {
-    localStorage.setItem(STORAGE_KEY_ONBOARDING, JSON.stringify(data));
+    const user = getCurrentUser();
+    if (user?.id) {
+      localStorage.setItem(`${STORAGE_KEY_ONBOARDING}_${user.id}`, JSON.stringify(data));
+    } else {
+      localStorage.setItem(STORAGE_KEY_ONBOARDING, JSON.stringify(data));
+    }
   } catch (err) {
     console.error('Lỗi lưu mock onboarding data:', err);
   }
@@ -102,38 +192,29 @@ const saveStoredOnboarding = (data) => {
 
 const getStoredKycDocs = () => {
   try {
+    const user = getCurrentUser();
+    if (user?.id) {
+      const userRaw = localStorage.getItem(`${STORAGE_KEY_KYC_DOCS}_${user.id}`);
+      if (userRaw) return JSON.parse(userRaw);
+      // Khi user đã đăng nhập nhưng chưa có tài liệu KYC riêng, trả về mảng rỗng để không lấy nhầm của user khác
+      return [];
+    }
     const raw = localStorage.getItem(STORAGE_KEY_KYC_DOCS);
     if (raw) return JSON.parse(raw);
   } catch (err) {
     console.error('Lỗi đọc mock kyc docs:', err);
   }
-  return [
-    {
-      id: 'doc-001',
-      document_type: 'BUSINESS_REGISTRATION',
-      original_file_name: 'giay_phep_kinh_doanh_apple_vn.pdf',
-      content_type: 'application/pdf',
-      size_bytes: 2450000,
-      status: 'VERIFIED',
-      download_url: 'https://storage.example/mock-download/opaque',
-      uploaded_at: '2026-08-10T10:00:00Z',
-    },
-    {
-      id: 'doc-002',
-      document_type: 'CITIZEN_ID',
-      original_file_name: 'cccd_mat_truoc_sau.pdf',
-      content_type: 'application/pdf',
-      size_bytes: 1850000,
-      status: 'VERIFIED',
-      download_url: 'https://storage.example/mock-download/opaque-cccd',
-      uploaded_at: '2026-08-10T10:05:00Z',
-    },
-  ];
+  return [];
 };
 
 const saveStoredKycDocs = (docs) => {
   try {
-    localStorage.setItem(STORAGE_KEY_KYC_DOCS, JSON.stringify(docs));
+    const user = getCurrentUser();
+    if (user?.id) {
+      localStorage.setItem(`${STORAGE_KEY_KYC_DOCS}_${user.id}`, JSON.stringify(docs));
+    } else {
+      localStorage.setItem(STORAGE_KEY_KYC_DOCS, JSON.stringify(docs));
+    }
   } catch (err) {
     console.error('Lỗi lưu mock kyc docs:', err);
   }
@@ -201,7 +282,7 @@ export const registerSeller = async ({ name, business_name, tax_code, slug, desc
     slug,
     description,
   });
-  return res.data;
+  return res?.data ?? res;
 };
 
 // ==========================================
@@ -214,7 +295,7 @@ export const getOnboardingProgress = async () => {
   }
 
   const res = await apiClient.get('/seller/onboarding');
-  return res.data;
+  return res?.data ?? res;
 };
 
 // ==========================================
@@ -261,7 +342,7 @@ export const updateOnboardingProfile = async ({ name, business_name, tax_code, d
     description,
     logo_object_key,
   });
-  return res.data;
+  return res?.data ?? res;
 };
 
 // ==========================================
@@ -280,18 +361,19 @@ export const updateOnboardingWarehouse = async ({
   if (isMockMode()) {
     await new Promise((r) => setTimeout(r, 350));
     const shop = getStoredShop();
+    const oldWs = shop?.warehouse_summary || {};
     const updatedWarehouse = {
-      warehouse_name: warehouse_name?.trim() || shop.warehouse_summary.warehouse_name,
-      contact_name: contact_name?.trim() || shop.warehouse_summary.contact_name,
-      contact_phone: backendPhone || shop.warehouse_summary.contact_phone,
-      district: address?.district || shop.warehouse_summary.district,
-      province: address?.province || shop.warehouse_summary.province,
-      ward: address?.ward || shop.warehouse_summary.ward,
-      line1: address?.line1 || shop.warehouse_summary.line1,
-      line2: address?.line2 || shop.warehouse_summary.line2 || '',
-      postal_code: address?.postal_code || shop.warehouse_summary.postal_code || '700000',
-      carrier_preferences,
-      cod_enabled,
+      warehouse_name: warehouse_name?.trim() || oldWs.warehouse_name || 'Kho lấy hàng',
+      contact_name: contact_name?.trim() || oldWs.contact_name || shop?.name || 'Người bán',
+      contact_phone: backendPhone || oldWs.contact_phone || '',
+      district: address?.district || oldWs.district || '',
+      province: address?.province || oldWs.province || '',
+      ward: address?.ward || oldWs.ward || '',
+      line1: address?.line1 || oldWs.line1 || '',
+      line2: address?.line2 || oldWs.line2 || '',
+      postal_code: address?.postal_code || oldWs.postal_code || '700000',
+      carrier_preferences: carrier_preferences || ['GHTK', 'GHN', 'SPX'],
+      cod_enabled: cod_enabled !== false,
     };
 
     const updatedShop = {
@@ -302,11 +384,12 @@ export const updateOnboardingWarehouse = async ({
     saveStoredShop(updatedShop);
 
     const onboarding = getStoredOnboarding();
-    const steps = onboarding.steps.map((s) => (s.key === 'WAREHOUSE' ? { ...s, completed: true } : s));
+    const currentSteps = onboarding?.steps || [];
+    const steps = currentSteps.map((s) => (s.key === 'WAREHOUSE' ? { ...s, completed: true } : s));
     const updatedOnboarding = {
       ...onboarding,
       steps,
-      current_step: steps.find((s) => !s.completed)?.key || 'COMPLETED',
+      current_step: steps.find((s) => !s.completed)?.key || 'BANK',
     };
     saveStoredOnboarding(updatedOnboarding);
 
@@ -326,7 +409,7 @@ export const updateOnboardingWarehouse = async ({
     carrier_preferences,
     cod_enabled,
   });
-  return res.data;
+  return res?.data ?? res;
 };
 
 // ==========================================
@@ -365,7 +448,7 @@ export const presignKycDocument = async ({ document_type, file_name, content_typ
     size_bytes,
     sha256,
   });
-  return res.data;
+  return res?.data ?? res;
 };
 
 // ==========================================
@@ -400,7 +483,23 @@ export const completeKycDocument = async ({ document_id, object_key, size_bytes,
     content_type,
     sha256,
   });
-  return res.data;
+  return res?.data ?? res;
+};
+
+// ==========================================
+// 6.1 DELETE /seller/onboarding/kyc/documents/{documentId}
+// ==========================================
+export const deleteKycDocument = async (documentId) => {
+  if (isMockMode()) {
+    await new Promise((r) => setTimeout(r, 200));
+    const currentDocs = getStoredKycDocs();
+    const filtered = currentDocs.filter((d) => d.id !== documentId);
+    saveStoredKycDocs(filtered);
+    return { success: true, document_id: documentId };
+  }
+
+  const res = await apiClient.delete(`/seller/onboarding/kyc/documents/${documentId}`);
+  return res?.data ?? res;
 };
 
 // ==========================================
@@ -428,6 +527,62 @@ export const submitKyc = async () => {
     };
     saveStoredOnboarding(updatedOnboarding);
 
+    // Đồng bộ hồ sơ KYC vào hàng đợi duyệt của Admin (taca_admin_kyc_queue)
+    try {
+      const docs = getStoredKycDocs();
+      const rawQueue = localStorage.getItem('taca_admin_kyc_queue');
+      let queue = rawQueue ? JSON.parse(rawQueue) : [];
+      const existingIdx = queue.findIndex((q) => q.shop_id === updatedShop.id);
+      const queueItem = {
+        shop_id: updatedShop.id,
+        shop_name: updatedShop.name,
+        business_name: updatedShop.business_name || updatedShop.name,
+        owner_user_id: updatedShop.owner_user_id || getCurrentUser()?.id || '01912f31-7a1b-7c12-9c55-8b1c34a6d921',
+        kyc_case_id: `kyc-case-${Date.now().toString(36)}`,
+        business_type: updatedShop.business_name ? 'Pháp nhân' : 'Cá nhân',
+        tax_code_masked: updatedShop.tax_code_masked || updatedShop.tax_code || '---',
+        risk_level: 'MEDIUM',
+        risk_label: 'Rủi ro trung bình',
+        risk_signal: 'Hồ sơ vừa nộp từ Kênh Người Bán sau khi hoàn tất Onboarding. Đang chờ Admin thẩm định tài liệu.',
+        status: 'PENDING',
+        submitted_at: new Date().toISOString(),
+        document_count: docs.length,
+        age_hours: 0.1,
+        legal_rep: updatedShop.warehouse_summary?.contact_name || updatedShop.business_name || 'Người bán',
+        address: updatedShop.warehouse_summary?.line1 ? `${updatedShop.warehouse_summary.line1}, ${updatedShop.warehouse_summary.district || ''}, ${updatedShop.warehouse_summary.province || ''}` : 'Chưa cập nhật kho',
+        bank_account: updatedShop.bank_summary?.bank_name ? `${updatedShop.bank_summary.bank_name} •••• ${updatedShop.bank_summary.account_number_masked?.slice(-4) || '8888'}` : 'Chưa cập nhật ngân hàng',
+        documents: docs.map((d) => ({
+          id: d.id,
+          document_type: d.document_type,
+          title: d.original_file_name || d.file_name || 'Giấy tờ xác minh.pdf',
+          file_name: d.original_file_name || d.file_name || 'Giấy tờ xác minh.pdf',
+          content_type: d.content_type || 'application/pdf',
+          size_bytes: d.size_bytes || 2048576,
+          status: 'VERIFIED',
+          download_url: d.download_url || 'https://example.com/docs/sample.pdf',
+        })),
+      };
+
+      if (existingIdx >= 0) {
+        queue[existingIdx] = queueItem;
+      } else {
+        queue = [queueItem, ...queue];
+      }
+      localStorage.setItem('taca_admin_kyc_queue', JSON.stringify(queue));
+      window.dispatchEvent(new CustomEvent('taca:kyc_updated', {
+        detail: { shopId: updatedShop.id, decision: 'PENDING' },
+      }));
+      try {
+        const bc = new BroadcastChannel('taca_marketplace_channel');
+        bc.postMessage({ type: 'KYC_SUBMITTED', shopId: updatedShop.id, shop: queueItem });
+        bc.close();
+      } catch {
+        // fallback
+      }
+    } catch (e) {
+      console.warn('Lỗi đồng bộ KYC sang Admin queue:', e);
+    }
+
     return {
       shop_id: updatedShop.id,
       kyc_case_id: `kyc-case-${Date.now().toString(36)}`,
@@ -437,7 +592,7 @@ export const submitKyc = async () => {
   }
 
   const res = await apiClient.post('/seller/onboarding/kyc/submit');
-  return res.data;
+  return res?.data ?? res;
 };
 
 // Lấy danh sách tài liệu KYC hiện tại (Helper cho UI KYC Step)
@@ -467,10 +622,11 @@ export const updateOnboardingBank = async ({
     const masked = cleanNum.length >= 4 ? `********${cleanNum.slice(-4)}` : '********1234';
 
     const shop = getStoredShop();
+    const oldBank = shop?.bank_summary || {};
     const updatedBank = {
       bank_code: bank_code || 'VCB',
       bank_name: bank_name || 'Vietcombank',
-      account_name: account_name?.toUpperCase() || shop.bank_summary.account_name,
+      account_name: account_name?.toUpperCase() || oldBank.account_name || '',
       account_number_masked: masked,
       verified: true,
     };
@@ -483,7 +639,8 @@ export const updateOnboardingBank = async ({
     saveStoredShop(updatedShop);
 
     const onboarding = getStoredOnboarding();
-    const steps = onboarding.steps.map((s) => (s.key === 'BANK' ? { ...s, completed: true } : s));
+    const currentSteps = onboarding?.steps || [];
+    const steps = currentSteps.map((s) => (s.key === 'BANK' ? { ...s, completed: true } : s));
     const updatedOnboarding = {
       ...onboarding,
       steps,
@@ -508,7 +665,7 @@ export const updateOnboardingBank = async ({
     account_number,
     confirm_account_name,
   });
-  return res.data;
+  return res?.data ?? res;
 };
 
 // ==========================================
@@ -521,7 +678,7 @@ export const getShopProfile = async () => {
   }
 
   const res = await apiClient.get('/seller/shop');
-  return res.data;
+  return res?.data ?? res;
 };
 
 // ==========================================
@@ -554,7 +711,7 @@ export const updateShopProfile = async ({ name, description, logo_object_key }) 
     description,
     logo_object_key,
   });
-  return res.data;
+  return res?.data ?? res;
 };
 
 // ==========================================
@@ -565,7 +722,7 @@ export const getShopFollowersCount = async (shopId) => {
     return { shop_id: shopId, follower_count: 1284 };
   }
   const res = await apiClient.get(`/shops/${shopId}/followers/count`);
-  return res.data;
+  return res?.data ?? res;
 };
 
 // ==========================================
@@ -588,7 +745,7 @@ export const getPublicShopProfile = async (shopIdOrSlug) => {
     };
   }
   const res = await apiClient.get(`/shops/${shopIdOrSlug}`);
-  return res.data;
+  return res?.data ?? res;
 };
 
 /**

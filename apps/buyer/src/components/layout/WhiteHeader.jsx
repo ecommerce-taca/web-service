@@ -26,7 +26,6 @@ const WhiteHeader = () => {
           </span>
           <span className="text-white text-[11px] font-semibold flex items-center gap-4">
             <span className="cursor-pointer hover:text-gray-200">Trung tâm hỗ trợ</span>
-            <span className="cursor-pointer hover:text-gray-200">Kênh người bán</span>
           </span>
         </div>
       </div>

@@ -10,7 +10,7 @@ export default defineConfig({
       name: 'buyer',
       filename: 'remoteEntry.js',
       exposes: {
-        './App': './src/app/RemoteApp.jsx',
+        './App': './src/app/App.jsx',
       },
       shared: ['react', 'react-dom', 'react-router-dom']
     })
