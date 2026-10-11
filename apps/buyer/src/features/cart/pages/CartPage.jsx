@@ -1,60 +1,34 @@
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-
-const mockCartItems = [
-  {
-    id: 1,
-    name: 'iPhone 16 Pro Max 256GB',
-    variant: 'Titan tự nhiên - SKU IP16PM-256-NAT',
-    price: 29490000,
-    quantity: 1,
-    image: 'https://via.placeholder.com/150',
-  },
-  {
-    id: 2,
-    name: 'Sony WH-1000XM5',
-    variant: 'Đen - SKU SONY-XM5-BLK',
-    price: 7490000,
-    quantity: 1,
-    image: 'https://via.placeholder.com/150',
-  }
-];
+import { useCart } from '../hooks/useCart';
+import { Button } from '@taca/ui-components';
 
 export default function CartPage() {
-  const [items, setItems] = useState(mockCartItems);
-  const [selectedItems, setSelectedItems] = useState([1, 2]); // Check all by default
+  const {
+    items,
+    selectedIds,
+    selectedItems,
+    selectedSubtotal,
+    updateQuantity,
+    removeFromCart,
+    toggleSelectItem,
+    selectAll,
+    deselectAll,
+  } = useCart();
+
   const navigate = useNavigate();
+
+  const isAllSelected = items.length > 0 && selectedIds.length === items.length;
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedItems(items.map(i => i.id));
+      selectAll();
     } else {
-      setSelectedItems([]);
+      deselectAll();
     }
   };
 
-  const handleSelectItem = (id, checked) => {
-    if (checked) {
-      setSelectedItems(prev => [...prev, id]);
-    } else {
-      setSelectedItems(prev => prev.filter(itemId => itemId !== id));
-    }
-  };
-
-  const handleUpdateQuantity = (id, newQuantity) => {
-    if (newQuantity < 1) return;
-    setItems(items.map(item => item.id === id ? { ...item, quantity: newQuantity } : item));
-  };
-
-  const calculateSubtotal = () => {
-    return items
-      .filter(item => selectedItems.includes(item.id))
-      .reduce((sum, item) => sum + item.price * item.quantity, 0);
-  };
-
-  const subtotal = calculateSubtotal();
-  const discount = 500000;
-  const total = subtotal - discount;
+  const discount = selectedItems.length > 0 ? (selectedSubtotal >= 20000000 ? 500000 : 200000) : 0;
+  const total = Math.max(0, selectedSubtotal - discount);
 
   const handleCheckout = () => {
     if (selectedItems.length > 0) {
@@ -62,35 +36,58 @@ export default function CartPage() {
     }
   };
 
+  if (items.length === 0) {
+    return (
+      <div className="bg-taca-surface min-h-[60vh] py-16 flex flex-col items-center justify-center text-center">
+        <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-slate-300 text-4xl mb-4 border border-taca-border shadow-sm">
+          🛒
+        </div>
+        <h2 className="text-xl font-bold text-taca-text-main mb-2">Giỏ hàng của bạn đang trống</h2>
+        <p className="text-sm text-taca-text-muted mb-6 max-w-sm">
+          Hãy khám phá hàng ngàn sản phẩm chính hãng với ưu đãi hấp dẫn trên Taca!
+        </p>
+        <Link to="/">
+          <Button variant="primary" className="px-8 h-11 rounded-[8px]">
+            Tiếp tục mua sắm
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-slate-50 min-h-screen pb-16">
+    <div className="bg-taca-surface min-h-screen pb-16">
       {/* Breadcrumb */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-[13px] text-slate-500">
-        <Link to="/" className="hover:text-primary">Trang chủ</Link>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-[13px] text-taca-text-muted">
+        <Link to="/" className="hover:text-taca-primary text-inherit no-underline">Trang chủ</Link>
         <span className="mx-2">/</span>
-        <span className="text-slate-900">Giỏ hàng</span>
+        <span className="text-taca-text-main font-semibold">Giỏ hàng</span>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-2">
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">Giỏ hàng ({items.length} sản phẩm)</h1>
+        <h1 className="text-2xl font-bold text-taca-text-main mb-6">
+          Giỏ hàng ({items.length} sản phẩm)
+        </h1>
         
         <div className="flex flex-col lg:flex-row gap-6 items-start">
           {/* Left Column: Cart Items */}
-          <div className="flex-1 bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+          <div className="flex-1 bg-white rounded-lg p-6 shadow-sm border border-taca-border w-full">
             {/* Header row */}
-            <div className="flex items-center mb-4 pb-4 border-b border-slate-200">
+            <div className="flex items-center mb-4 pb-4 border-b border-taca-border">
               <div className="flex items-center w-1/2">
                 <input 
                   type="checkbox" 
-                  className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
-                  checked={selectedItems.length === items.length && items.length > 0}
+                  className="w-4 h-4 text-taca-primary border-taca-border rounded focus:ring-taca-primary cursor-pointer"
+                  checked={isAllSelected}
                   onChange={handleSelectAll}
                 />
-                <span className="ml-3 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Sản phẩm</span>
+                <span className="ml-3 text-[12px] font-bold text-taca-text-muted uppercase tracking-wider">
+                  Chọn tất cả ({items.length})
+                </span>
               </div>
-              <div className="w-1/6 text-center text-[11px] font-bold text-slate-600 uppercase tracking-wider">Đơn giá</div>
-              <div className="w-1/6 text-center text-[11px] font-bold text-slate-600 uppercase tracking-wider">Số lượng</div>
-              <div className="w-1/6 text-right text-[11px] font-bold text-slate-600 uppercase tracking-wider">Thành tiền</div>
+              <div className="w-1/6 text-center text-[11px] font-bold text-taca-text-muted uppercase tracking-wider">Đơn giá</div>
+              <div className="w-1/6 text-center text-[11px] font-bold text-taca-text-muted uppercase tracking-wider">Số lượng</div>
+              <div className="w-1/6 text-right text-[11px] font-bold text-taca-text-muted uppercase tracking-wider">Thành tiền</div>
             </div>
 
             {/* Items list */}
@@ -101,55 +98,56 @@ export default function CartPage() {
                     <div className="pt-8">
                       <input 
                         type="checkbox" 
-                        className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
-                        checked={selectedItems.includes(item.id)}
-                        onChange={(e) => handleSelectItem(item.id, e.target.checked)}
+                        className="w-4 h-4 text-taca-primary border-taca-border rounded focus:ring-taca-primary cursor-pointer"
+                        checked={selectedIds.includes(item.id)}
+                        onChange={() => toggleSelectItem(item.id)}
                       />
                     </div>
-                    <Link to={`/product/${item.id}`} className="ml-4 w-24 h-24 bg-indigo-50 rounded-lg flex-shrink-0 cursor-pointer hover:opacity-90 overflow-hidden">
+                    <Link to={`/product/${item.productId}`} className="ml-4 w-24 h-24 bg-slate-50 rounded-lg flex-shrink-0 cursor-pointer hover:opacity-90 overflow-hidden border border-taca-border">
                       <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                     </Link>
-                    <div className="ml-4 flex flex-col justify-between h-24">
+                    <div className="ml-4 flex flex-col justify-between min-h-[96px]">
                       <div>
-                        <Link to={`/product/${item.id}`} className="text-[13px] font-extrabold text-slate-900 line-clamp-2 leading-tight hover:text-primary no-underline">{item.name}</Link>
-                        <p className="text-[10px] font-medium text-slate-600 mt-1">{item.variant}</p>
+                        <Link to={`/product/${item.productId}`} className="text-[13px] font-extrabold text-taca-text-main line-clamp-2 leading-tight hover:text-taca-primary no-underline">
+                          {item.name}
+                        </Link>
+                        <p className="text-[11px] font-medium text-taca-text-muted mt-1">{item.variant}</p>
                       </div>
-                      <div className="flex items-center gap-4 text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
-                        <button className="hover:text-primary flex items-center">
-                          <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                          Lưu để mua sau
+                      <div className="flex items-center gap-4 text-[11px] font-semibold text-taca-text-muted">
+                        <button 
+                          type="button"
+                          onClick={() => removeFromCart(item.id)} 
+                          className="hover:text-taca-sale text-inherit bg-transparent border-none cursor-pointer p-0"
+                        >
+                          Xóa khỏi giỏ
                         </button>
-                        <button className="hover:text-rose-500">Xóa</button>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="w-1/6 text-center pt-8 text-[13px] font-extrabold text-rose-600">
+                  <div className="w-1/6 text-center pt-8 text-[13px] font-extrabold text-taca-sale">
                     {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
                   </div>
                   
                   <div className="w-1/6 flex justify-center pt-8">
-                    <div className="flex items-center border border-slate-200 rounded h-8 bg-white">
+                    <div className="flex items-center border border-taca-border rounded h-8 bg-white overflow-hidden">
                       <button 
-                        className="w-8 flex items-center justify-center text-slate-900 text-[12px] font-bold hover:bg-slate-50 disabled:opacity-50"
-                        onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                        disabled={item.quantity <= 1}
+                        type="button"
+                        className="w-8 flex items-center justify-center text-taca-text-main text-[13px] font-bold hover:bg-slate-50 cursor-pointer border-none bg-transparent"
+                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
                       >-</button>
-                      <input 
-                        type="number" 
-                        className="w-10 text-center border-x border-y-0 border-slate-200 text-[12px] font-bold text-slate-900 focus:ring-0 p-0 h-full bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        value={item.quantity}
-                        onChange={(e) => handleUpdateQuantity(item.id, parseInt(e.target.value) || 1)}
-                        min="1"
-                      />
+                      <span className="w-10 text-center text-[12px] font-bold text-taca-text-main select-none">
+                        {item.quantity}
+                      </span>
                       <button 
-                        className="w-8 flex items-center justify-center text-slate-900 text-[12px] font-bold hover:bg-slate-50"
-                        onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                        type="button"
+                        className="w-8 flex items-center justify-center text-taca-text-main text-[13px] font-bold hover:bg-slate-50 cursor-pointer border-none bg-transparent"
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
                       >+</button>
                     </div>
                   </div>
                   
-                  <div className="w-1/6 text-right pt-8 text-[12px] font-extrabold text-slate-900">
+                  <div className="w-1/6 text-right pt-8 text-[13px] font-extrabold text-taca-text-main">
                     {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.quantity)}
                   </div>
                 </div>
@@ -158,52 +156,44 @@ export default function CartPage() {
           </div>
 
           {/* Right Column: Order Summary */}
-          <div className="w-full lg:w-[380px] bg-white rounded-lg p-6 shadow-sm border border-slate-200 flex flex-col">
-            <h2 className="text-[14px] font-extrabold text-slate-900 mb-6 uppercase">Tóm tắt đơn hàng</h2>
+          <div className="w-full lg:w-[380px] bg-white rounded-lg p-6 shadow-sm border border-taca-border flex flex-col flex-shrink-0">
+            <h2 className="text-[14px] font-extrabold text-taca-text-main mb-6 uppercase">Tóm tắt đơn hàng</h2>
             
-            <div className="flex flex-col mb-6">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Voucher</span>
-                <button 
-                  className="bg-violet-600 text-white hover:bg-violet-700 px-4 py-2 rounded-lg text-[12px] font-bold transition-colors cursor-pointer"
-                  onClick={() => alert('Tính năng đổi voucher sẽ được cập nhật sớm!')}
-                >
-                  2 voucher đã áp dụng
-                </button>
-              </div>
-              <div className="flex justify-end">
-                <p className="text-violet-600 text-[12px] font-bold">APPLE300K + TACA200K</p>
-              </div>
-            </div>
-
-            <div className="space-y-3 border-b border-slate-200 pb-4 mb-4">
+            <div className="space-y-3 border-b border-taca-border pb-4 mb-4 text-[13px]">
               <div className="flex justify-between items-center">
-                <span className="text-[11px] font-medium text-slate-600">Tạm tính</span>
-                <span className="text-[12px] font-bold text-slate-900">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(subtotal)}</span>
+                <span className="text-taca-text-muted">Tạm tính ({selectedItems.length} sản phẩm)</span>
+                <span className="font-bold text-taca-text-main">
+                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedSubtotal)}
+                </span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[11px] font-medium text-slate-600">Giảm giá</span>
-                <span className="text-[12px] font-bold text-emerald-600">- {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(discount)}</span>
-              </div>
+              {discount > 0 && (
+                <div className="flex justify-between items-center text-emerald-600">
+                  <span>Giảm giá voucher</span>
+                  <span className="font-bold">
+                    - {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(discount)}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-between items-center mb-6">
-              <span className="text-[14px] font-extrabold text-slate-900">Tổng cộng</span>
-              <span className="text-[18px] font-extrabold text-rose-600">
+              <span className="text-[14px] font-extrabold text-taca-text-main">Tổng thanh toán</span>
+              <span className="text-[18px] font-extrabold text-taca-sale">
                 {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}
               </span>
             </div>
 
-            <button 
+            <Button 
+              variant="primary"
               onClick={handleCheckout}
               disabled={selectedItems.length === 0}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] font-bold py-3.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed uppercase"
+              className="w-full h-12 text-[14px] font-bold rounded-[8px] uppercase tracking-wider"
             >
               Mua hàng ({selectedItems.length})
-            </button>
+            </Button>
             
-            <p className="text-[10px] font-medium text-slate-600 text-center mt-4">
-              Thanh toán an toàn • Bảo vệ người mua
+            <p className="text-[11px] font-medium text-taca-text-muted text-center mt-4">
+              Thanh toán an toàn • Bảo vệ người mua 100%
             </p>
           </div>
         </div>

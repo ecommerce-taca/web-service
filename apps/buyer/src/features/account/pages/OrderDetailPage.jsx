@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { orderApi } from '../services/order.api';
-import Button from '../../../../../../shared/ui-components/src/components/Button';
+import { Button } from '@taca/ui-components';
 import { formatPhoneDisplay } from '../../../../../../shared/utils/phone';
 
 const OrderDetailPage = () => {

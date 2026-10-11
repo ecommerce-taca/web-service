@@ -5,7 +5,7 @@ The Penpot project does not rely on Penpot's native Library Components feature (
 ## 1. Global / Shared Components (`shared/` workspace)
 - **Modal / Overlay Wrapper:** Crucial component, as the design uses over 15 distinct overlays across apps.
 - **Button:** Needs variants for Primary, Secondary (Border), Destructive, and Ghost.
-- **Input / Form Controls:** Standardized inputs with sharp corners (`rounded-none`).
+- **Input / Form Controls:** Standardized inputs with rounded borders (`rounded-lg`, border).
 - **Sidebar:** Used by both Seller and Admin (288px width, dark theme variants).
 - **Data Table:** Shared table layout for Seller/Admin data grids.
 

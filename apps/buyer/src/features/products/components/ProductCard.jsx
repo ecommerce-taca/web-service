@@ -1,9 +1,22 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import Badge from '../../../components/ui/Badge';
+import { Badge } from '@taca/ui-components';
 import FavoriteButton from './FavoriteButton';
 
-const ProductCard = ({ id, image, name, price, originalPrice, discount, isOfficial, rating, soldCount, tags, isFavorite, onToggleFavorite }) => {
+const ProductCard = ({
+  id = 1,
+  image = '',
+  name,
+  price = 0,
+  originalPrice = null,
+  discount = null,
+  isOfficial = false,
+  rating = null,
+  soldCount = null,
+  tags = [],
+  isFavorite = false,
+  onToggleFavorite
+}) => {
   return (
     <Link to={`/product/${id || 1}`} className="flex flex-col bg-white border border-taca-border cursor-pointer group hover:border-taca-primary hover:shadow-md transition-all h-full no-underline rounded-[12px] overflow-hidden p-3 gap-3">
       {/* Image Area */}
@@ -25,26 +38,40 @@ const ProductCard = ({ id, image, name, price, originalPrice, discount, isOffici
         {/* Favorite Button */}
         <div className="absolute top-2 right-2 z-10">
           <FavoriteButton 
-            isFavorite={isFavorite} 
-            onToggle={() => onToggleFavorite && onToggleFavorite(id, isFavorite)} 
+            isFavorite={Boolean(isFavorite)} 
+            onToggle={() => onToggleFavorite && onToggleFavorite(id, isFavorite, {
+              id,
+              product_id: id,
+              name,
+              price,
+              originalPrice,
+              original_price: originalPrice,
+              discount,
+              image,
+              rating,
+              soldCount,
+              sold: soldCount,
+              isOfficial,
+              tags
+            })} 
           />
         </div>
       </div>
 
       {/* Content Area */}
       <div className="flex flex-col flex-1 gap-2">
-        <h3 className="text-[14px] font-medium text-taca-text-taca-text-main line-clamp-2 leading-snug group-hover:text-taca-primary transition-colors">
+        <h3 className="text-[14px] font-medium text-taca-text-main line-clamp-2 leading-snug group-hover:text-taca-primary transition-colors">
           {name}
         </h3>
         
         <div className="mt-auto flex flex-col gap-1">
-          {originalPrice && (
-            <span className="text-[12px] text-taca-text-taca-text-muted line-through">
-              {originalPrice.toLocaleString('vi-VN')} ₫
+          {Boolean(originalPrice) && (
+            <span className="text-[12px] text-taca-text-muted line-through">
+              {Number(originalPrice).toLocaleString('vi-VN')} ₫
             </span>
           )}
           <span className="text-[16px] font-extrabold text-taca-sale">
-            {price.toLocaleString('vi-VN')} ₫
+            {Number(price || 0).toLocaleString('vi-VN')} ₫
           </span>
         </div>
         
@@ -91,18 +118,6 @@ ProductCard.propTypes = {
   tags: PropTypes.arrayOf(PropTypes.string),
   isFavorite: PropTypes.bool,
   onToggleFavorite: PropTypes.func,
-};
-
-ProductCard.defaultProps = {
-  id: 1,
-  image: '',
-  originalPrice: null,
-  discount: null,
-  isOfficial: false,
-  rating: null,
-  soldCount: null,
-  tags: [],
-  isFavorite: false,
 };
 
 export default ProductCard;

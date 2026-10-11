@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { reviewApi } from '../services/review.api';
-import Button from '../../../../../../shared/ui-components/src/components/Button';
+import { Button } from '@taca/ui-components';
 import ReviewFormModal from '../components/ReviewFormModal';
 
 const ReviewsPage = () => {

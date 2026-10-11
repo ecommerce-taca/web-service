@@ -1,5 +1,4 @@
-import Badge from '../../../components/ui/Badge';
-import Button from '../../../components/ui/Button';
+import { Button, Badge } from '@taca/ui-components';
 
 const ShopHero = () => {
   return (

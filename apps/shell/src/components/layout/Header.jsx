@@ -11,7 +11,7 @@ const Header = () => {
           </div>
           
           <div className="flex-1 max-w-[600px]">
-            <div className="flex items-center border border-border rounded-none bg-white h-[40px] focus-within:border-primary">
+            <div className="flex items-center border border-border rounded-lg bg-white h-[40px] focus-within:border-primary overflow-hidden">
               <span className="px-2 text-muted text-[16px]">⌕</span>
               <input 
                 type="text" 

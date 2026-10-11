@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 
 const Input = ({ label, type, placeholder, value, onChange, disabled, error, className }) => {
-  const baseInputClass = 'text-[14px] bg-white border rounded-none px-4 min-h-[40px] w-full outline-none transition-colors disabled:bg-surface disabled:text-muted disabled:cursor-not-allowed';
+  const baseInputClass = 'text-[14px] bg-white border rounded-lg px-4 min-h-[40px] w-full outline-none transition-colors disabled:bg-surface disabled:text-muted disabled:cursor-not-allowed';
   const borderClass = error ? 'border-sale' : 'border-border focus:border-primary';
   const inputClass = `${baseInputClass} ${borderClass} ${className || ''}`.trim();
 
