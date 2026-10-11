@@ -112,4 +112,9 @@ apiClient.interceptors.response.use(
   }
 );
 
+export const isMockMode = () => {
+  const flag = import.meta.env.VITE_USE_MOCK;
+  return flag !== 'false' && flag !== false;
+};
+
 export default apiClient;

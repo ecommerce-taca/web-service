@@ -1,7 +1,8 @@
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import FilterSidebar from '../../search/components/FilterSidebar';
-import productsMock from '../../../mocks/products.json';
+import { productApi } from '../services/product.api';
 import { useFavorites } from '../hooks/useFavorites';
 
 const USE_CASES = [
@@ -16,12 +17,46 @@ const CHIPS = ['Phổ biến', 'Bán chạy', 'Mới nhất', 'Giá thấp → c
 
 const CategoryLandingPage = () => {
   const { categorySlug, subCategorySlug } = useParams();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeChip, setActiveChip] = useState('Phổ biến');
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+
+    const sortMap = {
+      'Phổ biến': 'popular',
+      'Bán chạy': 'sales',
+      'Mới nhất': 'newest',
+      'Giá thấp → cao': 'price-asc'
+    };
+
+    productApi.getProducts({ 
+      category: categorySlug || 'dien-thoai',
+      sort: sortMap[activeChip] || 'popular',
+      size: 12
+    })
+      .then(res => {
+        if (isMounted) {
+          setProducts(res.data?.items || []);
+          setLoading(false);
+        }
+      })
+      .catch(err => {
+        if (isMounted) {
+          console.error('Failed to load category products', err);
+          setProducts([]);
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [categorySlug, activeChip]);
   
-  // Fake repeat the mock product to create a grid of 10 items (2 rows of 5)
-  const products = Array(10).fill(productsMock[0]).map((p, i) => ({ ...p, id: i + 1 }));
-  
-  const productIds = products.map(p => p.id);
-  const { favoritesMap, toggleFavorite } = useFavorites(productIds);
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   return (
     <div className="py-6 flex flex-col gap-6">
@@ -39,7 +74,7 @@ const CategoryLandingPage = () => {
       <div className="flex gap-8 items-start">
         {/* Sidebar Filters */}
         <div className="hidden lg:block w-[240px] flex-shrink-0">
-          <FilterSidebar />
+          <FilterSidebar selectedCategory={categorySlug || 'dien-thoai'} />
         </div>
 
         {/* Main Content */}
@@ -58,86 +93,122 @@ const CategoryLandingPage = () => {
                 Khám phá deal
               </Link>
             </div>
-            <div className="z-10 hidden md:block">
-              <span className="text-white/90 text-[32px] font-bold uppercase tracking-wider">SMARTPHONE</span>
-            </div>
+            {/* Visual background decoration */}
+            <div className="absolute right-[-20px] top-[-20px] w-[300px] h-[300px] bg-white/10 rounded-full blur-2xl pointer-events-none" />
           </div>
 
-          {/* Khám phá theo nhu cầu */}
-          <div className="flex flex-col gap-4">
-            <h2 className="text-[16px] font-bold text-taca-text-main m-0">Khám phá theo nhu cầu</h2>
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-              {USE_CASES.map((uc, idx) => (
-                <div key={idx} className="flex-shrink-0 w-[148px] h-[74px] bg-white rounded-[4px] border border-taca-border flex items-center justify-center font-bold text-[13px] text-taca-text-main hover:border-taca-primary cursor-pointer transition-colors shadow-sm">
-                  {uc}
-                </div>
+          {/* Nhu cầu sử dụng (Tags filter) */}
+          <div className="flex flex-col gap-3">
+            <div className="text-[13px] font-bold text-taca-text-main uppercase tracking-wider">
+              Nhu cầu sử dụng
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {USE_CASES.map(useCase => (
+                <Link
+                  key={useCase}
+                  to={`/search?q=${encodeURIComponent(useCase)}`}
+                  className="px-4 py-1.5 bg-white border border-taca-border rounded-full text-[13px] text-taca-text-main font-medium hover:border-taca-primary hover:text-taca-primary transition-colors no-underline"
+                >
+                  {useCase}
+                </Link>
               ))}
             </div>
           </div>
 
           {/* Thương hiệu nổi bật */}
-          <div className="flex flex-col gap-4">
-            <h2 className="text-[16px] font-bold text-taca-text-main m-0">Thương hiệu nổi bật</h2>
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-              {BRANDS.map((brand, idx) => (
-                <div key={idx} className="flex-shrink-0 w-[176px] h-[54px] bg-white rounded-[4px] border border-taca-border flex items-center justify-center font-bold text-[14px] text-taca-text-main hover:border-taca-primary cursor-pointer transition-colors shadow-sm">
+          <div className="flex flex-col gap-3">
+            <div className="text-[13px] font-bold text-taca-text-main uppercase tracking-wider">
+              Thương hiệu
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {BRANDS.map(brand => (
+                <Link
+                  key={brand}
+                  to={`/search?brand=${brand}`}
+                  className="px-5 py-2 bg-white border border-taca-border rounded-[4px] text-[13px] font-bold text-taca-text-main hover:border-taca-primary hover:text-taca-primary transition-colors no-underline"
+                >
                   {brand}
-                </div>
+                </Link>
               ))}
             </div>
           </div>
 
-          {/* Sản phẩm nổi bật */}
-          <div className="flex flex-col gap-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-[16px] font-bold text-taca-text-main m-0">Sản phẩm nổi bật</h2>
-              <div className="flex gap-3">
-                {CHIPS.map((chip, idx) => (
-                  <button key={idx} className={`px-4 py-2 rounded-[24px] border text-[13px] font-semibold transition-colors ${idx === 0 ? 'bg-white text-taca-primary border-taca-primary' : 'bg-white text-taca-text-muted border-taca-border hover:border-taca-primary hover:text-taca-primary'}`}>
+          {/* Section: Danh sách sản phẩm */}
+          <div className="flex flex-col gap-4">
+            {/* Header: Sắp xếp theo chip */}
+            <div className="flex items-center justify-between pb-2 border-b border-taca-border">
+              <span className="text-[16px] font-bold text-taca-text-main">
+                Danh sách sản phẩm ({products.length})
+              </span>
+              <div className="flex items-center gap-2">
+                {CHIPS.map(chip => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => setActiveChip(chip)}
+                    className={`px-3 py-1 text-[13px] rounded-full border transition-colors cursor-pointer ${
+                      activeChip === chip 
+                        ? 'border-taca-primary bg-[#f4f7ff] text-taca-primary font-bold' 
+                        : 'border-taca-border text-taca-text-muted hover:border-taca-primary'
+                    }`}
+                  >
                     {chip}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Product Grid - 4 columns as per Penpot screenshot */}
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {products.slice(0, 8).map(product => (
-                <ProductCard 
-                  key={product.id}
-                  id={product.id}
-                  name={product.name}
-                  price={product.price}
-                  originalPrice={product.originalPrice}
-                  discount={product.discount}
-                  isOfficial={product.isOfficial}
-                  image={product.image}
-                  rating={product.rating}
-                  soldCount={product.soldCount}
-                  tags={product.tags}
-                  isFavorite={!!favoritesMap[product.id]}
-                  onToggleFavorite={toggleFavorite}
-                />
-              ))}
-            </div>
+            {/* Product Grid */}
+            {loading ? (
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-pulse">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="bg-white border border-gray-100 rounded-[12px] p-3 flex flex-col gap-3">
+                    <div className="w-full aspect-square bg-gray-200 rounded-[8px]"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                ))}
+              </div>
+            ) : products.length > 0 ? (
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {products.map(product => (
+                  <ProductCard 
+                    key={product.id}
+                    id={product.id}
+                    name={product.name}
+                    price={product.price}
+                    originalPrice={product.originalPrice}
+                    discount={product.discount}
+                    isOfficial={product.isOfficial}
+                    image={product.image}
+                    rating={product.rating}
+                    soldCount={product.soldCount}
+                    tags={product.tags}
+                    isFavorite={isFavorite(product.id)}
+                    onToggleFavorite={() => toggleFavorite(product)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                Chưa có sản phẩm nào trong danh mục này
+              </div>
+            )}
           </div>
           
           {/* Deal theo thương hiệu */}
           <div className="flex flex-col gap-4 mb-8">
             <h2 className="text-[16px] font-bold text-taca-text-main m-0">Deal theo thương hiệu</h2>
             <div className="flex gap-4">
-              {/* Card 1 */}
-              <Link to="/search?q=apple" className="flex-1 h-[80px] bg-white rounded-[4px] border border-taca-primary flex flex-col justify-center px-4 cursor-pointer hover:shadow-md transition-shadow no-underline">
+              <Link to="/search?brand=Apple" className="flex-1 h-[80px] bg-white rounded-[4px] border border-taca-primary flex flex-col justify-center px-4 cursor-pointer hover:shadow-md transition-shadow no-underline">
                 <span className="font-bold text-[14px] text-taca-primary uppercase mb-1">APPLE WEEK - giảm đến 15%</span>
                 <span className="text-[12px] text-taca-primary font-semibold">Xem sản phẩm →</span>
               </Link>
-              {/* Card 2 */}
-              <Link to="/search?q=samsung" className="flex-1 h-[80px] bg-white rounded-[4px] border border-taca-border hover:border-taca-primary flex flex-col justify-center px-4 cursor-pointer hover:shadow-md transition-shadow no-underline">
+              <Link to="/search?brand=Samsung" className="flex-1 h-[80px] bg-white rounded-[4px] border border-taca-border hover:border-taca-primary flex flex-col justify-center px-4 cursor-pointer hover:shadow-md transition-shadow no-underline">
                 <span className="font-bold text-[14px] text-taca-text-main uppercase mb-1">SAMSUNG AI - quà 3 triệu</span>
                 <span className="text-[12px] text-taca-primary font-semibold">Xem sản phẩm →</span>
               </Link>
-              {/* Card 3 */}
-              <Link to="/search?q=xiaomi" className="flex-1 h-[80px] bg-white rounded-[4px] border border-taca-border hover:border-taca-primary flex flex-col justify-center px-4 cursor-pointer hover:shadow-md transition-shadow no-underline">
+              <Link to="/search?brand=Xiaomi" className="flex-1 h-[80px] bg-white rounded-[4px] border border-taca-border hover:border-taca-primary flex flex-col justify-center px-4 cursor-pointer hover:shadow-md transition-shadow no-underline">
                 <span className="font-bold text-[14px] text-taca-text-main uppercase mb-1">XIAOMI DEAL - freeship</span>
                 <span className="text-[12px] text-taca-primary font-semibold">Xem sản phẩm →</span>
               </Link>

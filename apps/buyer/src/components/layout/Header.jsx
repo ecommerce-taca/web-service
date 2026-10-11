@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth/hooks/useAuth';
+import { useCart } from '../../features/cart/hooks/useCart';
 import MegaMenu from './MegaMenu';
 
 const Header = () => {
   const { user, openAuthModal } = useAuth();
+  const { cartCount } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -74,8 +76,16 @@ const Header = () => {
           )}
 
           {/* Cart */}
-          <Link to="/cart" className="flex items-center text-white no-underline flex-shrink-0">
-            <span className="text-[12px] font-bold">▣  Giỏ hàng  2</span>
+          <Link to="/cart" className="flex items-center text-white no-underline flex-shrink-0 relative">
+            <span className="text-[12px] font-bold flex items-center gap-1.5">
+              <span>▣</span>
+              <span>Giỏ hàng</span>
+              {cartCount > 0 && (
+                <span className="bg-taca-sale text-white text-[10px] font-extrabold px-1.5 py-0.2 rounded-full min-w-[18px] text-center">
+                  {cartCount}
+                </span>
+              )}
+            </span>
           </Link>
         </div>
       </div>

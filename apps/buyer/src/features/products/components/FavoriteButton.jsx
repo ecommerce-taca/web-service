@@ -38,9 +38,4 @@ FavoriteButton.propTypes = {
   className: PropTypes.string
 };
 
-FavoriteButton.defaultProps = {
-  isFavorite: false,
-  className: ''
-};
-
 export default FavoriteButton;

@@ -30,7 +30,7 @@ const Input = forwardRef(({
           ref={ref}
           id={inputId}
           type={inputType}
-          className={`w-full h-10 px-3 ${isPassword ? 'pr-10' : ''} bg-white border ${error ? 'border-taca-sale focus:ring-taca-sale' : 'border-taca-border focus:ring-taca-primary'} text-[14px] text-taca-text-main placeholder-taca-text-muted focus:outline-none focus:ring-1 focus:border-transparent transition-all [&::-ms-reveal]:hidden [&::-webkit-contacts-auto-fill-button]:hidden ${className}`}
+          className={`w-full h-10 px-3 rounded-lg ${isPassword ? 'pr-10' : ''} bg-white border ${error ? 'border-taca-sale focus:ring-taca-sale' : 'border-taca-border focus:ring-taca-primary'} text-[14px] text-taca-text-main placeholder-taca-text-muted focus:outline-none focus:ring-1 focus:border-transparent transition-all [&::-ms-reveal]:hidden [&::-webkit-contacts-auto-fill-button]:hidden ${className}`}
           {...props}
         />
         {isPassword && (

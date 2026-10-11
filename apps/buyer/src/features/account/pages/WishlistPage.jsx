@@ -1,47 +1,24 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import ProductCard from '../../products/components/ProductCard';
-import { favoritesApi } from '../services/favorites.api';
+import { useFavorites } from '../../products/hooks/useFavorites';
 
 const WishlistPage = () => {
-  const [favorites, setFavorites] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const { favorites, removeFavorite } = useFavorites();
   const [search, setSearch] = useState('');
 
-  const fetchFavorites = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await favoritesApi.getFavorites();
-      setFavorites(response.data.data || []);
-    } catch (error) {
-      console.error('Failed to fetch favorites', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-     
-    fetchFavorites();
-  }, [fetchFavorites]);
-
-  const handleRemoveFavorite = async (productId) => {
-    try {
-      await favoritesApi.removeFavorite(productId);
-      setFavorites(prev => prev.filter(fav => fav.product_id !== productId));
-    } catch (error) {
-      console.error('Failed to remove favorite', error);
-      alert('Không thể xóa khỏi danh sách yêu thích');
-    }
+  const handleRemoveFavorite = (productId) => {
+    removeFavorite(productId);
   };
 
   const filteredFavorites = favorites.filter(fav => 
-    fav.name.toLowerCase().includes(search.toLowerCase())
+    (fav.name || '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div className="flex flex-col h-full bg-white">
       <div className="p-6 md:p-8 flex-1">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
           <h1 className="text-[20px] font-bold text-taca-text-main m-0 uppercase">
             SẢN PHẨM YÊU THÍCH <span className="text-gray-400 font-normal text-[14px] ml-2">{favorites.length} sản phẩm</span>
           </h1>
@@ -62,39 +39,51 @@ const WishlistPage = () => {
 
         {/* Filters */}
         <div className="flex gap-3 mb-6">
-          <button className="px-4 py-1.5 border border-taca-primary text-taca-primary rounded-full text-[13px] font-bold bg-taca-primary/5">
+          <button className="px-4 py-1.5 border border-taca-primary text-taca-primary rounded-full text-[13px] font-bold bg-taca-primary/5 cursor-pointer">
             Tất cả {favorites.length}
-          </button>
-          <button className="px-4 py-1.5 border border-gray-200 text-taca-text-main rounded-full text-[13px] hover:bg-gray-50 transition-colors">
-            Đang giảm giá 0
-          </button>
-          <button className="px-4 py-1.5 border border-gray-200 text-taca-text-main rounded-full text-[13px] hover:bg-gray-50 transition-colors">
-            Sắp hết hàng 0
           </button>
         </div>
 
-        {loading ? (
-          <div className="text-center py-12 text-gray-500">Đang tải sản phẩm yêu thích...</div>
-        ) : filteredFavorites.length > 0 ? (
+        {filteredFavorites.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredFavorites.map(product => (
-              <ProductCard 
-                key={product.id} 
-                id={product.product_id}
-                name={product.name}
-                price={product.price}
-                originalPrice={product.original_price}
-                rating={product.rating}
-                sold={product.sold}
-                image={product.image}
-                isFavorite={true}
-                onToggleFavorite={handleRemoveFavorite}
-              />
-            ))}
+            {filteredFavorites.map(product => {
+              const productId = product.id || product.product_id;
+              return (
+                <ProductCard 
+                  key={productId} 
+                  id={productId}
+                  name={product.name}
+                  price={product.price}
+                  originalPrice={product.originalPrice || product.original_price}
+                  discount={product.discount}
+                  rating={product.rating}
+                  soldCount={product.soldCount || product.sold || 0}
+                  image={product.image}
+                  isOfficial={product.isOfficial}
+                  tags={product.tags}
+                  isFavorite={true}
+                  onToggleFavorite={() => handleRemoveFavorite(productId)}
+                />
+              );
+            })}
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200 mt-4">
-            Chưa có sản phẩm nào trong danh sách yêu thích
+          <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-200 mt-4 flex flex-col items-center">
+            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-2xl mb-3">
+              ♥
+            </div>
+            <h3 className="text-[16px] font-bold text-taca-text-main mb-1">
+              {search ? 'Không tìm thấy sản phẩm nào' : 'Chưa có sản phẩm nào trong danh sách yêu thích'}
+            </h3>
+            <p className="text-[13px] text-taca-text-muted max-w-sm mb-6">
+              Hãy thả tim những sản phẩm bạn quan tâm để dễ dàng theo dõi và mua sắm sau này.
+            </p>
+            <Link
+              to="/search"
+              className="px-6 py-2.5 bg-taca-primary text-white rounded-lg text-[13px] font-semibold hover:bg-indigo-700 transition-colors no-underline"
+            >
+              Khám phá sản phẩm ngay
+            </Link>
           </div>
         )}
       </div>

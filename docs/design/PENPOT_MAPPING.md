@@ -43,7 +43,7 @@ module.exports = {
 ## 2. Shared Component Mapping
 Penpot UI elements mapped to `shared/ui-components/`:
 - **Penpot "Overlay / ..."** -> `shared/ui-components/Modal.jsx` (A generic wrapper handling backdrop and z-index).
-- **Text / Buttons and controls** -> `shared/ui-components/Button.jsx` (Using `taca-primary`, `rounded-none`, and Typography `Label 12`).
+- **Text / Buttons and controls** -> `shared/ui-components/Button.jsx` (Using `taca-primary`, `rounded-lg`, border, and Typography `Label 12`).
 
 ## 3. Workflow for New UI
 Before implementing a Penpot frame:

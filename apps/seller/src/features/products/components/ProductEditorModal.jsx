@@ -1,120 +1,313 @@
-import { useState } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
+import sellerProductApi from '../services/seller-product.api';
 
-export default function ProductEditorModal({ isOpen, onClose, onSave }) {
+/**
+ * Inner Form: Quản lý toàn bộ state và logic của form.
+ * Được mount với key duy nhất để khởi tạo state mà không cần gọi setState trong useEffect.
+ */
+function ProductEditorForm({ product, onClose, onSave }) {
   const [step, setStep] = useState(1);
-  const [spuName, setSpuName] = useState('iPhone 16 Pro Max');
-  const [category, setCategory] = useState('Điện thoại › Apple › iPhone');
-  const [brand, setBrand] = useState('Apple');
-  const [spuCode, setSpuCode] = useState('SPU-IP16PM');
-
-  // Multi-attribute configuration
-  const [attributes, setAttributes] = useState([
-    { id: 1, name: 'Dung lượng', values: ['256GB', '512GB', '1TB'] },
-    { id: 2, name: 'Màu sắc', values: ['Titan tự nhiên', 'Titan đen'] },
-    { id: 3, name: 'Kết nối', values: ['Wi-Fi', '5G'] },
-  ]);
-
-  const [newValueInputs, setNewValueInputs] = useState({});
-
-  // Matrix of SKU variants
-  const [skus, setSkus] = useState([
-    { id: 1, name: '256GB / Titan tự nhiên / Wi-Fi', code: 'IP16-256-NAT-WF', price: '29.490.000', stock: 38, enabled: true },
-    { id: 2, name: '256GB / Titan tự nhiên / 5G', code: 'IP16-256-NAT-5G', price: '31.490.000', stock: 24, enabled: true },
-    { id: 3, name: '512GB / Titan đen / Wi-Fi', code: 'IP16-512-BLK-WF', price: '35.990.000', stock: 18, enabled: true },
-    { id: 4, name: '512GB / Titan đen / 5G', code: 'IP16-512-BLK-5G', price: '37.990.000', stock: 12, enabled: true },
-  ]);
-
+  const [spuName, setSpuName] = useState(product ? (product.title || product.name || '') : '');
+  const [category, setCategory] = useState(product ? (product.category_name || 'Điện thoại › Apple › iPhone') : 'Điện thoại › Apple › iPhone');
+  const [brand, setBrand] = useState(product ? (product.brand || '') : '');
+  const [spuCode, setSpuCode] = useState(product ? (product.spu_code || product.code || '') : 'SPU-NEW');
+  const [description, setDescription] = useState(product ? (product.description || '') : '');
+  const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
 
-  if (!isOpen) return null;
+  // Quản lý ảnh sản phẩm và S3 Presigned URL (#15, #16)
+  const [images, setImages] = useState(
+    product?.images && product.images.length > 0
+      ? product.images
+      : ['https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=300&q=80']
+  );
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const imageInputRef = useRef(null);
+
+  // Khởi tạo thuộc tính
+  const [attributes, setAttributes] = useState(() => {
+    if (product?.attribute_definitions && product.attribute_definitions.length > 0) {
+      return product.attribute_definitions.map((a, idx) => ({
+        id: idx + 1,
+        name: a.name,
+        display_as: a.display_as || 'PLAIN',
+        values: a.values || []
+      }));
+    }
+    return [
+      { id: 1, name: 'Dung lượng', display_as: 'PLAIN', values: ['256GB', '512GB', '1TB'] },
+      { id: 2, name: 'Màu sắc', display_as: 'COLOR_SWATCH', values: ['Titan tự nhiên', 'Titan đen'] },
+      { id: 3, name: 'Kết nối', display_as: 'PLAIN', values: ['Wi-Fi', '5G'] }
+    ];
+  });
+
+  const [newValueInputs, setNewValueInputs] = useState({});
+  const [isAddAttrModalOpen, setIsAddAttrModalOpen] = useState(false);
+  const [newAttrName, setNewAttrName] = useState('');
+  const [newAttrType, setNewAttrType] = useState('PLAIN');
+  const [newAttrValues, setNewAttrValues] = useState([]);
+  const [tempValueInput, setTempValueInput] = useState('');
+
+  // Sinh Cartesian Product từ các thuộc tính
+  const generatedCombinations = useMemo(() => {
+    const validAttrs = attributes.filter(a => a.values && a.values.length > 0);
+    if (validAttrs.length === 0) return [];
+
+    let combos = [{}];
+    validAttrs.forEach(attr => {
+      const nextCombos = [];
+      combos.forEach(combo => {
+        attr.values.forEach(val => {
+          nextCombos.push({ ...combo, [attr.name]: val });
+        });
+      });
+      combos = nextCombos;
+    });
+
+    return combos;
+  }, [attributes]);
+
+  // Khởi tạo danh sách SKU
+  const [skus, setSkus] = useState(() => {
+    if (product?.skus && product.skus.length > 0) {
+      return product.skus.map((s, idx) => ({
+        id: s.id || `sku-${idx + 1}`,
+        code: s.sku_code || `SKU-${idx + 1}`,
+        name: Object.values(s.attributes || {}).join(' / ') || s.name || `Biến thể ${idx + 1}`,
+        price: s.price?.sale_price ? Number(s.price.sale_price).toLocaleString('vi-VN') : '29.490.000',
+        stock: s.stock_display ?? 20,
+        enabled: s.status !== 'INACTIVE',
+        attributes: s.attributes || {}
+      }));
+    }
+    return [
+      { id: 'sku-1', code: 'IP16-256-NAT-WF', name: '256GB / Titan tự nhiên / Wi-Fi', price: '29.490.000', stock: 38, enabled: true, attributes: {} },
+      { id: 'sku-2', code: 'IP16-256-NAT-5G', name: '256GB / Titan tự nhiên / 5G', price: '31.490.000', stock: 24, enabled: true, attributes: {} },
+      { id: 'sku-3', code: 'IP16-512-BLK-WF', name: '512GB / Titan đen / Wi-Fi', price: '35.990.000', stock: 18, enabled: true, attributes: {} },
+      { id: 'sku-4', code: 'IP16-512-BLK-5G', name: '512GB / Titan đen / 5G', price: '37.990.000', stock: 12, enabled: true, attributes: {} },
+    ];
+  });
 
   const handleAddValue = (attrId) => {
     const val = (newValueInputs[attrId] || '').trim();
     if (!val) return;
-    setAttributes(attributes.map(a => a.id === attrId ? { ...a, values: [...a.values, val] } : a));
+    setAttributes(attributes.map(a => 
+      a.id === attrId && !a.values.includes(val)
+        ? { ...a, values: [...a.values, val] }
+        : a
+    ));
     setNewValueInputs({ ...newValueInputs, [attrId]: '' });
   };
 
   const handleRemoveValue = (attrId, valToRemove) => {
-    setAttributes(attributes.map(a => a.id === attrId ? { ...a, values: a.values.filter(v => v !== valToRemove) } : a));
+    setAttributes(attributes.map(a => 
+      a.id === attrId ? { ...a, values: a.values.filter(v => v !== valToRemove) } : a
+    ));
   };
 
-  const handleToggleSku = (id) => {
-    setSkus(skus.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));
+  const handleToggleSku = (skuId) => {
+    setSkus(skus.map(s => s.id === skuId ? { ...s, enabled: !s.enabled } : s));
   };
 
-  const handlePublish = () => {
-    setNotification('Đăng bán sản phẩm thành công! Sản phẩm đã hiển thị công khai.');
-    setTimeout(() => {
-      if (onSave) onSave({ spuName, spuCode, skus });
-      onClose();
-    }, 1500);
+  const handleUpdateSkuPrice = (skuId, val) => {
+    setSkus(skus.map(s => s.id === skuId ? { ...s, price: val } : s));
+  };
+
+  const handleUpdateSkuStock = (skuId, val) => {
+    setSkus(skus.map(s => s.id === skuId ? { ...s, stock: Number(val) || 0 } : s));
+  };
+
+  const handleAddNewAttribute = () => {
+    if (!newAttrName.trim() || newAttrValues.length === 0) return;
+    const newId = attributes.length + 1;
+    setAttributes([
+      ...attributes,
+      {
+        id: newId,
+        name: newAttrName.trim(),
+        display_as: newAttrType,
+        values: newAttrValues
+      }
+    ]);
+    setNewAttrName('');
+    setNewAttrValues([]);
+    setIsAddAttrModalOpen(false);
+  };
+
+  const handleUploadImage = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingImage(true);
+      const targetId = product?.id || product?.productId || 'spu-draft';
+      // 1. Xin presigned upload URL từ S3 qua Service API (#15)
+      const res = await sellerProductApi.getMediaUploadUrl(targetId, {
+        file_name: file.name,
+        content_type: file.type || 'image/jpeg',
+        file_size: file.size
+      });
+      const mediaData = res?.data || {};
+
+      // 2. Xác nhận tải lên thành công qua Service API (#16)
+      await sellerProductApi.completeMediaUpload(targetId, {
+        media_id: mediaData.media_id,
+        upload_key: mediaData.file_key
+      });
+
+      // Tạo preview hiển thị ngay trên UI
+      const previewUrl = URL.createObjectURL(file);
+      setImages(prev => [...prev, previewUrl]);
+    } catch (err) {
+      alert(`Không thể tải ảnh: ${err.message}`);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = (indexToRemove) => {
+    setImages(images.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  const handleSaveDraft = async () => {
+    if (!spuName.trim()) {
+      alert('Vui lòng nhập tên sản phẩm (SPU)!');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      if (product) {
+        await sellerProductApi.updateProduct(product.id || product.productId, {
+          title: spuName,
+          slug: spuCode.toLowerCase(),
+          brand,
+          description,
+          images,
+          version: product.version || 1
+        });
+      } else {
+        await sellerProductApi.createProductDraft({
+          title: spuName,
+          slug: spuCode.toLowerCase(),
+          brand,
+          description,
+          images,
+          price_summary: { min_price: 29490000, max_price: 43990000, currency: 'VND' }
+        });
+      }
+      setNotification('Đã lưu bản nháp thành công!');
+      setTimeout(() => {
+        if (onSave) onSave();
+        onClose();
+      }, 1000);
+    } catch (err) {
+      alert(`Lỗi khi lưu bản nháp: ${err?.response?.data?.message || err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!spuName.trim()) {
+      alert('Vui lòng nhập tên sản phẩm trước khi đăng bán!');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const targetId = product?.id || product?.productId || `spu-${Date.now()}`;
+
+      const formattedSkus = skus.map(s => ({
+        sku_code: s.code,
+        attributes: s.attributes,
+        price: {
+          base_price: Number(String(s.price).replace(/\D/g, '')) || 29490000,
+          sale_price: Number(String(s.price).replace(/\D/g, '')) || 29490000,
+          currency: 'VND'
+        },
+        stock_display: s.stock,
+        tax_rate_bps: 1000,
+        status: s.enabled ? 'ACTIVE' : 'INACTIVE'
+      }));
+
+      await sellerProductApi.replaceSkus(targetId, {
+        attribute_definitions: attributes.map(a => ({
+          name: a.name,
+          display_as: a.display_as,
+          values: a.values
+        })),
+        skus: formattedSkus,
+        version: product?.version || 1
+      });
+
+      await sellerProductApi.publishProduct(targetId);
+
+      setNotification('Đăng bán sản phẩm thành công! Sản phẩm đã hiển thị công khai.');
+      setTimeout(() => {
+        if (onSave) onSave();
+        onClose();
+      }, 1200);
+    } catch (err) {
+      alert(`Không thể đăng bán: ${err?.response?.data?.message || err.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[900px] max-h-[92vh] flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="px-8 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
-          <div>
-            <h2 className="text-[20px] font-bold text-slate-900 tracking-tight uppercase">
-              THÊM SẢN PHẨM MỚI
-            </h2>
-            <p className="text-[12px] text-slate-500 mt-0.5">
-              Tạo SPU và các biến thể SKU bán hàng
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors text-xl font-bold"
-          >
-            ×
-          </button>
+    <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[920px] max-h-[92vh] flex flex-col overflow-hidden">
+      {/* Header */}
+      <div className="px-8 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+        <div>
+          <h2 className="text-[20px] font-bold text-slate-900 tracking-tight uppercase">
+            {product ? 'CHỈNH SỬA SẢN PHẨM' : 'THÊM SẢN PHẨM MỚI'}
+          </h2>
+          <p className="text-[12px] text-slate-500 mt-0.5">
+            Tạo SPU và các biến thể SKU bán hàng
+          </p>
         </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors text-xl font-bold cursor-pointer"
+        >
+          ×
+        </button>
+      </div>
 
-        {/* 4 Steps bar */}
-        <div className="px-8 py-3 bg-white border-b border-slate-100 flex items-center justify-between text-[12px] font-semibold text-slate-500">
+      {/* 4 Steps bar (Khớp Penpot) */}
+      <div className="px-8 py-3 bg-white border-b border-slate-100 flex items-center justify-between text-[12px] font-semibold text-slate-500">
+        {[
+          { num: 1, title: 'Thông tin cơ bản' },
+          { num: 2, title: 'Phân loại SKU' },
+          { num: 3, title: 'Giá & kho' },
+          { num: 4, title: 'Vận chuyển' }
+        ].map(s => (
           <button
+            key={s.num}
             type="button"
-            onClick={() => setStep(1)}
-            className={`pb-1 flex items-center gap-1.5 ${step === 1 ? 'text-[#4F46E5] border-b-2 border-[#4F46E5]' : 'hover:text-slate-700'}`}
+            onClick={() => setStep(s.num)}
+            className={`pb-1 flex items-center gap-1.5 cursor-pointer ${
+              step === s.num ? 'text-[#4F46E5] border-b-2 border-[#4F46E5]' : 'hover:text-slate-700'
+            }`}
           >
-            <span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[11px]">1</span>
-            <span>Thông tin cơ bản</span>
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${
+              step === s.num ? 'bg-[#4F46E5] text-white font-bold' : 'bg-slate-100'
+            }`}>
+              {s.num}
+            </span>
+            <span>{s.title}</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setStep(2)}
-            className={`pb-1 flex items-center gap-1.5 ${step === 2 ? 'text-[#4F46E5] border-b-2 border-[#4F46E5]' : 'hover:text-slate-700'}`}
-          >
-            <span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[11px]">2</span>
-            <span>Phân loại SKU</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setStep(3)}
-            className={`pb-1 flex items-center gap-1.5 ${step === 3 ? 'text-[#4F46E5] border-b-2 border-[#4F46E5]' : 'hover:text-slate-700'}`}
-          >
-            <span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[11px]">3</span>
-            <span>Giá & kho</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setStep(4)}
-            className={`pb-1 flex items-center gap-1.5 ${step === 4 ? 'text-[#4F46E5] border-b-2 border-[#4F46E5]' : 'hover:text-slate-700'}`}
-          >
-            <span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[11px]">4</span>
-            <span>Vận chuyển</span>
-          </button>
-        </div>
+        ))}
+      </div>
 
-        {/* Body */}
-        <div className="p-8 overflow-y-auto space-y-8 text-[13px]">
-          {/* Section 1: SPU Details */}
-          <div>
-            <span className="text-[12px] font-bold uppercase tracking-wider text-slate-500 block mb-4">
+      {/* Body Steps */}
+      <div className="p-8 overflow-y-auto space-y-8 text-[13px] flex-1">
+        {/* STEP 1: SPU Details */}
+        {step === 1 && (
+          <div className="space-y-6">
+            <span className="text-[12px] font-bold uppercase tracking-wider text-slate-500 block">
               THÔNG TIN SPU
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -125,6 +318,7 @@ export default function ProductEditorModal({ isOpen, onClose, onSave }) {
                 <input
                   type="text"
                   value={spuName}
+                  placeholder="Ví dụ: iPhone 16 Pro Max"
                   onChange={(e) => setSpuName(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5]"
                 />
@@ -147,6 +341,7 @@ export default function ProductEditorModal({ isOpen, onClose, onSave }) {
                 <input
                   type="text"
                   value={brand}
+                  placeholder="Apple, Samsung, Sony..."
                   onChange={(e) => setBrand(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5]"
                 />
@@ -159,22 +354,96 @@ export default function ProductEditorModal({ isOpen, onClose, onSave }) {
                   type="text"
                   value={spuCode}
                   onChange={(e) => setSpuCode(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5]"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5] font-mono"
                 />
               </div>
             </div>
-          </div>
 
-          {/* Section 2: SKU Attributes */}
-          <div className="pt-6 border-t border-slate-200">
-            <div className="flex items-center justify-between mb-1">
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                Mô tả chi tiết sản phẩm
+              </label>
+              <textarea
+                rows={3}
+                value={description}
+                placeholder="Mô tả công năng, thông số kỹ thuật, chế độ bảo hành..."
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5]"
+              />
+            </div>
+
+            {/* Media Upload Section (#15, #16 S3 Presigned URL) */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-[11px] font-bold text-slate-700 uppercase">
+                  Hình ảnh sản phẩm (S3 Media)
+                </label>
+                <span className="text-[11px] text-slate-400">
+                  Ảnh đầu tiên làm ảnh bìa · Tối đa 8 ảnh
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                {images.map((imgUrl, idx) => (
+                  <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
+                    <img src={imgUrl} alt={`Ảnh ${idx + 1}`} className="w-full h-full object-cover" />
+                    {idx === 0 && (
+                      <span className="absolute top-1.5 left-1.5 px-2 py-0.5 bg-[#4F46E5] text-white text-[10px] font-bold rounded shadow-xs">
+                        Ảnh bìa
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(idx)}
+                      className="absolute top-1.5 right-1.5 w-6 h-6 bg-slate-900/70 hover:bg-rose-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+
+                {/* Nút Upload qua Presigned S3 */}
+                {images.length < 8 && (
+                  <div
+                    onClick={() => imageInputRef.current?.click()}
+                    className="aspect-square rounded-xl border-2 border-dashed border-slate-300 hover:border-[#4F46E5] hover:bg-[#f8faff] flex flex-col items-center justify-center p-3 text-center cursor-pointer transition-all"
+                  >
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleUploadImage}
+                      className="hidden"
+                    />
+                    {uploadingImage ? (
+                      <span className="text-[12px] text-[#4F46E5] font-semibold animate-pulse">
+                        Đang tải...
+                      </span>
+                    ) : (
+                      <>
+                        <span className="text-xl text-slate-400 mb-1">📷</span>
+                        <span className="text-[11px] font-bold text-slate-700">Tải ảnh lên</span>
+                        <span className="text-[9px] text-slate-400 mt-0.5">S3 Presigned</span>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 2: SKU Attributes */}
+        {step === 2 && (
+          <div className="space-y-6">
+            <div>
               <h3 className="text-[15px] font-bold text-slate-900 tracking-tight uppercase">
                 THUỘC TÍNH SKU
               </h3>
+              <p className="text-[12px] text-slate-500 mt-0.5">
+                Tạo thuộc tính linh hoạt theo từng ngành hàng — không giới hạn màu sắc hoặc kích thước.
+              </p>
             </div>
-            <p className="text-[12px] text-slate-500 mb-4">
-              Tạo thuộc tính linh hoạt theo từng ngành hàng — không giới hạn màu sắc hoặc kích thước.
-            </p>
 
             <div className="space-y-3">
               {attributes.map((attr) => (
@@ -183,10 +452,15 @@ export default function ProductEditorModal({ isOpen, onClose, onSave }) {
                   className="p-3.5 bg-slate-50/80 border border-slate-200 rounded-xl flex flex-wrap items-center justify-between gap-3"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-slate-400 cursor-move">⋮⋮</span>
+                    <span className="text-slate-400">⋮⋮</span>
                     <span className="font-bold text-slate-800 text-[13px]">
                       {attr.id} · {attr.name}
                     </span>
+                    {attr.display_as === 'COLOR_SWATCH' && (
+                      <span className="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-semibold">
+                        Màu sắc
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
@@ -199,7 +473,7 @@ export default function ProductEditorModal({ isOpen, onClose, onSave }) {
                         <button
                           type="button"
                           onClick={() => handleRemoveValue(attr.id, val)}
-                          className="text-slate-400 hover:text-rose-500 text-xs font-bold"
+                          className="text-slate-400 hover:text-rose-500 text-xs font-bold cursor-pointer"
                         >
                           ×
                         </button>
@@ -224,7 +498,7 @@ export default function ProductEditorModal({ isOpen, onClose, onSave }) {
                       <button
                         type="button"
                         onClick={() => handleAddValue(attr.id)}
-                        className="text-[11px] font-bold text-[#4F46E5] px-1 hover:underline"
+                        className="text-[11px] font-bold text-[#4F46E5] px-1 hover:underline cursor-pointer"
                       >
                         +
                       </button>
@@ -234,28 +508,32 @@ export default function ProductEditorModal({ isOpen, onClose, onSave }) {
               ))}
             </div>
 
-            <div className="mt-3 flex items-center justify-between text-[12px]">
+            <div className="flex items-center justify-between text-[12px] pt-2">
               <button
                 type="button"
-                onClick={() => {
-                  const newId = attributes.length + 1;
-                  setAttributes([...attributes, { id: newId, name: `Thuộc tính ${newId}`, values: ['Mặc định'] }]);
-                }}
-                className="font-bold text-[#4F46E5] hover:underline flex items-center gap-1"
+                onClick={() => setIsAddAttrModalOpen(true)}
+                className="font-bold text-[#4F46E5] hover:underline flex items-center gap-1 cursor-pointer"
               >
                 ＋ Thêm thuộc tính
               </button>
               <span className="text-slate-500 font-medium">
-                {attributes.length} thuộc tính · 18 tổ hợp SKU được tạo tự động
+                {attributes.length} thuộc tính · {generatedCombinations.length} tổ hợp SKU
               </span>
             </div>
           </div>
+        )}
 
-          {/* Section 3: SKU Matrix Table */}
-          <div className="pt-6 border-t border-slate-200">
-            <span className="text-[12px] font-bold uppercase tracking-wider text-slate-500 block mb-3">
-              BIẾN THỂ ĐA THUỘC TÍNH
-            </span>
+        {/* STEP 3: SKU Matrix Table */}
+        {step === 3 && (
+          <div className="space-y-4">
+            <div>
+              <span className="text-[12px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                BIẾN THỂ ĐA THUỘC TÍNH (SKU MATRIX)
+              </span>
+              <p className="text-[12px] text-slate-500">
+                Tự động sinh từ mọi tổ hợp thuộc tính. Thiết lập giá, tồn kho và bật/tắt từng biến thể.
+              </p>
+            </div>
 
             <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
               <table className="w-full text-left border-collapse text-[12px]">
@@ -276,22 +554,24 @@ export default function ProductEditorModal({ isOpen, onClose, onSave }) {
                       <td className="py-3 px-4">
                         <input
                           type="text"
-                          defaultValue={sku.price}
-                          className="w-28 px-2 py-1 border border-slate-200 rounded text-slate-900 font-semibold focus:outline-none focus:border-[#4F46E5]"
+                          value={sku.price}
+                          onChange={(e) => handleUpdateSkuPrice(sku.id, e.target.value)}
+                          className="w-28 px-2.5 py-1.5 border border-slate-300 rounded-lg text-slate-900 font-semibold focus:outline-none focus:border-[#4F46E5]"
                         />
                       </td>
                       <td className="py-3 px-4">
                         <input
                           type="number"
-                          defaultValue={sku.stock}
-                          className="w-16 px-2 py-1 border border-slate-200 rounded text-slate-900 font-semibold focus:outline-none focus:border-[#4F46E5]"
+                          value={sku.stock}
+                          onChange={(e) => handleUpdateSkuStock(sku.id, e.target.value)}
+                          className="w-16 px-2.5 py-1.5 border border-slate-300 rounded-lg text-slate-900 font-semibold focus:outline-none focus:border-[#4F46E5]"
                         />
                       </td>
                       <td className="py-3 px-4 text-center">
                         <button
                           type="button"
                           onClick={() => handleToggleSku(sku.id)}
-                          className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] transition-colors ${
+                          className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] transition-colors cursor-pointer ${
                             sku.enabled
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : 'bg-slate-100 text-slate-400 border border-slate-200'
@@ -305,57 +585,249 @@ export default function ProductEditorModal({ isOpen, onClose, onSave }) {
                 </tbody>
               </table>
               <div className="p-3 bg-slate-50 border-t border-slate-200 text-[11px] text-slate-500 text-center font-medium">
-                Hiển thị 4 / 18 biến thể · <span className="text-[#4F46E5] font-semibold cursor-pointer">Mở rộng toàn bộ</span>
+                Tổng cộng: <strong className="text-slate-900">{skus.length}</strong> biến thể SKU
               </div>
             </div>
           </div>
+        )}
 
-          {/* SLA & Review Guarantee */}
-          <div className="p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-xl text-[12px] text-emerald-800 font-medium flex items-center gap-2">
-            <span>✓</span>
-            <span>Không cần duyệt — sản phẩm hiển thị ngay sau khi đăng bán.</span>
-          </div>
-
-          {notification && (
-            <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-[#4F46E5] font-semibold text-center animate-in fade-in">
-              ✓ {notification}
+        {/* STEP 4: Shipping & SLA */}
+        {step === 4 && (
+          <div className="space-y-6">
+            <span className="text-[12px] font-bold uppercase tracking-wider text-slate-500 block">
+              VẬN CHUYỂN & HÌNH ẢNH SẢN PHẨM
+            </span>
+            <div className="p-5 border-2 border-dashed border-slate-200 rounded-xl text-center space-y-2 bg-slate-50/50">
+              <span className="text-3xl block">📷</span>
+              <div className="text-[13px] font-semibold text-slate-700">
+                Kéo thả hình ảnh bìa và thư viện sản phẩm vào đây
+              </div>
+              <div className="text-[11px] text-slate-400">
+                Hỗ trợ JPG, PNG, WEBP tối đa 5MB. Ảnh đầu tiên sẽ là ảnh bìa đại diện.
+              </div>
             </div>
+
+            <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-xl text-[12px] text-emerald-800 font-medium flex items-center gap-2">
+              <span>✓</span>
+              <span>Không cần duyệt — sản phẩm hiển thị ngay sau khi người bán đăng bán.</span>
+            </div>
+          </div>
+        )}
+
+        {notification && (
+          <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-[#4F46E5] font-semibold text-center animate-in fade-in">
+            ✓ {notification}
+          </div>
+        )}
+      </div>
+
+      {/* Footer Actions */}
+      <div className="px-8 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+        <button
+          type="button"
+          disabled={loading}
+          onClick={handleSaveDraft}
+          className="px-5 py-2.5 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-lg font-semibold text-[13px] transition-colors cursor-pointer disabled:opacity-50"
+        >
+          Lưu bản nháp
+        </button>
+        <div className="flex items-center gap-3">
+          {step > 1 && (
+            <button
+              type="button"
+              onClick={() => setStep(step - 1)}
+              className="px-4 py-2 text-slate-600 hover:text-slate-900 text-[13px] font-semibold cursor-pointer"
+            >
+              ← Quay lại
+            </button>
+          )}
+          {step < 4 ? (
+            <button
+              type="button"
+              onClick={() => setStep(step + 1)}
+              className="px-6 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg font-bold text-[13px] shadow-sm transition-colors cursor-pointer"
+            >
+              Tiếp theo →
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={loading}
+              onClick={handlePublish}
+              className="px-6 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg font-bold text-[13px] shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+            >
+              {loading ? 'Đang xử lý...' : 'Đăng bán ngay'}
+            </button>
           )}
         </div>
+      </div>
 
-        {/* Footer Actions */}
-        <div className="px-8 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2.5 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-lg font-semibold text-[13px] transition-colors"
-          >
-            Lưu bản nháp
-          </button>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-slate-500 hover:text-slate-800 text-[13px] font-semibold"
-            >
-              Hủy
-            </button>
-            <button
-              type="button"
-              onClick={handlePublish}
-              className="px-6 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg font-bold text-[13px] shadow-sm transition-colors"
-            >
-              Đăng bán ngay
-            </button>
+      {/* Overlay / Add SKU attribute Modal (Khớp Penpot) */}
+      {isAddAttrModalOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-2xs">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-[520px] p-6 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h4 className="text-[16px] font-bold text-slate-900 uppercase">
+                THÊM THUỘC TÍNH SKU
+              </h4>
+              <button
+                type="button"
+                onClick={() => setIsAddAttrModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 font-bold text-lg cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-[12px] font-bold text-slate-700 mb-1">
+                Tên thuộc tính *
+              </label>
+              <input
+                type="text"
+                value={newAttrName}
+                placeholder="Ví dụ: Chất liệu, Phiên bản, Kết nối..."
+                onChange={(e) => setNewAttrName(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:border-[#4F46E5]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[12px] font-bold text-slate-700 mb-1">
+                Kiểu hiển thị
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'PLAIN', label: 'Văn bản' },
+                  { id: 'COLOR_SWATCH', label: 'Màu sắc' },
+                  { id: 'IMAGE_THUMB', label: 'Hình ảnh' }
+                ].map(type => (
+                  <button
+                    key={type.id}
+                    type="button"
+                    onClick={() => setNewAttrType(type.id)}
+                    className={`py-2 px-3 text-[12px] font-semibold rounded-lg border cursor-pointer ${
+                      newAttrType === type.id 
+                        ? 'bg-[#f4f7ff] border-[#4F46E5] text-[#4F46E5]' 
+                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[12px] font-bold text-slate-700 mb-1">
+                Giá trị thuộc tính *
+              </label>
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={tempValueInput}
+                  placeholder="Nhập giá trị rồi nhấn Enter"
+                  onChange={(e) => setTempValueInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (tempValueInput.trim()) {
+                        setNewAttrValues([...newAttrValues, tempValueInput.trim()]);
+                        setTempValueInput('');
+                      }
+                    }
+                  }}
+                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:border-[#4F46E5]"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (tempValueInput.trim()) {
+                      setNewAttrValues([...newAttrValues, tempValueInput.trim()]);
+                      setTempValueInput('');
+                    }
+                  }}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-bold text-[12px] rounded-lg cursor-pointer transition-colors"
+                >
+                  Thêm
+                </button>
+              </div>
+
+              {/* Tag list */}
+              <div className="flex flex-wrap gap-2 pt-1">
+                {newAttrValues.map((val, idx) => (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 border border-slate-200 rounded-lg text-[12px] font-medium text-slate-800 shadow-2xs"
+                  >
+                    <span>{val}</span>
+                    <button
+                      type="button"
+                      onClick={() => setNewAttrValues(newAttrValues.filter((_, i) => i !== idx))}
+                      className="text-slate-400 hover:text-rose-500 font-bold cursor-pointer"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="text-[11px] text-slate-500">
+              ✓ SKU matrix sẽ tự tạo lại theo mọi tổ hợp thuộc tính.
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsAddAttrModalOpen(false)}
+                className="px-4 py-2 text-slate-600 text-[13px] font-semibold cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleAddNewAttribute}
+                disabled={!newAttrName.trim() || newAttrValues.length === 0}
+                className="px-5 py-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold text-[13px] rounded-lg cursor-pointer disabled:opacity-50"
+              >
+                Thêm thuộc tính
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+    </div>
+  );
+}
+
+ProductEditorForm.propTypes = {
+  product: PropTypes.object,
+  onClose: PropTypes.func.isRequired,
+  onSave: PropTypes.func,
+};
+
+/**
+ * Outer Modal Wrapper: Kiểm tra isOpen và mount form với key để reset state sạch sẽ.
+ */
+export default function ProductEditorModal({ isOpen, product = null, onClose, onSave }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+      <ProductEditorForm
+        key={product ? (product.id || product.productId) : 'new-product'}
+        product={product}
+        onClose={onClose}
+        onSave={onSave}
+      />
     </div>
   );
 }
 
 ProductEditorModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
+  product: PropTypes.object,
   onClose: PropTypes.func.isRequired,
   onSave: PropTypes.func,
 };

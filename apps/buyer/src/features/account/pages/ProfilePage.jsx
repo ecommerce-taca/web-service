@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import Button from '../../../../../../shared/ui-components/src/components/Button';
-import Input from '../../../../../../shared/ui-components/src/components/Input';
+import { Button, Input } from '@taca/ui-components';
 import AddressCard from '../components/AddressCard';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { authApi } from '../../auth/services/auth.api';

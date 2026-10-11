@@ -2,9 +2,9 @@ import PropTypes from 'prop-types';
 
 export default function MetricCard({ label, value, trend, isPositive, isWarning, subtitle }) {
   const getTrendColor = () => {
-    if (isWarning) return 'text-amber-600 bg-amber-50';
-    if (isPositive) return 'text-emerald-600 bg-emerald-50';
-    return 'text-slate-500 bg-slate-50';
+    if (isWarning) return 'text-amber-700 bg-amber-50 border-amber-200';
+    if (isPositive) return 'text-emerald-700 bg-emerald-50 border-emerald-200';
+    return 'text-slate-600 bg-slate-50 border-slate-200';
   };
 
   return (
@@ -19,7 +19,7 @@ export default function MetricCard({ label, value, trend, isPositive, isWarning,
         <div className="mt-2.5 flex items-center gap-1.5">
           {trend && (
             <span
-              className={`text-[11px] font-semibold px-2 py-0.5 rounded ${getTrendColor()}`}
+              className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${getTrendColor()}`}
             >
               {trend}
             </span>

@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import Button from '../../../components/ui/Button';
+import { Button } from '@taca/ui-components';
 
 const ProductShopCard = ({ shop }) => {
   const shopUrl = `/shop/${shop.id || 1}`;

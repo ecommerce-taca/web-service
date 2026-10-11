@@ -20,7 +20,7 @@ export default defineConfig({
     cors: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8081',
+        target: process.env.VITE_GATEWAY_TARGET || 'http://localhost:8081',
         changeOrigin: true,
       }
     }
