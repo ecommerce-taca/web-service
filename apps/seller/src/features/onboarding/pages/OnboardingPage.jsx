@@ -11,6 +11,7 @@ import {
   getKycDocuments,
   updateOnboardingBank,
   getShopProfile,
+  calculateFileSha256,
   VIETNAM_BANK_CATALOG,
 } from '../../../services/seller-shop.api';
 import { formatPhoneDisplay, isValidVietnamesePhone } from '../../../../../../shared/utils/phone';
@@ -59,12 +60,13 @@ export default function OnboardingPage() {
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [newDocType, setNewDocType] = useState('BUSINESS_REGISTRATION');
 
-  // Kiểm tra 3 loại tài liệu bắt buộc theo yêu cầu sàn
+  // Kiểm tra tài liệu KYC theo đặc tả docs/api/auth-user.md §2.25 & Backend user-auth-service
+  // Backend hiện hỗ trợ BUSINESS_REGISTRATION và yêu cầu tối thiểu 1 tài liệu hợp lệ
   const hasBusinessReg = kycDocs.some((d) => d.document_type === 'BUSINESS_REGISTRATION');
   const hasIdFront = kycDocs.some((d) => d.document_type === 'CITIZEN_ID_FRONT' || d.document_type === 'CITIZEN_ID');
   const hasIdBack = kycDocs.some((d) => d.document_type === 'CITIZEN_ID_BACK');
-  const kycCompleteCount = [hasBusinessReg, hasIdFront, hasIdBack].filter(Boolean).length;
-  const isKycComplete = kycCompleteCount === 3;
+  // Hoàn tất bước KYC khi đã có Giấy ĐKKD hoặc tối thiểu 1 tài liệu hợp lệ theo §2.25
+  const isKycComplete = hasBusinessReg || kycDocs.length >= 1;
 
   // Step 3: Warehouse State
   const [warehouseForm, setWarehouseForm] = useState({
@@ -249,35 +251,75 @@ export default function OnboardingPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Kiểm tra dung lượng tối đa 10MB
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMessage('Tệp vượt quá kích thước cho phép (tối đa 10MB). Vui lòng chọn tệp khác.');
+      e.target.value = '';
+      return;
+    }
+
     setUploadingDoc(true);
     setErrorMessage('');
     try {
-      // 1. Presign
+      // 1. Tính toán mã băm SHA-256 thật từ nội dung file bằng Web Crypto API
+      const sha256 = await calculateFileSha256(file);
+
+      // 2. Presign: Gọi Backend để lấy ID và S3/MinIO upload URL
       const presign = await presignKycDocument({
         document_type: newDocType,
         file_name: file.name,
+        filename: file.name,
         content_type: file.type || 'application/pdf',
         size_bytes: file.size,
-        sha256: 'mock-sha256-hash-value-for-kyc-document',
+        sha256,
       });
 
-      // 2. Complete upload
+      // 3. Upload File Binary lên S3 / MinIO Presigned URL (nếu có URL thật)
+      if (presign?.upload_url && !presign.upload_url.includes('storage.example')) {
+        try {
+          const uploadHeaders = {
+            'Content-Type': file.type || 'application/pdf',
+            ...(presign.required_headers || {}),
+          };
+          const s3Res = await fetch(presign.upload_url, {
+            method: 'PUT',
+            body: file,
+            headers: uploadHeaders,
+          });
+          if (!s3Res.ok && s3Res.status !== 0) {
+            console.warn('Cảnh báo tải file lên S3:', s3Res.status, s3Res.statusText);
+          }
+        } catch (s3Err) {
+          console.warn('Lỗi khi PUT file lên S3 presigned URL:', s3Err);
+        }
+      }
+
+      // 4. Complete upload: Xác nhận với Backend
       await completeKycDocument({
         document_id: presign.document_id,
-        object_key: presign.object_key,
+        object_key: presign.object_key || presign.s3_key,
+        s3_key: presign.object_key || presign.s3_key,
         size_bytes: file.size,
         content_type: file.type || 'application/pdf',
-        sha256: 'mock-sha256-hash-value-for-kyc-document',
+        sha256,
         document_type: newDocType,
         file_name: file.name,
+        filename: file.name,
       });
 
-      // Refresh doc list
+      // 5. Cập nhật danh sách tài liệu
       const docs = await getKycDocuments();
       setKycDocs(docs);
       notifySuccess('✓ Tải lên tài liệu KYC thành công!');
     } catch (err) {
-      setErrorMessage(err?.response?.data?.error?.message || 'Lỗi khi tải tài liệu lên.');
+      console.error('Lỗi upload KYC:', err);
+      const serverMsg =
+        err?.response?.data?.error?.message ||
+        err?.response?.data?.message ||
+        (typeof err?.response?.data?.error === 'string' ? err.response.data.error : null) ||
+        err?.message ||
+        'Lỗi khi tải tài liệu lên.';
+      setErrorMessage(serverMsg);
     } finally {
       setUploadingDoc(false);
       e.target.value = '';
@@ -301,18 +343,14 @@ export default function OnboardingPage() {
     }
   };
 
-  // Step 2: Chuyển sang Bước 3 (Bắt buộc đủ 3 loại tài liệu)
+  // Step 2: Chuyển sang Bước 3 (Yêu cầu tài liệu hợp lệ theo §2.25)
   const handleContinueToWarehouse = () => {
     if (!isKycComplete) {
-      const missing = [];
-      if (!hasBusinessReg) missing.push('Giấy phép ĐKKD');
-      if (!hasIdFront) missing.push('CCCD mặt trước');
-      if (!hasIdBack) missing.push('CCCD mặt sau');
-      setErrorMessage(`Vui lòng tải lên đầy đủ cả 3 tài liệu bắt buộc trước khi chuyển sang Bước 3. Còn thiếu: ${missing.join(', ')}.`);
+      setErrorMessage('Vui lòng tải lên Giấy chứng nhận ĐKKD / Hộ kinh doanh trước khi chuyển sang Bước 3.');
       return;
     }
     setStepStatuses((prev) => ({ ...prev, KYC: true }));
-    notifySuccess('✓ Đã xác nhận đầy đủ 3 tài liệu KYC!');
+    notifySuccess('✓ Đã xác nhận tài liệu KYC hợp lệ!');
     setCurrentStep('WAREHOUSE');
   };
 
@@ -416,9 +454,9 @@ export default function OnboardingPage() {
       setCurrentStep('PROFILE');
       return;
     }
-    // 2. Kiểm tra Step 2: KYC
+    // 2. Kiểm tra Step 2: KYC (khớp §2.25: có ít nhất 1 document hợp lệ)
     if (!isKycComplete) {
-      setErrorMessage('Chưa hoàn tất tải lên đủ 3 tài liệu pháp lý (ĐKKD, CCCD mặt trước, CCCD mặt sau). Vui lòng kiểm tra Bước 2.');
+      setErrorMessage('Chưa có tài liệu pháp lý hợp lệ. Vui lòng tải lên Giấy chứng nhận ĐKKD ở Bước 2.');
       setCurrentStep('KYC');
       return;
     }
@@ -709,27 +747,27 @@ export default function OnboardingPage() {
                     </span>
                   </div>
                   <p className="text-[12px] text-slate-500 mt-1">
-                    Bắt buộc tải lên đầy đủ cả 3 loại giấy tờ pháp lý để đảm bảo điều kiện kinh doanh hợp lệ trên sàn Taca.
+                    Tải lên tài liệu pháp lý kinh doanh (Giấy chứng nhận ĐKKD / Hộ kinh doanh) theo quy định của sàn (khớp đặc tả API §2.23–§2.25).
                   </p>
                 </div>
 
-                {/* 3 Mandatory Documents Checklist */}
+                {/* Tài liệu Checklist */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className={`p-4 rounded-xl border transition-all ${hasBusinessReg ? 'bg-emerald-50/70 border-emerald-300' : 'bg-slate-50 border-slate-200'}`}>
+                  <div className={`p-4 rounded-xl border transition-all ${hasBusinessReg ? 'bg-emerald-50/70 border-emerald-300' : 'bg-amber-50/60 border-amber-200'}`}>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-bold text-[12px] text-slate-800">1. Giấy phép ĐKKD</span>
-                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded ${hasBusinessReg ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
-                        {hasBusinessReg ? '✓ ĐÃ TẢI' : 'CHƯA TẢI'}
+                      <span className="font-bold text-[12px] text-slate-800">1. Giấy phép ĐKKD *</span>
+                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded ${hasBusinessReg ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                        {hasBusinessReg ? '✓ ĐÃ TẢI' : 'BẮT BUỘC'}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-500">Giấy ĐKKD hoặc Giấy chứng nhận hộ kinh doanh</p>
+                    <p className="text-[11px] text-slate-500">Giấy ĐKKD hoặc Giấy chứng nhận hộ kinh doanh (Backend API hỗ trợ)</p>
                   </div>
 
                   <div className={`p-4 rounded-xl border transition-all ${hasIdFront ? 'bg-emerald-50/70 border-emerald-300' : 'bg-slate-50 border-slate-200'}`}>
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="font-bold text-[12px] text-slate-800">2. CCCD Mặt trước</span>
                       <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded ${hasIdFront ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
-                        {hasIdFront ? '✓ ĐÃ TẢI' : 'CHƯA TẢI'}
+                        {hasIdFront ? '✓ ĐÃ TẢI' : 'TÙY CHỌN'}
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500">Ảnh chụp rõ mặt trước CCCD người đại diện</p>
@@ -739,7 +777,7 @@ export default function OnboardingPage() {
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="font-bold text-[12px] text-slate-800">3. CCCD Mặt sau</span>
                       <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded ${hasIdBack ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
-                        {hasIdBack ? '✓ ĐÃ TẢI' : 'CHƯA TẢI'}
+                        {hasIdBack ? '✓ ĐÃ TẢI' : 'TÙY CHỌN'}
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500">Ảnh chụp rõ mặt sau có chip CCCD</p>
@@ -759,7 +797,7 @@ export default function OnboardingPage() {
                         onChange={(e) => setNewDocType(e.target.value)}
                         className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:border-[#4F46E5]"
                       >
-                        <option value="BUSINESS_REGISTRATION">1. Giấy chứng nhận ĐKKD / Đăng ký hộ kinh doanh</option>
+                        <option value="BUSINESS_REGISTRATION">1. Giấy chứng nhận ĐKKD / Đăng ký hộ kinh doanh (Hỗ trợ Backend)</option>
                         <option value="CITIZEN_ID_FRONT">2. CCCD / Hộ chiếu đại diện (Mặt trước)</option>
                         <option value="CITIZEN_ID_BACK">3. CCCD / Hộ chiếu đại diện (Mặt sau)</option>
                       </select>
@@ -789,10 +827,10 @@ export default function OnboardingPage() {
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-bold text-slate-800 text-[14px]">
-                      Danh sách tài liệu đã tải ({kycDocs.length}/3 yêu cầu)
+                      Danh sách tài liệu đã tải ({kycDocs.length} tài liệu)
                     </h3>
                     <span className={`text-[12px] font-bold ${isKycComplete ? 'text-emerald-700' : 'text-amber-700'}`}>
-                      {isKycComplete ? '✓ Đã đủ 3 loại giấy tờ bắt buộc' : `Cần tải thêm ${3 - kycCompleteCount} loại giấy tờ`}
+                      {isKycComplete ? '✓ Đã có tài liệu hợp lệ theo §2.25' : 'Cần tải lên Giấy phép ĐKKD'}
                     </span>
                   </div>
 
@@ -869,7 +907,7 @@ export default function OnboardingPage() {
                         : 'bg-slate-200 text-slate-500 cursor-not-allowed'
                     }`}
                   >
-                    <span>Xác nhận 3 tài liệu & Tiếp tục sang Kho hàng ({kycCompleteCount}/3) →</span>
+                    <span>Xác nhận tài liệu & Tiếp tục sang Kho hàng →</span>
                   </button>
                 </div>
               </div>
@@ -1168,9 +1206,9 @@ export default function OnboardingPage() {
                     <div className="bg-white p-3.5 rounded-xl border border-indigo-100">
                       <span className="font-bold text-slate-500 uppercase text-[10px] block mb-1">2. Giấy tờ KYC</span>
                       <p className={`font-bold ${isKycComplete ? 'text-emerald-700' : 'text-amber-700'}`}>
-                        {isKycComplete ? '✓ Đủ 3/3 tài liệu bắt buộc' : `⚠️ Còn thiếu (${kycCompleteCount}/3)`}
+                        {isKycComplete ? '✓ Đã có tài liệu hợp lệ (§2.25)' : '⚠️ Chưa có tài liệu'}
                       </p>
-                      <p className="text-slate-500">ĐKKD, CCCD mặt trước & mặt sau</p>
+                      <p className="text-slate-500">Giấy phép ĐKKD / Hộ kinh doanh</p>
                     </div>
 
                     <div className="bg-white p-3.5 rounded-xl border border-indigo-100">

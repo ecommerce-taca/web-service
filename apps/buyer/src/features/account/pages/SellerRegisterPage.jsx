@@ -2,6 +2,13 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { registerSeller, getSellerRegistrationStatus, fetchSellerRegistrationStatus } from '../services/seller-register.api';
 
+const getSellerUrl = (path = '/seller') => {
+  if (typeof window !== 'undefined' && window.location.port === '5174') {
+    return `http://${window.location.hostname}:5173${path}`;
+  }
+  return path;
+};
+
 export default function SellerRegisterPage() {
   const { user, openAuthModal } = useAuth();
   const [form, setForm] = useState({
@@ -201,7 +208,7 @@ export default function SellerRegisterPage() {
             Tiếp tục đến trang Onboarding để hoàn tất các bước và gửi duyệt.
           </span>
           <a
-            href="/seller/onboarding"
+            href={getSellerUrl('/seller/onboarding')}
             className="px-6 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl font-bold text-[13px] shadow-sm transition-colors no-underline inline-flex items-center gap-1.5"
           >
             <span>Đến Kênh Người Bán hoàn tất hồ sơ →</span>
@@ -305,7 +312,7 @@ export default function SellerRegisterPage() {
             Truy cập trang Onboarding để xem lại bản nháp, thay thế giấy tờ cần thiết và gửi lại thẩm định.
           </span>
           <a
-            href="/seller/onboarding"
+            href={getSellerUrl('/seller/onboarding')}
             className="px-6 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl font-bold text-[13px] shadow-sm transition-colors no-underline inline-flex items-center gap-1.5"
           >
             <span>Vào Kênh Người Bán chỉnh sửa & nộp lại →</span>
@@ -336,7 +343,7 @@ export default function SellerRegisterPage() {
             </p>
           </div>
           <a
-            href="/seller"
+            href={getSellerUrl('/seller')}
             className="inline-flex items-center justify-center gap-2 px-8 py-3 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl font-bold text-[13px] shadow-sm transition-colors no-underline"
           >
             <span>Vào Kênh Người Bán →</span>
