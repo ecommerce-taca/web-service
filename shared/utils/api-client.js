@@ -83,11 +83,20 @@ apiClient.interceptors.response.use(
           refresh_token: refreshToken
         })
         .then(({ data }) => {
-          const newAccessToken = data.data.tokens.access_token;
-          const newRefreshToken = data.data.tokens.refresh_token;
+          // Hỗ trợ cả 2 chuẩn response envelope: { data: { tokens: { access_token } } } và { tokens: { ... } }
+          const payload = data?.data || data;
+          const tokens = payload?.tokens || payload;
+          const newAccessToken = tokens?.access_token || data?.access_token;
+          const newRefreshToken = tokens?.refresh_token || data?.refresh_token || refreshToken;
+
+          if (!newAccessToken) {
+            throw new Error('AUTH_REFRESH_TOKEN_INVALID: Không tìm thấy access_token trong response.');
+          }
 
           localStorage.setItem('taca_access_token', newAccessToken);
-          localStorage.setItem('taca_refresh_token', newRefreshToken);
+          if (newRefreshToken) {
+            localStorage.setItem('taca_refresh_token', newRefreshToken);
+          }
 
           originalRequest.headers['Authorization'] = 'Bearer ' + newAccessToken;
           

@@ -31,6 +31,31 @@ const MOCK_VOUCHERS = [
     status: 'ACTIVE'
   },
   {
+    id: 'SHOP_DISCOUNT_APPLE300K',
+    code: 'APPLE300K',
+    title: 'Giảm 300.000 ₫',
+    description: 'Đơn tối thiểu 10.000.000 ₫ (Cửa hàng)',
+    discount_amount: 300000,
+    min_order_value: 10000000,
+    valid_until: '2026-12-31T23:59:59Z',
+    type: 'DISCOUNT',
+    provider: 'SHOP',
+    shop_name: 'Apple Flagship Store',
+    status: 'ACTIVE'
+  },
+  {
+    id: 'TACA_DISCOUNT_TACA200K',
+    code: 'TACA200K',
+    title: 'Giảm 200.000 ₫ toàn sàn',
+    description: 'Đơn tối thiểu 5.000.000 ₫',
+    discount_amount: 200000,
+    min_order_value: 5000000,
+    valid_until: '2026-12-31T23:59:59Z',
+    type: 'DISCOUNT',
+    provider: 'TACA',
+    status: 'ACTIVE'
+  },
+  {
     id: 'SHOP_DISCOUNT_1',
     code: 'APPLE500',
     title: 'Giảm 500k',

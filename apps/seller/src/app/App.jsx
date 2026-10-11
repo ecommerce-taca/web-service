@@ -6,6 +6,7 @@ import OrdersPage from '../features/orders/pages/OrdersPage';
 import VouchersPage from '../features/vouchers/pages/VouchersPage';
 import FinancePage from '../features/finance/pages/FinancePage';
 import SettingsPage from '../features/settings/pages/SettingsPage';
+import OnboardingPage from '../features/onboarding/pages/OnboardingPage';
 
 function AppRoutes() {
   return (
@@ -17,6 +18,7 @@ function AppRoutes() {
         <Route path="vouchers" element={<VouchersPage />} />
         <Route path="finance" element={<FinancePage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="onboarding" element={<OnboardingPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

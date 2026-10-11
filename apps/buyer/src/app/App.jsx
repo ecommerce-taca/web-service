@@ -20,10 +20,12 @@ import VouchersPage from '../features/account/pages/VouchersPage';
 import WishlistPage from '../features/account/pages/WishlistPage';
 import CartPage from '../features/cart/pages/CartPage';
 import CheckoutPage from '../features/checkout/pages/CheckoutPage';
+import ScrollToTop from '../components/common/ScrollToTop';
 
 function AppContent() {
   return (
     <>
+      <ScrollToTop />
       <AuthModal />
       <Routes>
         <Route element={<BuyerLayout />}>

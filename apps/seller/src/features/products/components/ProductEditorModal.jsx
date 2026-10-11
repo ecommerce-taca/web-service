@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import sellerProductApi from '../services/seller-product.api';
 
@@ -68,6 +69,63 @@ function ProductEditorForm({ product, onClose, onSave }) {
     return combos;
   }, [attributes]);
 
+  // Hàm sinh danh sách SKU từ các tổ hợp thuộc tính Cartesian Product
+  const generateSkusFromCombos = (combos, existingSkus = [], currentSpuCode = 'SPU') => {
+    if (!combos || combos.length === 0) {
+      return [
+        {
+          id: 'sku-default',
+          code: `${currentSpuCode || 'SPU'}-DEFAULT`,
+          name: 'Tiêu chuẩn',
+          price: '29.490.000',
+          stock: 50,
+          enabled: true,
+          attributes: {}
+        }
+      ];
+    }
+
+    return combos.map((combo, idx) => {
+      // Tìm SKU cũ khớp chính xác tổ hợp thuộc tính
+      const matchOld = existingSkus.find(old => {
+        const oldAttrs = old.attributes || {};
+        const comboKeys = Object.keys(combo);
+        const oldKeys = Object.keys(oldAttrs);
+        if (comboKeys.length !== oldKeys.length) return false;
+        return comboKeys.every(k => oldAttrs[k] === combo[k]);
+      });
+
+      if (matchOld) {
+        return matchOld;
+      }
+
+      // Tạo mã SKU gợi ý từ spuCode + combo values
+      const cleanParts = Object.values(combo).map(val =>
+        String(val)
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-zA-Z0-9]/g, '')
+          .toUpperCase()
+      ).filter(Boolean);
+
+      const prefix = (currentSpuCode || 'SKU').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+      const code = [prefix, ...cleanParts].join('-') || `SKU-${idx + 1}`;
+      const name = Object.values(combo).join(' / ');
+      const defaultPrice = existingSkus[0]?.price || '29.490.000';
+      const defaultStock = existingSkus[0]?.stock ?? 20;
+
+      return {
+        id: `sku-gen-${idx + 1}-${Date.now().toString(36)}`,
+        code,
+        name,
+        price: defaultPrice,
+        stock: defaultStock,
+        enabled: true,
+        attributes: { ...combo }
+      };
+    });
+  };
+
   // Khởi tạo danh sách SKU
   const [skus, setSkus] = useState(() => {
     if (product?.skus && product.skus.length > 0) {
@@ -82,12 +140,60 @@ function ProductEditorForm({ product, onClose, onSave }) {
       }));
     }
     return [
-      { id: 'sku-1', code: 'IP16-256-NAT-WF', name: '256GB / Titan tự nhiên / Wi-Fi', price: '29.490.000', stock: 38, enabled: true, attributes: {} },
-      { id: 'sku-2', code: 'IP16-256-NAT-5G', name: '256GB / Titan tự nhiên / 5G', price: '31.490.000', stock: 24, enabled: true, attributes: {} },
-      { id: 'sku-3', code: 'IP16-512-BLK-WF', name: '512GB / Titan đen / Wi-Fi', price: '35.990.000', stock: 18, enabled: true, attributes: {} },
-      { id: 'sku-4', code: 'IP16-512-BLK-5G', name: '512GB / Titan đen / 5G', price: '37.990.000', stock: 12, enabled: true, attributes: {} },
+      { id: 'sku-1', code: 'IP16-256-NAT-WF', name: '256GB / Titan tự nhiên / Wi-Fi', price: '29.490.000', stock: 38, enabled: true, attributes: { 'Dung lượng': '256GB', 'Màu sắc': 'Titan tự nhiên', 'Kết nối': 'Wi-Fi' } },
+      { id: 'sku-2', code: 'IP16-256-NAT-5G', name: '256GB / Titan tự nhiên / 5G', price: '31.490.000', stock: 24, enabled: true, attributes: { 'Dung lượng': '256GB', 'Màu sắc': 'Titan tự nhiên', 'Kết nối': '5G' } },
+      { id: 'sku-3', code: 'IP16-512-BLK-WF', name: '512GB / Titan đen / Wi-Fi', price: '35.990.000', stock: 18, enabled: true, attributes: { 'Dung lượng': '512GB', 'Màu sắc': 'Titan đen', 'Kết nối': 'Wi-Fi' } },
+      { id: 'sku-4', code: 'IP16-512-BLK-5G', name: '512GB / Titan đen / 5G', price: '37.990.000', stock: 12, enabled: true, attributes: { 'Dung lượng': '512GB', 'Màu sắc': 'Titan đen', 'Kết nối': '5G' } },
     ];
   });
+
+  // State hỗ trợ cập nhật hàng loạt cho SKU
+  const [bulkPriceInput, setBulkPriceInput] = useState('');
+  const [bulkStockInput, setBulkStockInput] = useState('');
+
+  const handleUpdateSkuCode = (skuId, val) => {
+    setSkus(skus.map(s => s.id === skuId ? { ...s, code: val } : s));
+  };
+
+  const handleRegenerateSkus = () => {
+    const newSkus = generateSkusFromCombos(generatedCombinations, skus, spuCode);
+    setSkus(newSkus);
+    setNotification(`✓ Đã sinh lại ${newSkus.length} SKU từ ${generatedCombinations.length} tổ hợp thuộc tính!`);
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  const handleApplyBulkPrice = () => {
+    if (!bulkPriceInput.trim()) return;
+    const clean = bulkPriceInput.replace(/\D/g, '');
+    if (!clean) return;
+    const formatted = Number(clean).toLocaleString('vi-VN');
+    setSkus(skus.map(s => ({ ...s, price: formatted })));
+    setNotification('✓ Đã áp dụng giá bán cho tất cả SKU!');
+    setTimeout(() => setNotification(null), 2500);
+  };
+
+  const handleApplyBulkStock = () => {
+    const num = Number(bulkStockInput);
+    if (isNaN(num)) return;
+    setSkus(skus.map(s => ({ ...s, stock: num })));
+    setNotification('✓ Đã áp dụng số lượng tồn kho cho tất cả SKU!');
+    setTimeout(() => setNotification(null), 2500);
+  };
+
+  const handleToggleAllSkus = (enable) => {
+    setSkus(skus.map(s => ({ ...s, enabled: enable })));
+  };
+
+  const handleNextStep = () => {
+    if (step === 2) {
+      // Khi từ bước 2 sang bước 3: tự động sinh lại bảng SKU nếu chưa có hoặc tổ hợp thay đổi
+      if (generatedCombinations.length > 0 && skus.length !== generatedCombinations.length) {
+        const synched = generateSkusFromCombos(generatedCombinations, skus, spuCode);
+        setSkus(synched);
+      }
+    }
+    setStep(step + 1);
+  };
 
   const handleAddValue = (attrId) => {
     const val = (newValueInputs[attrId] || '').trim();
@@ -177,24 +283,70 @@ function ProductEditorForm({ product, onClose, onSave }) {
 
     try {
       setLoading(true);
+      const targetId = product?.id || product?.productId || `spu-${Date.now()}`;
+
+      const formattedSkus = skus.map(s => ({
+        sku_code: s.code?.trim() || `SKU-${s.id}`,
+        name: s.name,
+        attributes: s.attributes || {},
+        price: {
+          base_price: Number(String(s.price).replace(/\D/g, '')) || 0,
+          sale_price: Number(String(s.price).replace(/\D/g, '')) || 0,
+          currency: 'VND'
+        },
+        stock_display: Number(s.stock) || 0,
+        tax_rate_bps: 1000,
+        status: s.enabled ? 'ACTIVE' : 'INACTIVE'
+      }));
+
+      const prices = formattedSkus.map(s => s.price.sale_price).filter(p => p > 0);
+      const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+      const maxPrice = prices.length > 0 ? Math.max(...prices) : minPrice;
+
+      const attrDefs = attributes.map(a => ({
+        name: a.name,
+        display_as: a.display_as || 'PLAIN',
+        values: a.values || []
+      }));
+
       if (product) {
-        await sellerProductApi.updateProduct(product.id || product.productId, {
-          title: spuName,
-          slug: spuCode.toLowerCase(),
-          brand,
-          description,
+        await sellerProductApi.updateProduct(targetId, {
+          title: spuName.trim(),
+          spu_code: spuCode.trim(),
+          slug: spuCode.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          brand: brand.trim(),
+          primary_category_id: category,
+          description: description.trim(),
           images,
+          price_summary: { min_price: minPrice, max_price: maxPrice, currency: 'VND' },
+          version: product.version || 1
+        });
+        await sellerProductApi.replaceSkus(targetId, {
+          attribute_definitions: attrDefs,
+          skus: formattedSkus,
           version: product.version || 1
         });
       } else {
-        await sellerProductApi.createProductDraft({
-          title: spuName,
-          slug: spuCode.toLowerCase(),
-          brand,
-          description,
+        const createRes = await sellerProductApi.createProductDraft({
+          title: spuName.trim(),
+          spu_code: spuCode.trim() || `SPU-${Date.now()}`,
+          slug: (spuCode || spuName).toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          brand: brand.trim(),
+          primary_category_id: category,
+          description: description.trim(),
           images,
-          price_summary: { min_price: 29490000, max_price: 43990000, currency: 'VND' }
+          price_summary: { min_price: minPrice, max_price: maxPrice, currency: 'VND' },
+          attribute_definitions: attrDefs,
+          skus: formattedSkus
         });
+        const newId = createRes?.data?.id || createRes?.data?.productId;
+        if (newId) {
+          await sellerProductApi.replaceSkus(newId, {
+            attribute_definitions: attrDefs,
+            skus: formattedSkus,
+            version: 1
+          });
+        }
       }
       setNotification('Đã lưu bản nháp thành công!');
       setTimeout(() => {
@@ -202,7 +354,12 @@ function ProductEditorForm({ product, onClose, onSave }) {
         onClose();
       }, 1000);
     } catch (err) {
-      alert(`Lỗi khi lưu bản nháp: ${err?.response?.data?.message || err.message}`);
+      if (err?.response?.status === 401) {
+        window.dispatchEvent(new Event('auth:required'));
+        alert('Phiên đăng nhập chưa được xác thực (401 Unauthorized). Vui lòng đăng nhập tài khoản Người bán!');
+      } else {
+        alert(`Lỗi khi lưu bản nháp: ${err?.response?.data?.message || err.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -219,29 +376,71 @@ function ProductEditorForm({ product, onClose, onSave }) {
       const targetId = product?.id || product?.productId || `spu-${Date.now()}`;
 
       const formattedSkus = skus.map(s => ({
-        sku_code: s.code,
-        attributes: s.attributes,
+        sku_code: s.code?.trim() || `SKU-${s.id}`,
+        name: s.name,
+        attributes: s.attributes || {},
         price: {
-          base_price: Number(String(s.price).replace(/\D/g, '')) || 29490000,
-          sale_price: Number(String(s.price).replace(/\D/g, '')) || 29490000,
+          base_price: Number(String(s.price).replace(/\D/g, '')) || 0,
+          sale_price: Number(String(s.price).replace(/\D/g, '')) || 0,
           currency: 'VND'
         },
-        stock_display: s.stock,
+        stock_display: Number(s.stock) || 0,
         tax_rate_bps: 1000,
         status: s.enabled ? 'ACTIVE' : 'INACTIVE'
       }));
 
-      await sellerProductApi.replaceSkus(targetId, {
-        attribute_definitions: attributes.map(a => ({
-          name: a.name,
-          display_as: a.display_as,
-          values: a.values
-        })),
-        skus: formattedSkus,
-        version: product?.version || 1
-      });
+      const activeSkus = formattedSkus.filter(s => s.status === 'ACTIVE');
+      const prices = (activeSkus.length > 0 ? activeSkus : formattedSkus).map(s => s.price.sale_price).filter(p => p > 0);
+      const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+      const maxPrice = prices.length > 0 ? Math.max(...prices) : minPrice;
 
-      await sellerProductApi.publishProduct(targetId);
+      const attrDefs = attributes.map(a => ({
+        name: a.name,
+        display_as: a.display_as || 'PLAIN',
+        values: a.values || []
+      }));
+
+      if (product) {
+        await sellerProductApi.updateProduct(targetId, {
+          title: spuName.trim(),
+          spu_code: spuCode.trim(),
+          slug: spuCode.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          brand: brand.trim(),
+          primary_category_id: category,
+          description: description.trim(),
+          images,
+          price_summary: { min_price: minPrice, max_price: maxPrice, currency: 'VND' },
+          version: product.version || 1
+        });
+        await sellerProductApi.replaceSkus(targetId, {
+          attribute_definitions: attrDefs,
+          skus: formattedSkus,
+          version: product.version || 1
+        });
+        await sellerProductApi.publishProduct(targetId, (product.version || 1) + 1);
+      } else {
+        const createRes = await sellerProductApi.createProductDraft({
+          title: spuName.trim(),
+          spu_code: spuCode.trim() || `SPU-${Date.now()}`,
+          slug: (spuCode || spuName).toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          brand: brand.trim(),
+          primary_category_id: category,
+          description: description.trim(),
+          images,
+          price_summary: { min_price: minPrice, max_price: maxPrice, currency: 'VND' },
+          attribute_definitions: attrDefs,
+          skus: formattedSkus
+        });
+        const newId = createRes?.data?.id || createRes?.data?.productId;
+        if (newId) {
+          await sellerProductApi.replaceSkus(newId, {
+            attribute_definitions: attrDefs,
+            skus: formattedSkus,
+            version: 1
+          });
+          await sellerProductApi.publishProduct(newId, 1);
+        }
+      }
 
       setNotification('Đăng bán sản phẩm thành công! Sản phẩm đã hiển thị công khai.');
       setTimeout(() => {
@@ -249,7 +448,12 @@ function ProductEditorForm({ product, onClose, onSave }) {
         onClose();
       }, 1200);
     } catch (err) {
-      alert(`Không thể đăng bán: ${err?.response?.data?.message || err.message}`);
+      if (err?.response?.status === 401) {
+        window.dispatchEvent(new Event('auth:required'));
+        alert('Phiên đăng nhập chưa được xác thực (401 Unauthorized). Vui lòng đăng nhập tài khoản Người bán!');
+      } else {
+        alert(`Không thể đăng bán: ${err?.response?.data?.message || err.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -508,7 +712,7 @@ function ProductEditorForm({ product, onClose, onSave }) {
               ))}
             </div>
 
-            <div className="flex items-center justify-between text-[12px] pt-2">
+            <div className="flex flex-wrap items-center justify-between text-[12px] pt-2 gap-2">
               <button
                 type="button"
                 onClick={() => setIsAddAttrModalOpen(true)}
@@ -516,9 +720,19 @@ function ProductEditorForm({ product, onClose, onSave }) {
               >
                 ＋ Thêm thuộc tính
               </button>
-              <span className="text-slate-500 font-medium">
-                {attributes.length} thuộc tính · {generatedCombinations.length} tổ hợp SKU
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-slate-500 font-medium">
+                  {attributes.length} thuộc tính · <strong className="text-slate-900">{generatedCombinations.length}</strong> tổ hợp SKU
+                </span>
+                <button
+                  type="button"
+                  onClick={handleRegenerateSkus}
+                  className="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-[#4F46E5] border border-indigo-200 rounded-lg font-bold text-xs transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <span>🔄</span>
+                  <span>Sinh bảng SKU từ {generatedCombinations.length} tổ hợp</span>
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -526,21 +740,105 @@ function ProductEditorForm({ product, onClose, onSave }) {
         {/* STEP 3: SKU Matrix Table */}
         {step === 3 && (
           <div className="space-y-4">
-            <div>
-              <span className="text-[12px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                BIẾN THỂ ĐA THUỘC TÍNH (SKU MATRIX)
-              </span>
-              <p className="text-[12px] text-slate-500">
-                Tự động sinh từ mọi tổ hợp thuộc tính. Thiết lập giá, tồn kho và bật/tắt từng biến thể.
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <span className="text-[12px] font-bold uppercase tracking-wider text-slate-500 block mb-0.5">
+                  BIẾN THỂ ĐA THUỘC TÍNH (SKU MATRIX)
+                </span>
+                <p className="text-[12px] text-slate-500">
+                  Thiết lập mã SKU, giá bán, tồn kho cho từng biến thể tổ hợp thuộc tính.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleRegenerateSkus}
+                className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-[#4F46E5] border border-indigo-200 rounded-lg font-bold text-xs transition-colors cursor-pointer self-start sm:self-auto flex items-center gap-1.5"
+              >
+                <span>🔄</span>
+                <span>Sinh lại bảng ({generatedCombinations.length} tổ hợp)</span>
+              </button>
             </div>
+
+            {/* Bulk update toolbar */}
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-[12px]">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="font-bold text-slate-700">Áp dụng hàng loạt:</span>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="text"
+                    placeholder="Giá bán chung (₫)"
+                    value={bulkPriceInput}
+                    onChange={(e) => setBulkPriceInput(e.target.value)}
+                    className="w-28 px-2.5 py-1 border border-slate-300 rounded-lg bg-white text-xs text-slate-900 focus:outline-none focus:border-[#4F46E5]"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyBulkPrice}
+                    className="px-2.5 py-1 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg font-semibold text-xs transition-colors cursor-pointer"
+                  >
+                    Gán giá
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    placeholder="Kho chung"
+                    value={bulkStockInput}
+                    onChange={(e) => setBulkStockInput(e.target.value)}
+                    className="w-20 px-2.5 py-1 border border-slate-300 rounded-lg bg-white text-xs text-slate-900 focus:outline-none focus:border-[#4F46E5]"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyBulkStock}
+                    className="px-2.5 py-1 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg font-semibold text-xs transition-colors cursor-pointer"
+                  >
+                    Gán kho
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleToggleAllSkus(true)}
+                  className="px-2.5 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg font-bold text-[11px] transition-colors cursor-pointer"
+                >
+                  Bật tất cả
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleToggleAllSkus(false)}
+                  className="px-2.5 py-1 bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200 rounded-lg font-bold text-[11px] transition-colors cursor-pointer"
+                >
+                  Tắt tất cả
+                </button>
+              </div>
+            </div>
+
+            {/* Cảnh báo khi tắt toàn bộ SKU */}
+            {skus.every(s => !s.enabled) && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between text-[12px] text-amber-800">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">⚠️</span>
+                  <span>Tất cả biến thể SKU đang bị <strong>TẮT (OFF)</strong> nên giá ngoài danh mục hiển thị 0 ₫. Bấm <strong>Bật tất cả</strong> để kích hoạt!</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleToggleAllSkus(true)}
+                  className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow-xs transition-colors cursor-pointer shrink-0"
+                >
+                  Bật tất cả ngay
+                </button>
+              </div>
+            )}
 
             <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
               <table className="w-full text-left border-collapse text-[12px]">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
                     <th className="py-2.5 px-4">BIẾN THỂ ĐA THUỘC TÍNH</th>
-                    <th className="py-2.5 px-4">MÃ SKU</th>
+                    <th className="py-2.5 px-4">MÃ SKU *</th>
                     <th className="py-2.5 px-4">GIÁ BÁN (₫)</th>
                     <th className="py-2.5 px-4">TỒN KHO</th>
                     <th className="py-2.5 px-4 text-center">HIỂN THỊ</th>
@@ -549,13 +847,35 @@ function ProductEditorForm({ product, onClose, onSave }) {
                 <tbody className="divide-y divide-slate-100">
                   {skus.map((sku) => (
                     <tr key={sku.id} className="hover:bg-slate-50/60">
-                      <td className="py-3 px-4 font-semibold text-slate-800">{sku.name}</td>
-                      <td className="py-3 px-4 font-mono text-slate-600">{sku.code}</td>
+                      <td className="py-3 px-4 font-semibold text-slate-800">
+                        <div>{sku.name}</div>
+                        {sku.attributes && Object.keys(sku.attributes).length > 0 && (
+                          <div className="text-[10px] text-slate-400 font-normal mt-0.5">
+                            {Object.entries(sku.attributes).map(([k, v]) => `${k}: ${v}`).join(' · ')}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <input
+                          type="text"
+                          required
+                          value={sku.code}
+                          onChange={(e) => handleUpdateSkuCode(sku.id, e.target.value)}
+                          placeholder="Mã SKU (VD: IP16-256-NAT)"
+                          className="w-full min-w-[140px] px-2.5 py-1.5 font-mono text-[11px] border border-slate-300 rounded-lg text-slate-900 font-semibold focus:outline-none focus:border-[#4F46E5] bg-white"
+                        />
+                      </td>
                       <td className="py-3 px-4">
                         <input
                           type="text"
                           value={sku.price}
                           onChange={(e) => handleUpdateSkuPrice(sku.id, e.target.value)}
+                          onBlur={() => {
+                            const clean = String(sku.price).replace(/\D/g, '');
+                            if (clean) {
+                              handleUpdateSkuPrice(sku.id, Number(clean).toLocaleString('vi-VN'));
+                            }
+                          }}
                           className="w-28 px-2.5 py-1.5 border border-slate-300 rounded-lg text-slate-900 font-semibold focus:outline-none focus:border-[#4F46E5]"
                         />
                       </td>
@@ -644,7 +964,7 @@ function ProductEditorForm({ product, onClose, onSave }) {
           {step < 4 ? (
             <button
               type="button"
-              onClick={() => setStep(step + 1)}
+              onClick={handleNextStep}
               className="px-6 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg font-bold text-[13px] shadow-sm transition-colors cursor-pointer"
             >
               Tiếp theo →
@@ -813,15 +1133,16 @@ ProductEditorForm.propTypes = {
 export default function ProductEditorModal({ isOpen, product = null, onClose, onSave }) {
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
       <ProductEditorForm
         key={product ? (product.id || product.productId) : 'new-product'}
         product={product}
         onClose={onClose}
         onSave={onSave}
       />
-    </div>
+    </div>,
+    document.body
   );
 }
 

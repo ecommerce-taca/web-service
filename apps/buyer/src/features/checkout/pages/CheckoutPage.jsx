@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../cart/hooks/useCart';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { addressApi } from '../../account/services/address.api';
 import { orderApi } from '../../account/services/order.api';
+import { formatPhoneDisplay } from '../../../../../../shared/utils/phone';
 import DeliveryAddressModal from '../components/DeliveryAddressModal';
 import ApplyVoucherModal from '../components/ApplyVoucherModal';
 import VnpayQrModal from '../components/VnpayQrModal';
@@ -12,9 +13,10 @@ import { Button } from '@taca/ui-components';
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { selectedItems, items: cartItems, clearCart } = useCart();
+  // KHÔNG gọi clearCart sau khi mua hàng để giữ nguyên giỏ hàng theo yêu cầu
+  const { selectedItems, items: cartItems } = useCart();
 
-  // Use selected items from cart, fallback to all items if direct navigation
+  // Danh sách sản phẩm thanh toán
   const items = selectedItems.length > 0 ? selectedItems : cartItems;
 
   const [paymentMethod, setPaymentMethod] = useState('COD');
@@ -28,26 +30,58 @@ export default function CheckoutPage() {
   const [isVnpayModalOpen, setIsVnpayModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load user saved addresses
-  useEffect(() => {
-    if (user) {
-      addressApi.getAddresses()
-        .then(res => {
-          const list = res.data?.data || res.data || [];
-          setAddresses(list);
-          if (list.length > 0) {
-            const def = list.find(a => a.is_default) || list[0];
-            setSelectedAddress(def);
-          }
-        })
-        .catch(() => {});
-    }
-  }, [user]);
-
+  // Tính tiền cơ bản
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shippingFee = subtotal >= 5000000 || subtotal === 0 ? 0 : 30000;
-  const shopDiscount = subtotal >= 20000000 ? 300000 : (subtotal >= 10000000 ? 150000 : 0);
-  const tacaDiscount = subtotal >= 10000000 ? 200000 : (subtotal >= 5000000 ? 100000 : 0);
+
+  // Quản lý voucher linh hoạt (có thể bỏ chọn / xóa dấu tick)
+  const [selectedShopVoucher, setSelectedShopVoucher] = useState(() => {
+    if (subtotal >= 10000000) {
+      return {
+        id: 'SHOP_DISCOUNT_APPLE300K',
+        code: 'APPLE300K',
+        title: 'Giảm 300.000 ₫',
+        discount_amount: 300000,
+        provider: 'SHOP'
+      };
+    }
+    return null;
+  });
+
+  const [selectedTacaVoucher, setSelectedTacaVoucher] = useState(() => {
+    if (subtotal >= 5000000) {
+      return {
+        id: 'TACA_DISCOUNT_TACA200K',
+        code: 'TACA200K',
+        title: 'Giảm 200.000 ₫ toàn sàn',
+        discount_amount: 200000,
+        provider: 'TACA'
+      };
+    }
+    return null;
+  });
+
+  // Tải danh sách địa chỉ đã lưu trong account (gọi ngay khi mount)
+  const fetchAddresses = useCallback(async () => {
+    try {
+      const res = await addressApi.getAddresses();
+      const list = res.data?.data || res.data || [];
+      setAddresses(list);
+      if (list.length > 0) {
+        setSelectedAddress(prev => prev || list.find(a => a.is_default) || list[0]);
+      }
+    } catch (e) {
+      console.error('Failed to load saved addresses', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAddresses();
+  }, [fetchAddresses]);
+
+  // Giảm giá tính động dựa trên voucher đang được chọn thực tế
+  const shopDiscount = selectedShopVoucher ? (selectedShopVoucher.discount_amount || 0) : 0;
+  const tacaDiscount = selectedTacaVoucher ? (selectedTacaVoucher.discount_amount || 0) : 0;
   const total = Math.max(0, subtotal + shippingFee - shopDiscount - tacaDiscount);
 
   const handlePlaceOrder = async () => {
@@ -69,10 +103,11 @@ export default function CheckoutPage() {
         total,
         shipping_fee: shippingFee,
         discount_amount: shopDiscount + tacaDiscount,
+        voucher_codes: [selectedShopVoucher?.code, selectedTacaVoucher?.code].filter(Boolean),
         payment_method: 'COD',
         shipping_address: selectedAddress
       });
-      clearCart();
+      // KHÔNG gọi clearCart() để giỏ hàng vẫn còn sau khi mua hàng
       navigate('/account/orders');
     } catch (e) {
       console.error('Failed to create order', e);
@@ -91,10 +126,11 @@ export default function CheckoutPage() {
         total,
         shipping_fee: shippingFee,
         discount_amount: shopDiscount + tacaDiscount,
+        voucher_codes: [selectedShopVoucher?.code, selectedTacaVoucher?.code].filter(Boolean),
         payment_method: 'VNPAY QR',
         shipping_address: selectedAddress
       });
-      clearCart();
+      // KHÔNG gọi clearCart() để giỏ hàng vẫn còn sau khi mua hàng
       navigate('/account/orders');
     } catch (e) {
       console.error('Failed to create order via VNPAY', e);
@@ -103,6 +139,18 @@ export default function CheckoutPage() {
       setIsSubmitting(false);
     }
   };
+
+  // Thông tin địa chỉ hiển thị
+  const recipientName = selectedAddress?.recipient || selectedAddress?.recipient_name || selectedAddress?.name || user?.full_name || 'Khách hàng';
+  const recipientPhone = formatPhoneDisplay(selectedAddress?.phone || user?.phone || '0909123456');
+  const recipientFullAddress = selectedAddress
+    ? [
+        selectedAddress.line1 || selectedAddress.detail_address || selectedAddress.address,
+        selectedAddress.line2,
+        selectedAddress.ward || selectedAddress.ward_name,
+        selectedAddress.province || selectedAddress.province_name
+      ].filter(Boolean).join(', ')
+    : '28 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh';
 
   return (
     <div className="bg-taca-surface min-h-screen pb-16">
@@ -124,7 +172,7 @@ export default function CheckoutPage() {
             
             {/* 1. Địa chỉ nhận hàng */}
             <div className="bg-white rounded-lg p-6 shadow-sm border border-taca-border">
-              <div className="flex justify-between items-start mb-4">
+              <div className="flex justify-between items-center mb-4">
                 <h2 className="text-[14px] font-extrabold text-taca-text-main uppercase">1. ĐỊA CHỈ NHẬN HÀNG</h2>
                 <button 
                   type="button"
@@ -134,26 +182,14 @@ export default function CheckoutPage() {
                   Thay đổi
                 </button>
               </div>
+
               <div className="mt-2 text-[13px]">
-                {selectedAddress ? (
-                  <>
-                    <p className="font-bold text-taca-text-main">
-                      {selectedAddress.recipient_name || selectedAddress.name || user?.full_name || 'Khách hàng'} • {selectedAddress.phone || user?.phone || '0909 123 456'}
-                    </p>
-                    <p className="font-medium text-taca-text-muted mt-1">
-                      {selectedAddress.detail_address || selectedAddress.address}, {selectedAddress.ward_name || ''}, {selectedAddress.province_name || ''}
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="font-bold text-taca-text-main">
-                      {user?.full_name || 'Nguyễn Minh Anh'} • {user?.phone || '0909 123 456'}
-                    </p>
-                    <p className="font-medium text-taca-text-muted mt-1">
-                      28 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh
-                    </p>
-                  </>
-                )}
+                <p className="font-bold text-taca-text-main">
+                  {recipientName} • <span className="font-bold text-taca-text-main">{recipientPhone}</span>
+                </p>
+                <p className="font-medium text-taca-text-muted mt-1 leading-relaxed">
+                  {recipientFullAddress}
+                </p>
               </div>
             </div>
 
@@ -191,27 +227,27 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* 3. Phương thức thanh toán */}
+            {/* 3. Phương thức thanh toán - Đã XÓA Thẻ quốc tế theo yêu cầu */}
             <div className="bg-white rounded-lg p-6 shadow-sm border border-taca-border">
               <h2 className="text-[14px] font-extrabold text-taca-text-main uppercase mb-4">3. PHƯƠNG THỨC THANH TOÁN</h2>
               <div className="flex flex-wrap gap-4">
-                {['COD', 'VNPAY QR', 'Thẻ quốc tế'].map(method => (
+                {['COD', 'VNPAY QR'].map(method => (
                   <button
                     key={method}
                     type="button"
                     onClick={() => setPaymentMethod(method)}
-                    className={`px-4 py-2 border rounded-lg flex items-center transition-colors cursor-pointer ${
+                    className={`px-5 py-2.5 border rounded-lg flex items-center transition-colors cursor-pointer ${
                       paymentMethod === method 
                         ? 'border-taca-primary bg-indigo-50/50 text-taca-primary font-bold' 
                         : 'border-taca-border bg-white text-taca-text-muted hover:bg-slate-50'
                     }`}
                   >
-                    <span className={`w-3 h-3 rounded-full mr-2 flex items-center justify-center border ${
+                    <span className={`w-3.5 h-3.5 rounded-full mr-2.5 flex items-center justify-center border ${
                       paymentMethod === method ? 'border-taca-primary' : 'border-slate-300'
                     }`}>
-                      {paymentMethod === method && <span className="w-1.5 h-1.5 bg-taca-primary rounded-full"></span>}
+                      {paymentMethod === method && <span className="w-2 h-2 bg-taca-primary rounded-full"></span>}
                     </span>
-                    <span className="text-[12px]">{method}</span>
+                    <span className="text-[13px] font-medium">{method}</span>
                   </button>
                 ))}
               </div>
@@ -239,7 +275,7 @@ export default function CheckoutPage() {
                 onClick={() => setIsVoucherModalOpen(true)}
                 className="text-taca-primary border border-taca-border rounded-lg px-3 py-1 text-[11px] font-bold hover:bg-indigo-50 transition-colors cursor-pointer bg-transparent"
               >
-                Đổi voucher
+                {(selectedShopVoucher || selectedTacaVoucher) ? 'Đổi voucher' : 'Chọn voucher'}
               </button>
             </div>
             
@@ -256,15 +292,15 @@ export default function CheckoutPage() {
                   {shippingFee === 0 ? 'Miễn phí' : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(shippingFee)}
                 </span>
               </div>
-              {shopDiscount > 0 && (
+              {shopDiscount > 0 && selectedShopVoucher && (
                 <div className="flex justify-between text-taca-sale">
-                  <span>Shop • APPLE300K</span>
+                  <span>Shop • {selectedShopVoucher.code}</span>
                   <span className="font-bold">- {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(shopDiscount)}</span>
                 </div>
               )}
-              {tacaDiscount > 0 && (
+              {tacaDiscount > 0 && selectedTacaVoucher && (
                 <div className="flex justify-between text-taca-primary">
-                  <span>Taca • TACA200K</span>
+                  <span>Taca • {selectedTacaVoucher.code}</span>
                   <span className="font-bold">- {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(tacaDiscount)}</span>
                 </div>
               )}
@@ -295,6 +331,7 @@ export default function CheckoutPage() {
         </div>
       </div>
 
+      {/* Modal chọn địa chỉ nhận hàng đã lưu */}
       <DeliveryAddressModal 
         isOpen={isAddressModalOpen} 
         onClose={() => setIsAddressModalOpen(false)} 
@@ -304,8 +341,27 @@ export default function CheckoutPage() {
           setSelectedAddress(addr);
           setIsAddressModalOpen(false);
         }}
+        onAddressCreated={(newAddr) => {
+          fetchAddresses();
+          if (newAddr) setSelectedAddress(newAddr);
+        }}
       />
-      <ApplyVoucherModal isOpen={isVoucherModalOpen} onClose={() => setIsVoucherModalOpen(false)} />
+
+
+      {/* Modal chọn voucher (duy nhất 1 thanh cuộn, cho phép bỏ tick / chọn lại) */}
+      <ApplyVoucherModal 
+        isOpen={isVoucherModalOpen} 
+        onClose={() => setIsVoucherModalOpen(false)}
+        selectedShopVoucher={selectedShopVoucher}
+        selectedTacaVoucher={selectedTacaVoucher}
+        subtotal={subtotal}
+        onApplyVouchers={({ shopVoucher, tacaVoucher }) => {
+          setSelectedShopVoucher(shopVoucher);
+          setSelectedTacaVoucher(tacaVoucher);
+        }}
+      />
+
+      {/* Modal mã QR VNPAY */}
       <VnpayQrModal 
         isOpen={isVnpayModalOpen} 
         onClose={() => setIsVnpayModalOpen(false)} 

@@ -4,9 +4,11 @@ import { Badge } from '@taca/ui-components';
 import FavoriteButton from './FavoriteButton';
 
 const ProductCard = ({
-  id = 1,
+  product,
+  id,
   image = '',
   name,
+  title,
   price = 0,
   originalPrice = null,
   discount = null,
@@ -17,41 +19,84 @@ const ProductCard = ({
   isFavorite = false,
   onToggleFavorite
 }) => {
+  // Chuẩn hóa trường theo đặc tả API Product Catalog Service (§3.1)
+  const actualId = product?.product_id || product?.id || id || 1;
+  const actualName = product?.title || product?.name || title || name || 'Sản phẩm';
+  const actualImage = product?.cover_media?.url || product?.image || image || (product?.images && product.images[0]) || '';
+  
+  // Xử lý đối tượng giá tiền theo cấu trúc { base_price, sale_price, currency: "VND" }
+  const actualPrice = product?.price?.sale_price !== undefined
+    ? product.price.sale_price
+    : (typeof product?.price === 'number' ? product.price : (price?.sale_price ?? (typeof price === 'number' ? price : 0)));
+
+  const actualOriginalPrice = product?.price?.base_price !== undefined
+    ? product.price.base_price
+    : (product?.originalPrice ?? originalPrice ?? null);
+
+  const actualDiscount = (actualOriginalPrice && actualOriginalPrice > actualPrice)
+    ? Math.round(((actualOriginalPrice - actualPrice) / actualOriginalPrice) * 100)
+    : (product?.discount ?? discount ?? null);
+
+  const actualRating = product?.rating_summary?.avg ?? product?.rating ?? rating ?? null;
+  const actualSoldCount = product?.soldCount ?? product?.sold_count ?? soldCount ?? null;
+  const actualIsOfficial = product?.shop?.is_official ?? product?.isOfficial ?? isOfficial ?? false;
+  const actualStockStatus = product?.stock_display?.status;
+  const isOutOfStock = actualStockStatus === 'OUT_OF_STOCK' || product?.stock_display === 0;
+
   return (
-    <Link to={`/product/${id || 1}`} className="flex flex-col bg-white border border-taca-border cursor-pointer group hover:border-taca-primary hover:shadow-md transition-all h-full no-underline rounded-[12px] overflow-hidden p-3 gap-3">
+    <Link 
+      to={`/product/${actualId}`} 
+      className="flex flex-col bg-white border border-taca-border cursor-pointer group hover:border-taca-primary hover:shadow-md transition-all h-full no-underline rounded-[12px] overflow-hidden p-3 gap-3 relative"
+    >
       {/* Image Area */}
       <div className="relative w-full aspect-square bg-[#f4f7ff] rounded-[8px] overflow-hidden flex-shrink-0">
-        {image ? (
-          <img src={image} alt={name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+        {actualImage ? (
+          <img 
+            src={actualImage} 
+            alt={actualName} 
+            className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${
+              isOutOfStock ? 'grayscale opacity-75' : ''
+            }`} 
+          />
         ) : (
           <div className="absolute top-3 left-3 text-taca-primary text-[12px] font-bold">
             SKU
           </div>
         )}
+
+        {/* Hết hàng overlay */}
+        {isOutOfStock && (
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px] flex items-center justify-center z-10">
+            <span className="bg-slate-900/80 text-white text-[11px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wide">
+              Hết hàng
+            </span>
+          </div>
+        )}
         
         {/* Badges Overlay */}
         <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
-          {isOfficial && <Badge variant="official">Official</Badge>}
-          {discount && <Badge variant="sale">-{discount}%</Badge>}
+          {actualIsOfficial && <Badge variant="official">Official</Badge>}
+          {actualDiscount && actualDiscount > 0 && <Badge variant="sale">-{actualDiscount}%</Badge>}
         </div>
 
         {/* Favorite Button */}
         <div className="absolute top-2 right-2 z-10">
           <FavoriteButton 
             isFavorite={Boolean(isFavorite)} 
-            onToggle={() => onToggleFavorite && onToggleFavorite(id, isFavorite, {
-              id,
-              product_id: id,
-              name,
-              price,
-              originalPrice,
-              original_price: originalPrice,
-              discount,
-              image,
-              rating,
-              soldCount,
-              sold: soldCount,
-              isOfficial,
+            onToggle={() => onToggleFavorite && onToggleFavorite(actualId, isFavorite, {
+              id: actualId,
+              product_id: actualId,
+              name: actualName,
+              title: actualName,
+              price: actualPrice,
+              originalPrice: actualOriginalPrice,
+              original_price: actualOriginalPrice,
+              discount: actualDiscount,
+              image: actualImage,
+              rating: actualRating,
+              soldCount: actualSoldCount,
+              sold: actualSoldCount,
+              isOfficial: actualIsOfficial,
               tags
             })} 
           />
@@ -61,36 +106,38 @@ const ProductCard = ({
       {/* Content Area */}
       <div className="flex flex-col flex-1 gap-2">
         <h3 className="text-[14px] font-medium text-taca-text-main line-clamp-2 leading-snug group-hover:text-taca-primary transition-colors">
-          {name}
+          {actualName}
         </h3>
         
         <div className="mt-auto flex flex-col gap-1">
-          {Boolean(originalPrice) && (
+          {Boolean(actualOriginalPrice) && actualOriginalPrice > actualPrice && (
             <span className="text-[12px] text-taca-text-muted line-through">
-              {Number(originalPrice).toLocaleString('vi-VN')} ₫
+              {Number(actualOriginalPrice).toLocaleString('vi-VN')} ₫
             </span>
           )}
-          <span className="text-[16px] font-extrabold text-taca-sale">
-            {Number(price || 0).toLocaleString('vi-VN')} ₫
-          </span>
+          <div className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="text-[16px] font-extrabold text-taca-sale">
+              {Number(actualPrice || 0).toLocaleString('vi-VN')} ₫
+            </span>
+          </div>
         </div>
         
         {/* Rating and Tags */}
-        {(rating || soldCount || (tags && tags.length > 0)) && (
+        {(actualRating || actualSoldCount || (tags && tags.length > 0)) && (
           <div className="flex flex-col gap-1 mt-1">
-            {(rating || soldCount) && (
-              <div className="flex items-center text-[11px] text-taca-text-taca-text-muted">
-                {rating && (
+            {(actualRating || actualSoldCount) && (
+              <div className="flex items-center text-[11px] text-taca-text-muted">
+                {actualRating && (
                   <span className="flex items-center text-[#faad14] mr-2">
-                    <span className="mr-1 tracking-[2px]">★★★★★</span> <span className="text-taca-text-taca-text-muted font-medium">{rating}</span>
+                    <span className="mr-1 tracking-[2px]">★★★★★</span> <span className="text-taca-text-muted font-medium">{actualRating}</span>
                   </span>
                 )}
-                {rating && soldCount && <span>·</span>}
-                {soldCount && <span className="ml-2">Đã bán {soldCount}</span>}
+                {actualRating && actualSoldCount && <span>·</span>}
+                {actualSoldCount && <span className="ml-2">Đã bán {actualSoldCount}</span>}
               </div>
             )}
             {tags && tags.length > 0 && (
-              <div className="flex flex-wrap items-center text-[11px] text-taca-text-taca-text-muted mt-1">
+              <div className="flex flex-wrap items-center text-[11px] text-taca-text-muted mt-1">
                 {tags.map((tag, index) => (
                   <span key={index} className="flex items-center">
                     {tag} {index < tags.length - 1 && <span className="mx-2">·</span>}
@@ -106,10 +153,12 @@ const ProductCard = ({
 };
 
 ProductCard.propTypes = {
+  product: PropTypes.object,
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   image: PropTypes.string,
-  name: PropTypes.string.isRequired,
-  price: PropTypes.number.isRequired,
+  name: PropTypes.string,
+  title: PropTypes.string,
+  price: PropTypes.oneOfType([PropTypes.number, PropTypes.object]),
   originalPrice: PropTypes.number,
   discount: PropTypes.number,
   isOfficial: PropTypes.bool,

@@ -5,13 +5,14 @@ export default function SellerNav() {
   const isShell = location.pathname.startsWith('/seller');
   const basePath = isShell ? '/seller' : '';
 
-  const navItems = [
+    const navItems = [
     { label: 'Tổng quan', path: `${basePath}/`, exact: true },
     { label: 'Quản lý sản phẩm', path: `${basePath}/products` },
     { label: 'Xử lý đơn hàng', path: `${basePath}/orders` },
     { label: 'Khuyến mãi & Voucher', path: `${basePath}/vouchers` },
     { label: 'Ví doanh thu & Rút tiền', path: `${basePath}/finance` },
     { label: 'Cài đặt gian hàng', path: `${basePath}/settings` },
+    { label: 'Hồ sơ & KYC', path: `${basePath}/onboarding` },
   ];
 
   const isActive = (item) => {
@@ -22,7 +23,7 @@ export default function SellerNav() {
   };
 
   return (
-    <nav className="bg-white border-b border-slate-200 h-[54px] sticky top-[68px] z-30 px-6 lg:px-12 flex items-center overflow-x-auto no-scrollbar">
+    <nav className="bg-white h-[54px] px-6 lg:px-12 flex items-center overflow-x-auto no-scrollbar">
       <div className="flex items-center gap-1 sm:gap-2 h-full">
         {navItems.map((item) => {
           const active = isActive(item);

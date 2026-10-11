@@ -1,4 +1,5 @@
 import apiClient, { isMockMode } from '../../../../../../shared/utils/api-client';
+import { sanitizeObjectForExport } from '../../../../../../shared/utils/security';
 
 /**
  * Mock Data danh sách sản phẩm của Seller khớp Penpot "Taca Seller / Products"
@@ -209,6 +210,72 @@ let MOCK_SELLER_PRODUCTS = [
       }
     ],
     updated_at: '2026-10-05T16:20:00Z'
+  },
+  {
+    id: 'spu-5',
+    productId: 'spu-5',
+    title: 'Bàn phím cơ Logitech MX Mechanical Mini',
+    spu_code: 'SPU-LOGI-MX-MINI',
+    slug: 'ban-phim-co-logitech-mx-mechanical-mini',
+    brand: 'Logitech',
+    primary_category_id: 'phu-kien',
+    category_name: 'Phụ kiện máy tính › Bàn phím',
+    status: 'DRAFT',
+    version: 1,
+    sku_count: 2,
+    sku_summary: '2 SKU · Tactile / Linear',
+    price_range: '3.290.000 ₫',
+    price_summary: {
+      min_price: 3290000,
+      max_price: 3290000,
+      currency: 'VND'
+    },
+    stock_display: 50,
+    total_stock: 50,
+    sold_count: 0,
+    attribute_definitions: [
+      { name: 'Switch', display_as: 'PLAIN', values: ['Tactile Quiet', 'Linear'] }
+    ],
+    skus: [
+      {
+        id: 'sku-51',
+        sku_code: 'LOGI-MX-TAC',
+        name: 'Tactile Quiet',
+        attributes: { 'Switch': 'Tactile Quiet' },
+        price: { base_price: 3490000, sale_price: 3290000, currency: 'VND' },
+        stock_display: 25,
+        tax_rate_bps: 1000,
+        status: 'ACTIVE'
+      }
+    ],
+    updated_at: '2026-10-09T08:15:00Z'
+  },
+  {
+    id: 'spu-6',
+    productId: 'spu-6',
+    title: 'Tai nghe Bluetooth Air-Pro 3 Copy 1:1',
+    spu_code: 'SPU-COPY-AIR3',
+    slug: 'tai-nghe-bluetooth-air-pro-3-copy',
+    brand: 'OEM',
+    primary_category_id: 'am-thanh',
+    category_name: 'Âm thanh › Tai nghe',
+    status: 'BLOCKED',
+    block_reason: 'Vi phạm chính sách hàng giả, hàng nhái và bản quyền thương hiệu Taca',
+    version: 2,
+    sku_count: 1,
+    sku_summary: '1 SKU · Trắng',
+    price_range: '350.000 ₫',
+    price_summary: {
+      min_price: 350000,
+      max_price: 350000,
+      currency: 'VND'
+    },
+    stock_display: 0,
+    total_stock: 0,
+    sold_count: 12,
+    attribute_definitions: [],
+    skus: [],
+    updated_at: '2026-10-10T11:20:00Z'
   }
 ];
 
@@ -286,21 +353,28 @@ export const sellerProductApi = {
     }
 
     await new Promise(res => setTimeout(res, 200));
+    const minP = Number(payload.price_summary?.min_price) || 0;
+    const maxP = Number(payload.price_summary?.max_price) || minP;
+    const calculatedRange = minP > 0
+      ? (minP === maxP ? `${minP.toLocaleString('vi-VN')} ₫` : `${minP.toLocaleString('vi-VN')} – ${maxP.toLocaleString('vi-VN')} ₫`)
+      : '0 ₫';
+
     const newSpu = {
       id: `spu-${Date.now()}`,
       productId: `spu-${Date.now()}`,
       title: payload.title,
-      spu_code: payload.slug ? payload.slug.toUpperCase() : `SPU-${Date.now()}`,
+      spu_code: payload.spu_code || (payload.slug ? payload.slug.toUpperCase() : `SPU-${Date.now()}`),
       slug: payload.slug,
       brand: payload.brand,
       status: 'DRAFT',
       version: 1,
-      sku_count: 0,
-      price_range: '0 ₫',
-      stock_display: 0,
+      sku_count: payload.skus ? payload.skus.length : 0,
+      price_range: calculatedRange,
+      price_summary: { min_price: minP, max_price: maxP, currency: 'VND' },
+      stock_display: payload.skus ? payload.skus.reduce((sum, s) => sum + (Number(s.stock_display) || 0), 0) : 0,
       sold_count: 0,
-      attribute_definitions: [],
-      skus: [],
+      attribute_definitions: payload.attribute_definitions || [],
+      skus: payload.skus || [],
       updated_at: new Date().toISOString()
     };
     MOCK_SELLER_PRODUCTS.unshift(newSpu);
@@ -319,6 +393,15 @@ export const sellerProductApi = {
     const item = MOCK_SELLER_PRODUCTS.find(p => p.id === productId);
     if (item) {
       Object.assign(item, payload, { version: (item.version || 1) + 1 });
+      if (payload.price_summary) {
+        const minP = Number(payload.price_summary.min_price) || 0;
+        const maxP = Number(payload.price_summary.max_price) || minP;
+        if (minP > 0) {
+          item.price_range = minP === maxP
+            ? `${minP.toLocaleString('vi-VN')} ₫`
+            : `${minP.toLocaleString('vi-VN')} – ${maxP.toLocaleString('vi-VN')} ₫`;
+        }
+      }
       return { data: item };
     }
     return { data: payload };
@@ -362,6 +445,20 @@ export const sellerProductApi = {
       item.sku_count = skus.length;
       item.stock_display = skus.reduce((sum, s) => sum + (Number(s.stock_display) || 0), 0);
       item.version = (item.version || 1) + 1;
+
+      // Tự động tính toán lại giá bán theo đặc tả API Product Catalog (§3.2)
+      const validPrices = skus
+        .map(s => Number(s.price?.sale_price || s.price?.base_price || String(s.price).replace(/\D/g, '') || 0))
+        .filter(p => p > 0);
+
+      if (validPrices.length > 0) {
+        const minP = Math.min(...validPrices);
+        const maxP = Math.max(...validPrices);
+        item.price_summary = { min_price: minP, max_price: maxP, currency: 'VND' };
+        item.price_range = minP === maxP
+          ? `${minP.toLocaleString('vi-VN')} ₫`
+          : `${minP.toLocaleString('vi-VN')} – ${maxP.toLocaleString('vi-VN')} ₫`;
+      }
     }
     return { data: { success: true, count: skus.length } };
   },
@@ -369,31 +466,47 @@ export const sellerProductApi = {
   /**
    * 7. Xuất bản / Tạm dừng / Lưu trữ SPU
    */
-  publishProduct: async (productId) => {
+  publishProduct: async (productId, version = 1) => {
+    const ver = Math.max(1, Number(version) || 1);
     if (!isMockMode()) {
-      return apiClient.post(`/seller/products/${productId}/publish`);
+      return apiClient.post(`/seller/products/${productId}/publish`, { version: ver });
     }
     const item = MOCK_SELLER_PRODUCTS.find(p => p.id === productId);
-    if (item) item.status = 'ACTIVE';
-    return { data: { success: true, status: 'ACTIVE' } };
+    if (item) {
+      item.status = 'ACTIVE';
+      item.version = (item.version || 1) + 1;
+    }
+    return { data: { success: true, status: 'ACTIVE', version: (item?.version || 1) } };
   },
 
-  unpublishProduct: async (productId) => {
+  unpublishProduct: async (productId, version = 1, reason = '') => {
+    const ver = Math.max(1, Number(version) || 1);
     if (!isMockMode()) {
-      return apiClient.post(`/seller/products/${productId}/unpublish`);
+      const payload = { version: ver };
+      if (reason) payload.reason = reason;
+      return apiClient.post(`/seller/products/${productId}/unpublish`, payload);
     }
     const item = MOCK_SELLER_PRODUCTS.find(p => p.id === productId);
-    if (item) item.status = 'INACTIVE';
-    return { data: { success: true, status: 'INACTIVE' } };
+    if (item) {
+      item.status = 'INACTIVE';
+      item.version = (item.version || 1) + 1;
+    }
+    return { data: { success: true, status: 'INACTIVE', version: (item?.version || 1) } };
   },
 
-  archiveProduct: async (productId) => {
+  archiveProduct: async (productId, version = 1, reason = '') => {
+    const ver = Math.max(1, Number(version) || 1);
     if (!isMockMode()) {
-      return apiClient.post(`/seller/products/${productId}/archive`);
+      const payload = { version: ver };
+      if (reason) payload.reason = reason;
+      return apiClient.post(`/seller/products/${productId}/archive`, payload);
     }
     const item = MOCK_SELLER_PRODUCTS.find(p => p.id === productId);
-    if (item) item.status = 'ARCHIVED';
-    return { data: { success: true, status: 'ARCHIVED' } };
+    if (item) {
+      item.status = 'ARCHIVED';
+      item.version = (item.version || 1) + 1;
+    }
+    return { data: { success: true, status: 'ARCHIVED', version: (item?.version || 1) } };
   },
 
   /**
@@ -426,11 +539,18 @@ export const sellerProductApi = {
   /**
    * 9. Excel Import / Export Async Job
    */
-  exportProductsExcelUrl: async () => {
+  exportProductsExcelUrl: async (params = {}) => {
     if (!isMockMode()) {
-      return apiClient.get('/seller/products/export');
+      return apiClient.get('/seller/products/export', { params });
     }
-    return { data: { download_url: '#mock-export-url' } };
+    // Mock export với dữ liệu đã được làm sạch chống Formula Injection (CWE-1236)
+    const sanitizedItems = MOCK_SELLER_PRODUCTS.map(sanitizeObjectForExport);
+    return {
+      data: {
+        download_url: '#mock-export-url',
+        preview_data: sanitizedItems
+      }
+    };
   },
 
   downloadImportTemplate: async (type = 'MULTI_SHEET') => {
