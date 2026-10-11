@@ -17,9 +17,25 @@ export default function DashboardPage() {
   const [onboardingProgress, setOnboardingProgress] = useState(null);
 
   useEffect(() => {
-    getOnboardingProgress()
-      .then((data) => setOnboardingProgress(data))
-      .catch((err) => console.error('Lỗi nạp tiến độ onboarding dashboard:', err));
+    const loadProgress = () => {
+      getOnboardingProgress()
+        .then((data) => setOnboardingProgress(data))
+        .catch((err) => console.error('Lỗi nạp tiến độ onboarding dashboard:', err));
+    };
+
+    loadProgress();
+
+    const handleKycUpdated = () => {
+      loadProgress();
+    };
+
+    window.addEventListener('taca:kyc_updated', handleKycUpdated);
+    window.addEventListener('storage', handleKycUpdated);
+
+    return () => {
+      window.removeEventListener('taca:kyc_updated', handleKycUpdated);
+      window.removeEventListener('storage', handleKycUpdated);
+    };
   }, []);
 
   const handleDownloadReport = () => {
@@ -85,17 +101,29 @@ export default function DashboardPage() {
               <p className="text-[12px] text-slate-500 mt-0.5">
                 {onboardingProgress.kyc_status === 'APPROVED'
                   ? 'Tài khoản người bán đã kích hoạt đầy đủ các tính năng bán hàng và nhận thanh toán.'
+                  : onboardingProgress.kyc_status === 'PENDING'
+                  ? 'Hồ sơ KYC đã được gửi lên hệ thống và đang chờ Admin phê duyệt. Bạn có thể thiết lập kho trong khi chờ xét duyệt.'
+                  : onboardingProgress.kyc_status === 'NEEDS_INFO'
+                  ? 'Admin yêu cầu bổ sung thông tin hoặc tài liệu xác thực. Vui lòng cập nhật sớm.'
+                  : onboardingProgress.kyc_status === 'REJECTED'
+                  ? 'Hồ sơ KYC không được phê duyệt. Vui lòng kiểm tra lại thông tin hoặc liên hệ hỗ trợ.'
                   : `Đang ở bước: ${onboardingProgress.current_step}. Vui lòng nộp đầy đủ hồ sơ để được phê duyệt nhanh nhất.`}
               </p>
             </div>
           </div>
 
-          <Link
-            to={`${basePath}/onboarding`}
-            className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-[#4F46E5] rounded-lg font-bold text-[12px] shadow-2xs whitespace-nowrap self-start sm:self-auto transition-colors"
-          >
-            {onboardingProgress.kyc_status === 'APPROVED' ? 'Xem hồ sơ & KYC ↗' : 'Tiếp tục hoàn thiện hồ sơ →'}
-          </Link>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link
+              to={`${basePath}/onboarding`}
+              className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-[#4F46E5] rounded-lg font-bold text-[12px] shadow-2xs whitespace-nowrap self-start sm:self-auto transition-colors no-underline"
+            >
+              {onboardingProgress.kyc_status === 'APPROVED'
+                ? 'Xem hồ sơ & KYC ↗'
+                : onboardingProgress.kyc_status === 'PENDING'
+                ? 'Xem tiến độ KYC ↗'
+                : 'Tiếp tục hoàn thiện hồ sơ →'}
+            </Link>
+          </div>
         </div>
       )}
 

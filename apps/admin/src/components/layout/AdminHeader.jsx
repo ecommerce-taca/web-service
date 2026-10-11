@@ -1,0 +1,93 @@
+import { useState } from 'react';
+import PropTypes from 'prop-types';
+
+export default function AdminHeader({
+  title = 'Shops / KYC',
+  subtitle = 'Xác minh người bán, hồ sơ pháp lý và tín hiệu rủi ro.',
+  onSearch,
+  searchValue = '',
+}) {
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  return (
+    <header className="h-[76px] bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0">
+      {/* Title & Subtitle */}
+      <div>
+        <h1 className="text-[20px] font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+          {title}
+        </h1>
+        <p className="text-[12px] text-slate-500 font-medium">
+          {subtitle}
+        </p>
+      </div>
+
+      {/* Right Search & Controls */}
+      <div className="flex items-center gap-4">
+        {/* Search Input */}
+        <div className="relative w-64">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[13px]">
+            ⌕
+          </span>
+          <input
+            type="text"
+            value={searchValue}
+            onChange={(e) => onSearch && onSearch(e.target.value)}
+            placeholder="Tìm trong hệ thống"
+            className="w-full pl-8 pr-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[12px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0A68FF] focus:bg-white transition-colors"
+          />
+        </div>
+
+        {/* Action Button: Quy tắc rủi ro */}
+        <button
+          type="button"
+          onClick={() => alert('Quy tắc rủi ro hệ thống: Tự động gắn nhãn HIGH khi trùng IP, trùng thiết bị hoặc nghi vấn sao kê ngân hàng.')}
+          className="px-3.5 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-[12px] transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+        >
+          <span className="text-amber-500">⚠</span>
+          <span>Quy tắc rủi ro</span>
+        </button>
+
+        {/* Notifications & Admin Status */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-[12px] flex items-center gap-2 cursor-pointer"
+          >
+            <span>🔔</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-black">
+              12
+            </span>
+            <span className="text-slate-400 text-[10px]">Trần Hoàng ▾</span>
+          </button>
+
+          {showNotifications && (
+            <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-50 text-[12px] animate-in fade-in duration-150">
+              <div className="font-bold text-slate-900 border-b border-slate-100 pb-2 mb-2 flex items-center justify-between">
+                <span>Thông báo hệ thống</span>
+                <span className="text-[10px] text-blue-600 font-medium">Đánh dấu đã đọc</span>
+              </div>
+              <div className="space-y-2 text-slate-600">
+                <div className="p-2 rounded-lg bg-blue-50/50 border border-blue-100">
+                  <div className="font-semibold text-blue-900">12 hồ sơ KYC mới cần duyệt</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">Vừa nhận 5 phút trước</div>
+                </div>
+                <div className="p-2 rounded-lg bg-amber-50/50 border border-amber-100">
+                  <div className="font-semibold text-amber-900">Phát hiện 1 gian hàng trùng IP khả nghi</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">Taca Digital Store (HIGH RISK)</div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}
+
+AdminHeader.propTypes = {
+  title: PropTypes.string,
+  subtitle: PropTypes.string,
+  onSearch: PropTypes.func,
+  searchValue: PropTypes.string,
+};

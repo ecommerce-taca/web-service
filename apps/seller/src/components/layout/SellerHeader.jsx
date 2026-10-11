@@ -80,7 +80,7 @@ export default function SellerHeader({ shopName = 'Taca Apple Flagship Store', u
                   className="w-full text-left px-3 py-2 text-slate-600 hover:bg-slate-50 transition-colors block text-decoration-none"
                   onClick={() => setIsStoreMenuOpen(false)}
                 >
-                  + Đăng ký gian hàng mới / KYC
+                  Tiến độ KYC & Thiết lập gian hàng
                 </Link>
               </div>
             )}
