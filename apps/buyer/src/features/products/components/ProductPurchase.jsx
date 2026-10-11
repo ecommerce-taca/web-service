@@ -183,6 +183,11 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
               </span>
             )}
           </div>
+          <div className="flex items-center gap-2 pt-0.5">
+            <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded">
+              ✓ Giá đã bao gồm thuế VAT {product.tax_rate_bps ? `(${product.tax_rate_bps / 100}%)` : '(10%)'}
+            </span>
+          </div>
         </div>
 
         {/* Dynamic Multi-Attributes / SKU Picker (Khớp Penpot Taca Buyer / Product Detail) */}
@@ -230,7 +235,15 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
         <div className="text-[12px] font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 w-fit flex items-center gap-2">
           <span>SKU đã chọn: <strong className="text-slate-900">{currentSkuCode}</strong></span>
           <span className="text-slate-300">·</span>
-          <span>Còn <strong className="text-slate-900">{currentStock}</strong> sản phẩm</span>
+          <span>
+            {currentStock <= 0 ? (
+              <strong className="text-rose-600">Tạm hết hàng</strong>
+            ) : currentStock <= 5 ? (
+              <span className="text-amber-700 font-bold">Chỉ còn {currentStock} sản phẩm</span>
+            ) : (
+              <span>Còn <strong className="text-slate-900">{currentStock}</strong> sản phẩm</span>
+            )}
+          </span>
         </div>
 
         {/* Actions */}

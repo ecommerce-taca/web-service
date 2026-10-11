@@ -34,7 +34,7 @@ const getStoredMockAddresses = () => {
     {
       id: '01912f4b-7a1b-7c12-9c55-8b1c34a6d001',
       recipient: 'Nguyễn Minh Anh',
-      phone: '+84909123456',
+      phone: '0909123456',
       line1: '28 Nguyễn Huệ',
       line2: 'Tòa nhà Bitexco',
       country_code: 'VN',
@@ -47,6 +47,23 @@ const getStoredMockAddresses = () => {
       is_default: true,
       created_at: '2026-08-30T09:10:00Z',
       updated_at: '2026-08-30T09:10:00Z'
+    },
+    {
+      id: '01912f4b-7a1b-7c12-9c55-8b1c34a6d002',
+      recipient: 'Nguyễn Minh Anh',
+      phone: '0909123456',
+      line1: '123 Lê Lợi',
+      line2: 'Tầng 15, Saigon Centre',
+      country_code: 'VN',
+      province_code: '79',
+      province: 'Thành phố Hồ Chí Minh',
+      ward_code: '26740',
+      ward: 'Phường Bến Nghé',
+      district: null,
+      postal_code: '700000',
+      is_default: false,
+      created_at: '2026-09-01T10:00:00Z',
+      updated_at: '2026-09-01T10:00:00Z'
     }
   ];
   localStorage.setItem('taca_mock_addresses', JSON.stringify(defaultList));

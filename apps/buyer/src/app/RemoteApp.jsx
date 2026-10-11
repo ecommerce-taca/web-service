@@ -18,12 +18,14 @@ import SearchLayout from '../features/search/layouts/SearchLayout';
 import SearchPage from '../features/search/pages/SearchPage';
 import CartPage from '../features/cart/pages/CartPage';
 import CheckoutPage from '../features/checkout/pages/CheckoutPage';
+import ScrollToTop from '../components/common/ScrollToTop';
 
 export default function RemoteApp() {
   return (
     <AuthProvider>
       <CartProvider>
         <FavoritesProvider>
+          <ScrollToTop />
           <AuthModal />
           <Routes>
           <Route element={<BuyerLayout />}>

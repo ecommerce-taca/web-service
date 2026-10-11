@@ -3,12 +3,16 @@ import MetricCard from '../../../components/common/MetricCard';
 import StatusBadge from '../../../components/common/StatusBadge';
 import ProductEditorModal from '../components/ProductEditorModal';
 import ProductImportModal from '../components/ProductImportModal';
+import SellerLoginModal from '../../../components/common/SellerLoginModal';
+import { quickDemoLogin } from '../../../services/seller-auth.api';
 import sellerProductApi from '../services/seller-product.api';
 
 export default function ProductsPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAuthError, setIsAuthError] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -19,8 +23,10 @@ export default function ProductsPage() {
   const tabs = [
     { id: 'ALL', label: 'Tất cả' },
     { id: 'ACTIVE', label: 'Đang bán' },
+    { id: 'DRAFT', label: 'Bản nháp' },
     { id: 'OUT_OF_STOCK', label: 'Hết hàng' },
     { id: 'INACTIVE', label: 'Tạm ẩn' },
+    { id: 'BLOCKED', label: 'Bị khóa' },
     { id: 'ARCHIVED', label: 'Đã lưu trữ' },
   ];
 
@@ -29,6 +35,7 @@ export default function ProductsPage() {
     try {
       setLoading(true);
       setError(null);
+      setIsAuthError(false);
       const res = await sellerProductApi.getProducts({
         status: activeTab,
         q: searchQuery.trim(),
@@ -40,7 +47,12 @@ export default function ProductsPage() {
       setItems(dataItems);
     } catch (err) {
       console.error('Lỗi khi tải danh sách sản phẩm người bán:', err);
-      setError('Không thể tải danh sách sản phẩm. Vui lòng thử lại!');
+      if (err?.response?.status === 401) {
+        setIsAuthError(true);
+        setError('Phiên đăng nhập chưa được xác thực (401 Unauthorized). Vui lòng đăng nhập tài khoản Người bán để truy cập kho sản phẩm!');
+      } else {
+        setError(err?.response?.data?.error?.message || err?.message || 'Không thể tải danh sách sản phẩm. Vui lòng thử lại!');
+      }
     } finally {
       setLoading(false);
     }
@@ -51,6 +63,25 @@ export default function ProductsPage() {
       loadProducts();
     }, 200);
     return () => clearTimeout(timer);
+  }, [loadProducts]);
+
+  useEffect(() => {
+    const handleAuthEvent = () => {
+      loadProducts();
+    };
+    const handleAuthRequired = () => {
+      setIsLoginModalOpen(true);
+    };
+
+    window.addEventListener('auth:login', handleAuthEvent);
+    window.addEventListener('auth:logout', handleAuthEvent);
+    window.addEventListener('auth:required', handleAuthRequired);
+
+    return () => {
+      window.removeEventListener('auth:login', handleAuthEvent);
+      window.removeEventListener('auth:logout', handleAuthEvent);
+      window.removeEventListener('auth:required', handleAuthRequired);
+    };
   }, [loadProducts]);
 
   // Tính toán 4 thẻ chỉ số KPI động khớp Penpot "Taca Seller / Products"
@@ -78,10 +109,12 @@ export default function ProductsPage() {
 
   const handleTogglePublish = async (spu) => {
     try {
+      const productId = spu.id || spu.productId;
+      const currentVersion = spu.version || 1;
       if (spu.status === 'ACTIVE') {
-        await sellerProductApi.unpublishProduct(spu.id || spu.productId);
+        await sellerProductApi.unpublishProduct(productId, currentVersion);
       } else {
-        await sellerProductApi.publishProduct(spu.id || spu.productId);
+        await sellerProductApi.publishProduct(productId, currentVersion);
       }
       loadProducts();
     } catch (err) {
@@ -93,7 +126,9 @@ export default function ProductsPage() {
     const isConfirmed = window.confirm(`Bạn có chắc chắn muốn chuyển sản phẩm "${spu.title || spu.name}" vào danh sách lưu trữ?`);
     if (!isConfirmed) return;
     try {
-      await sellerProductApi.archiveProduct(spu.id || spu.productId);
+      const productId = spu.id || spu.productId;
+      const currentVersion = spu.version || 1;
+      await sellerProductApi.archiveProduct(productId, currentVersion);
       alert('Đã lưu trữ sản phẩm thành công!');
       loadProducts();
     } catch (err) {
@@ -113,7 +148,7 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-8">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -213,8 +248,32 @@ export default function ProductsPage() {
             Đang tải dữ liệu sản phẩm...
           </div>
         ) : error ? (
-          <div className="py-12 text-center text-rose-500 text-[14px]">
-            {error}
+          <div className="py-12 px-6 text-center space-y-3">
+            <div className="text-3xl">🔒</div>
+            <p className="text-rose-600 font-semibold text-[14px] max-w-lg mx-auto">
+              {error}
+            </p>
+            {isAuthError && (
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsLoginModalOpen(true)}
+                  className="px-5 py-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg font-bold text-xs shadow-sm transition-colors cursor-pointer"
+                >
+                  Đăng nhập Người bán
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    quickDemoLogin();
+                    loadProducts();
+                  }}
+                  className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg font-bold text-xs transition-colors cursor-pointer"
+                >
+                  ⚡ Đăng nhập nhanh Demo
+                </button>
+              </div>
+            )}
           </div>
         ) : items.length === 0 ? (
           <div className="py-16 text-center text-slate-400 text-[14px]">
@@ -231,7 +290,7 @@ export default function ProductsPage() {
                   <th className="py-3.5 px-6">TỒN KHO</th>
                   <th className="py-3.5 px-6">ĐÃ BÁN</th>
                   <th className="py-3.5 px-6">TRẠNG THÁI</th>
-                  <th className="py-3.5 px-6 text-right">THAO TÁC</th>
+                  <th className="py-3.5 px-6 text-right w-[300px] min-w-[300px]">THAO TÁC</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -251,41 +310,70 @@ export default function ProductsPage() {
                             <div className="text-[11px] font-mono text-slate-400 mt-0.5">
                               {spu.spu_code || spu.code || `SPU-${spu.id}`}
                             </div>
+                            {spu.status === 'BLOCKED' && spu.block_reason && (
+                              <div className="text-[11px] text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded mt-1 font-medium inline-block">
+                                ⚠️ Vi phạm: {spu.block_reason}
+                              </div>
+                            )}
                           </div>
                         </td>
 
                         {/* Variant summary */}
-                        <td className="py-4 px-6 text-[#4F46E5] font-medium text-[12px]">
+                        <td className="py-4 px-6 text-[#4F46E5] font-medium text-[12px] whitespace-nowrap">
                           {spu.sku_summary || `${spu.sku_count || (spu.skus ? spu.skus.length : 1)} SKU`}
                         </td>
 
                         {/* Price Range */}
-                        <td className="py-4 px-6 font-extrabold text-slate-900">
-                          {spu.price_range || (
-                            spu.price_summary 
-                              ? `${Number(spu.price_summary.min_price).toLocaleString('vi-VN')} – ${Number(spu.price_summary.max_price).toLocaleString('vi-VN')} ₫`
-                              : '29.490.000 ₫'
-                          )}
+                        <td className="py-4 px-6 font-extrabold text-slate-900 whitespace-nowrap">
+                          {(() => {
+                            if (spu.skus && spu.skus.length > 0) {
+                              const prices = spu.skus
+                                .map(s => Number(s.price?.sale_price || s.price?.base_price || String(s.price).replace(/\D/g, '') || 0))
+                                .filter(p => p > 0);
+                              if (prices.length > 0) {
+                                const minP = Math.min(...prices);
+                                const maxP = Math.max(...prices);
+                                return minP === maxP
+                                  ? `${minP.toLocaleString('vi-VN')} ₫`
+                                  : `${minP.toLocaleString('vi-VN')} – ${maxP.toLocaleString('vi-VN')} ₫`;
+                              }
+                            }
+                            if (spu.price_range && spu.price_range !== '0 ₫' && spu.price_range !== '0') {
+                              return spu.price_range;
+                            }
+                            if (spu.price_summary && Number(spu.price_summary.min_price) > 0) {
+                              const minP = Number(spu.price_summary.min_price);
+                              const maxP = Number(spu.price_summary.max_price) || minP;
+                              return minP === maxP
+                                ? `${minP.toLocaleString('vi-VN')} ₫`
+                                : `${minP.toLocaleString('vi-VN')} – ${maxP.toLocaleString('vi-VN')} ₫`;
+                            }
+                            return '0 ₫';
+                          })()}
                         </td>
 
                         {/* Stock */}
-                        <td className="py-4 px-6">
+                        <td className="py-4 px-6 whitespace-nowrap">
                           <span className={`font-bold ${isOutOfStock ? 'text-rose-600' : 'text-slate-800'}`}>
                             {spu.stock_display ?? spu.total_stock ?? 0}
                           </span>
                         </td>
 
                         {/* Sold */}
-                        <td className="py-4 px-6 text-slate-600 font-medium">
+                        <td className="py-4 px-6 text-slate-600 font-medium whitespace-nowrap">
                           {(spu.sold_count || spu.sold || 0).toLocaleString('vi-VN')}
                         </td>
 
                         {/* Status */}
-                        <td className="py-4 px-6">
+                        <td className="py-4 px-6 whitespace-nowrap">
                           <StatusBadge 
                             status={
                               spu.status === 'ARCHIVED'
                                 ? 'Đã lưu trữ'
+                                : spu.status === 'BLOCKED'
+                                ? 'Bị khóa'
+                                : spu.status === 'DRAFT'
+                                ? 'Bản nháp'
                                 : spu.status === 'ACTIVE'
                                 ? 'Đang bán'
                                 : isOutOfStock
@@ -295,6 +383,10 @@ export default function ProductsPage() {
                             type={
                               spu.status === 'ARCHIVED'
                                 ? 'archived'
+                                : spu.status === 'BLOCKED'
+                                ? 'danger'
+                                : spu.status === 'DRAFT'
+                                ? 'pending'
                                 : spu.status === 'ACTIVE'
                                 ? 'active'
                                 : isOutOfStock
@@ -305,37 +397,53 @@ export default function ProductsPage() {
                         </td>
 
                         {/* Actions */}
-                        <td className="py-4 px-6 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="py-4 px-6 text-right w-[300px] min-w-[300px]">
+                          <div className="flex items-center justify-end gap-1.5 flex-nowrap">
                             {spu.skus && spu.skus.length > 0 && (
                               <button
                                 type="button"
                                 onClick={() => setExpandedSpuId(isExpanded ? null : spu.id)}
-                                className="px-2.5 py-1 text-[11px] font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-2xs transition-all cursor-pointer"
+                                className="shrink-0 whitespace-nowrap h-7 px-2.5 text-[11px] font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-2xs transition-all cursor-pointer inline-flex items-center justify-center gap-1"
                               >
-                                {isExpanded ? 'Thu gọn ▴' : 'Xem SKU ▾'}
+                                <span>{isExpanded ? 'Thu gọn' : 'Xem SKU'}</span>
+                                <span className="text-[9px]">{isExpanded ? '▴' : '▾'}</span>
                               </button>
                             )}
                             <button
                               type="button"
                               onClick={() => handleOpenEditModal(spu)}
-                              className="px-2.5 py-1 text-[11px] font-bold text-[#4F46E5] bg-indigo-50/70 hover:bg-indigo-100/80 border border-indigo-200 rounded-lg shadow-2xs transition-all cursor-pointer"
+                              className="shrink-0 whitespace-nowrap h-7 px-2.5 text-[11px] font-bold text-[#4F46E5] bg-indigo-50/70 hover:bg-indigo-100/80 border border-indigo-200 rounded-lg shadow-2xs transition-all cursor-pointer inline-flex items-center justify-center"
                             >
                               Chỉnh sửa
                             </button>
-                            {spu.status !== 'ARCHIVED' ? (
+                            {spu.status === 'BLOCKED' ? (
+                              <span 
+                                title={spu.block_reason || 'Bị khóa bởi quản trị viên'}
+                                className="shrink-0 whitespace-nowrap h-7 px-2.5 text-[11px] font-semibold text-slate-400 bg-slate-100 border border-slate-200 rounded-lg cursor-not-allowed inline-flex items-center justify-center"
+                              >
+                                Bị khóa
+                              </span>
+                            ) : spu.status === 'DRAFT' ? (
+                              <button
+                                type="button"
+                                onClick={() => handleTogglePublish(spu)}
+                                className="shrink-0 whitespace-nowrap h-7 px-2.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg shadow-2xs transition-all cursor-pointer inline-flex items-center justify-center"
+                              >
+                                Đăng bán
+                              </button>
+                            ) : spu.status !== 'ARCHIVED' ? (
                               <>
                                 <button
                                   type="button"
                                   onClick={() => handleTogglePublish(spu)}
-                                  className="px-2.5 py-1 text-[11px] font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-2xs transition-all cursor-pointer"
+                                  className="shrink-0 whitespace-nowrap h-7 px-2.5 text-[11px] font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-2xs transition-all cursor-pointer inline-flex items-center justify-center"
                                 >
                                   {spu.status === 'ACTIVE' ? 'Ẩn' : 'Hiện'}
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleArchiveProduct(spu)}
-                                  className="px-2.5 py-1 text-[11px] font-semibold text-rose-600 bg-rose-50/70 hover:bg-rose-100/80 border border-rose-200 rounded-lg shadow-2xs transition-all cursor-pointer"
+                                  className="shrink-0 whitespace-nowrap h-7 px-2.5 text-[11px] font-semibold text-rose-600 bg-rose-50/70 hover:bg-rose-100/80 border border-rose-200 rounded-lg shadow-2xs transition-all cursor-pointer inline-flex items-center justify-center"
                                 >
                                   Lưu trữ
                                 </button>
@@ -344,7 +452,7 @@ export default function ProductsPage() {
                               <button
                                 type="button"
                                 onClick={() => handleTogglePublish(spu)}
-                                className="px-2.5 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50/70 hover:bg-emerald-100/80 border border-emerald-200 rounded-lg shadow-2xs transition-all cursor-pointer"
+                                className="shrink-0 whitespace-nowrap h-7 px-2.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50/70 hover:bg-emerald-100/80 border border-emerald-200 rounded-lg shadow-2xs transition-all cursor-pointer inline-flex items-center justify-center"
                               >
                                 Khôi phục
                               </button>
@@ -404,6 +512,16 @@ export default function ProductsPage() {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onSuccess={() => {
+          loadProducts();
+        }}
+      />
+
+      {/* Seller Login Modal */}
+      <SellerLoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onSuccess={() => {
+          setIsLoginModalOpen(false);
           loadProducts();
         }}
       />

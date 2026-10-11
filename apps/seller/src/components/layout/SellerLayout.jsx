@@ -5,8 +5,11 @@ import SellerNav from './SellerNav';
 export default function SellerLayout() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans flex flex-col">
-      <SellerHeader />
-      <SellerNav />
+      {/* Unified Sticky Navigation Bar */}
+      <div className="sticky top-0 z-30 bg-white shadow-xs">
+        <SellerHeader />
+        <SellerNav />
+      </div>
 
       {/* Main Content Area */}
       <main className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-12 py-8">

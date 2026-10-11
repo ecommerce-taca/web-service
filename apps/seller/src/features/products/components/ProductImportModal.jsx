@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import sellerProductApi from '../services/seller-product.api';
 
@@ -141,8 +142,8 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[620px] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/60">
@@ -326,7 +327,8 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
           ) : null}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

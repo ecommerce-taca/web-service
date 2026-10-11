@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import MetricCard from '../../../components/common/MetricCard';
 import StatusBadge from '../../../components/common/StatusBadge';
 import OrderDetailModal from '../../orders/components/OrderDetailModal';
 import { SELLER_MOCK_DATA } from '../../../services/seller.mock';
+import { getOnboardingProgress } from '../../../services/seller-shop.api';
 
 export default function DashboardPage() {
   const location = useLocation();
@@ -13,6 +14,13 @@ export default function DashboardPage() {
   const { dashboard } = SELLER_MOCK_DATA;
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [reportDownloaded, setReportDownloaded] = useState(false);
+  const [onboardingProgress, setOnboardingProgress] = useState(null);
+
+  useEffect(() => {
+    getOnboardingProgress()
+      .then((data) => setOnboardingProgress(data))
+      .catch((err) => console.error('Lỗi nạp tiến độ onboarding dashboard:', err));
+  }, []);
 
   const handleDownloadReport = () => {
     setReportDownloaded(true);
@@ -47,6 +55,49 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
+
+      {/* Onboarding & KYC Status Banner (§2.20) */}
+      {onboardingProgress && (
+        <div className="bg-gradient-to-r from-indigo-50/90 to-blue-50/60 rounded-xl border border-indigo-100 p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-white border border-indigo-100 flex items-center justify-center text-lg shadow-2xs shrink-0">
+              {onboardingProgress.kyc_status === 'APPROVED' ? '🛡️' : '📋'}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[13px] font-bold text-slate-900">
+                  {onboardingProgress.kyc_status === 'APPROVED'
+                    ? 'Gian hàng đã xác thực KYC chính thức'
+                    : 'Tiến độ thiết lập gian hàng & Định danh (Onboarding)'}
+                </span>
+                <span
+                  className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                    onboardingProgress.kyc_status === 'APPROVED'
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : onboardingProgress.kyc_status === 'PENDING'
+                      ? 'bg-amber-100 text-amber-800'
+                      : 'bg-slate-200 text-slate-700'
+                  }`}
+                >
+                  KYC: {onboardingProgress.kyc_status}
+                </span>
+              </div>
+              <p className="text-[12px] text-slate-500 mt-0.5">
+                {onboardingProgress.kyc_status === 'APPROVED'
+                  ? 'Tài khoản người bán đã kích hoạt đầy đủ các tính năng bán hàng và nhận thanh toán.'
+                  : `Đang ở bước: ${onboardingProgress.current_step}. Vui lòng nộp đầy đủ hồ sơ để được phê duyệt nhanh nhất.`}
+              </p>
+            </div>
+          </div>
+
+          <Link
+            to={`${basePath}/onboarding`}
+            className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-[#4F46E5] rounded-lg font-bold text-[12px] shadow-2xs whitespace-nowrap self-start sm:self-auto transition-colors"
+          >
+            {onboardingProgress.kyc_status === 'APPROVED' ? 'Xem hồ sơ & KYC ↗' : 'Tiếp tục hoàn thiện hồ sơ →'}
+          </Link>
+        </div>
+      )}
 
       {/* 4 Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import ScrollToTop from '../components/common/ScrollToTop';
 
 const BuyerApp = lazy(() => import('buyer/App'));
 const SellerApp = lazy(() => import('seller/App'));
@@ -10,6 +11,7 @@ const Loading = () => <div className="p-8 text-center text-xl font-bold">Loading
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <nav className="bg-slate-900 text-white p-4 flex gap-6 sticky top-0 z-50">
         <span className="font-bold text-sale">TACA MICRO-FE HOST</span>
         <Link to="/" className="hover:text-primary">Buyer Storefront</Link>
