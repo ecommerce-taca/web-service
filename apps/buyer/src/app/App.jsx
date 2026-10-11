@@ -23,6 +23,42 @@ import CartPage from '../features/cart/pages/CartPage';
 import CheckoutPage from '../features/checkout/pages/CheckoutPage';
 import ScrollToTop from '../components/common/ScrollToTop';
 
+function SellerRedirectNotice() {
+  const hostUrl = typeof window !== 'undefined'
+    ? `http://${window.location.hostname}:5173${window.location.pathname}${window.location.search}`
+    : '/seller';
+
+  return (
+    <div className="py-16 text-center max-w-lg mx-auto space-y-5">
+      <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-[#4F46E5] border border-indigo-200 flex items-center justify-center text-3xl mx-auto shadow-xs">
+        🏪
+      </div>
+      <div>
+        <h2 className="text-xl font-extrabold text-slate-900">
+          Chuyển hướng sang Kênh Người Bán
+        </h2>
+        <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+          Bạn đang truy cập trực tiếp từ cổng độc lập <strong>Buyer (Port 5174)</strong>. Toàn bộ Kênh Người Bán và quy trình Onboarding hoạt động trên cổng tổng hợp <strong>Shell (Port 5173)</strong>.
+        </p>
+      </div>
+      <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <a
+          href={hostUrl}
+          className="w-full sm:w-auto px-6 py-3 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl font-bold text-sm shadow-sm transition-colors no-underline flex items-center justify-center gap-2"
+        >
+          <span>Mở tại Kênh Người Bán (Port 5173) →</span>
+        </a>
+        <a
+          href="/"
+          className="w-full sm:w-auto px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm transition-colors no-underline"
+        >
+          ← Quay lại trang chủ
+        </a>
+      </div>
+    </div>
+  );
+}
+
 function AppContent() {
   return (
     <>
@@ -54,6 +90,9 @@ function AppContent() {
             <Route path="wishlist" element={<WishlistPage />} />
             <Route path="seller-register" element={<SellerRegisterPage />} />
           </Route>
+
+          <Route path="/seller/*" element={<SellerRedirectNotice />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
     </>
