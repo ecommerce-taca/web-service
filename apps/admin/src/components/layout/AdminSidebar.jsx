@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
-export default function AdminSidebar({ user, onSignOut }) {
+export default function AdminSidebar({ user, onSignOut, onOpen2FA }) {
   const location = useLocation();
 
   const isShell = location.pathname.startsWith('/admin');
@@ -18,6 +18,7 @@ export default function AdminSidebar({ user, onSignOut }) {
     { label: 'Orders / Disputes', path: `${basePath}/orders`, icon: '▦' },
     { label: 'Vouchers', path: `${basePath}/vouchers`, icon: '▦' },
     { label: 'Users / Roles', path: `${basePath}/users/roles`, icon: '▦' },
+    { label: 'Audit Logs', path: `${basePath}/audit-logs`, icon: '▦' },
     { label: 'Settings', path: `${basePath}/settings`, icon: '▦' },
   ];
 
@@ -102,7 +103,21 @@ export default function AdminSidebar({ user, onSignOut }) {
       </div>
 
       {/* Admin User Footer matching Penpot */}
-      <div className="p-4 border-t border-slate-800/80 bg-slate-900/60">
+      <div className="p-4 border-t border-slate-800/80 bg-slate-900/60 space-y-2.5">
+        {onOpen2FA && (
+          <button
+            type="button"
+            onClick={onOpen2FA}
+            className="w-full py-1.5 px-2.5 bg-blue-950/60 hover:bg-blue-900/60 border border-blue-800/40 rounded-xl text-[11px] font-bold text-[#38BDF8] flex items-center justify-between transition-colors cursor-pointer"
+          >
+            <span className="flex items-center gap-1.5">
+              <span>🔐</span>
+              <span>Cài đặt 2FA (TOTP)</span>
+            </span>
+            <span className="text-[10px] bg-blue-500/20 px-1 rounded">#11, #12</span>
+          </button>
+        )}
+
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="w-9 h-9 rounded-full bg-blue-600/30 border border-blue-500/40 flex items-center justify-center text-blue-400 font-bold text-[13px] shrink-0">
@@ -137,4 +152,5 @@ export default function AdminSidebar({ user, onSignOut }) {
 AdminSidebar.propTypes = {
   user: PropTypes.object,
   onSignOut: PropTypes.func.isRequired,
+  onOpen2FA: PropTypes.func,
 };

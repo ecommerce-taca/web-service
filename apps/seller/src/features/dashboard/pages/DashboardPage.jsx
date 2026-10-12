@@ -5,6 +5,7 @@ import StatusBadge from '../../../components/common/StatusBadge';
 import OrderDetailModal from '../../orders/components/OrderDetailModal';
 import { SELLER_MOCK_DATA } from '../../../services/seller.mock';
 import { getOnboardingProgress } from '../../../services/seller-shop.api';
+import { useSellerRealtimeStatus } from '../../../hooks/useSellerRealtimeStatus';
 
 export default function DashboardPage() {
   const location = useLocation();
@@ -15,6 +16,9 @@ export default function DashboardPage() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [reportDownloaded, setReportDownloaded] = useState(false);
   const [onboardingProgress, setOnboardingProgress] = useState(null);
+
+  // Hook WebSocket / SSE Realtime Status (AUD-04)
+  const { notification, dismissNotification } = useSellerRealtimeStatus();
 
   useEffect(() => {
     const loadProgress = () => {
@@ -45,6 +49,35 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
+      {/* Realtime Notification Banner (AUD-04) */}
+      {notification && (
+        <div
+          className={`p-4 rounded-xl border flex items-start justify-between gap-4 animate-in slide-in-from-top duration-300 shadow-sm ${
+            notification.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+              : notification.type === 'error'
+              ? 'bg-rose-50 border-rose-200 text-rose-900'
+              : 'bg-amber-50 border-amber-200 text-amber-900'
+          }`}
+        >
+          <div className="flex gap-3">
+            <span className="text-xl">
+              {notification.type === 'success' ? '🎉' : notification.type === 'error' ? '⚠️' : '📋'}
+            </span>
+            <div>
+              <h4 className="font-bold text-[14px] m-0">{notification.title}</h4>
+              <p className="text-[13px] mt-0.5 opacity-90">{notification.message}</p>
+            </div>
+          </div>
+          <button
+            onClick={dismissNotification}
+            className="text-slate-400 hover:text-slate-600 font-bold text-sm cursor-pointer p-1"
+            aria-label="Đóng thông báo"
+          >
+            ✕
+          </button>
+        </div>
+      )}
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

@@ -17,6 +17,7 @@ const AccountSidebar = () => {
     { name: 'Đánh giá', path: '/account/reviews', icon: '★' },
     { name: 'Voucher của tôi', path: '/account/vouchers', icon: 'V' },
     { name: 'Sản phẩm yêu thích', path: '/account/wishlist', icon: '♥' },
+    { name: 'Cửa hàng theo dõi', path: '/account/following', icon: '🏪' },
   ];
 
   return (

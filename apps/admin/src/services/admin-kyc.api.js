@@ -539,3 +539,24 @@ export const updateUserStatus = async (userId, { status, reason = '' }) => {
     reason,
   });
 };
+
+/**
+ * #35 GET /admin/audit-logs
+ * Truy vấn nhật ký kiểm toán hệ thống
+ * @param {Object} params - { actor_id, action, target_type, target_id, from_date, to_date, page, size }
+ */
+export const getAuditLogs = async (params = {}) => {
+  if (isMockMode()) {
+    return {
+      data: [],
+      meta: {
+        page: Number(params.page) || 1,
+        size: Number(params.size) || 20,
+        total: 0,
+        total_pages: 1,
+      },
+    };
+  }
+  return apiClient.get('/admin/audit-logs', { params });
+};
+

@@ -33,9 +33,18 @@ export const hasAdminPrivilege = (user) => {
   return user.roles.some((r) => ['ADMIN', 'SUPER_ADMIN', 'RISK_MANAGER'].includes(r));
 };
 
-export const signinAdmin = async ({ identifier, password }) => {
+export const signinAdmin = async ({ identifier, password, force2fa = false }) => {
   if (isMockMode()) {
     await new Promise((res) => setTimeout(res, 350));
+    // Nếu yêu cầu test 2FA hoặc mật khẩu/email có chữ '2fa'
+    if (force2fa || identifier.includes('2fa') || password.includes('2fa')) {
+      return {
+        mfa_required: true,
+        challenge_id: 'mfa-challenge-' + Date.now(),
+        supported_methods: ['TOTP'],
+      };
+    }
+
     const token = 'mock-admin-access-token-' + Date.now();
     const refreshToken = 'mock-admin-refresh-token-' + Date.now();
     localStorage.setItem(ACCESS_TOKEN_KEY, token);
@@ -53,6 +62,16 @@ export const signinAdmin = async ({ identifier, password }) => {
     });
 
     const payload = response.data || response;
+
+    // Trường hợp tài khoản kích hoạt bảo mật 2 lớp
+    if (payload.mfa_required) {
+      return {
+        mfa_required: true,
+        challenge_id: payload.challenge_id,
+        supported_methods: payload.supported_methods || ['TOTP'],
+      };
+    }
+
     const user = payload.user || payload;
     const tokens = payload.tokens;
 
@@ -104,3 +123,84 @@ export const signoutAdmin = async () => {
     window.dispatchEvent(new Event('auth:logout'));
   }
 };
+
+/**
+ * 11. POST /auth/2fa/setup (§2.11 auth-user.md)
+ * Tạo TOTP enrollment cho quản trị viên (Admin Authenticated)
+ */
+export const setup2FA = async () => {
+  if (isMockMode()) {
+    await new Promise((res) => setTimeout(res, 250));
+    return {
+      data: {
+        setup_id: `setup-mock-${Date.now()}`,
+        issuer: 'Taca Marketplace',
+        account: 'admin@taca.vn',
+        otpauth_uri: 'otpauth://totp/Taca%20Marketplace:admin@taca.vn?secret=JBSWY3DPEHPK3PXP&issuer=Taca%20Marketplace',
+        expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+      },
+      meta: { request_id: 'req-' + Date.now() },
+    };
+  }
+  const res = await apiClient.post('/auth/2fa/setup');
+  return res?.data ?? res;
+};
+
+/**
+ * 12. POST /auth/2fa/verify (§2.12 auth-user.md)
+ * Xác thực TOTP 2FA cho LOGIN, ENROLL hoặc STEP_UP
+ */
+export const verify2FA = async ({ purpose, challenge_id, setup_id, method = 'TOTP', code }) => {
+  if (isMockMode()) {
+    await new Promise((res) => setTimeout(res, 300));
+    const token = `mock-admin-2fa-token-${Date.now()}`;
+    const refreshToken = `mock-admin-refresh-token-${Date.now()}`;
+
+    if (purpose === 'LOGIN') {
+      localStorage.setItem(ACCESS_TOKEN_KEY, token);
+      localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+      localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(DEMO_ADMIN));
+      window.dispatchEvent(new Event('auth:login'));
+    }
+
+    return {
+      data: {
+        status: 'ENABLED',
+        verified: true,
+        user: DEMO_ADMIN,
+        tokens: {
+          token_type: 'Bearer',
+          access_token: token,
+          refresh_token: refreshToken,
+          expires_in: 900,
+        },
+      },
+      meta: { request_id: 'req-' + Date.now() },
+    };
+  }
+
+  const res = await apiClient.post('/auth/2fa/verify', {
+    purpose,
+    challenge_id,
+    setup_id,
+    method,
+    code,
+  });
+
+  const payload = res?.data || res;
+  if (purpose === 'LOGIN' && payload?.verified) {
+    const tokens = payload.tokens;
+    const user = payload.user || DEMO_ADMIN;
+    if (tokens?.access_token) {
+      localStorage.setItem(ACCESS_TOKEN_KEY, tokens.access_token);
+    }
+    if (tokens?.refresh_token) {
+      localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refresh_token);
+    }
+    localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(user));
+    window.dispatchEvent(new Event('auth:login'));
+  }
+
+  return res?.data ?? res;
+};
+

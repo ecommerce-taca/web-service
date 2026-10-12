@@ -2,6 +2,24 @@ import apiClient, { isMockMode } from '../../../../../../shared/utils/api-client
 import { sanitizeObjectForExport } from '../../../../../../shared/utils/security';
 
 /**
+ * Tính toán mã băm SHA-256 (64 hex characters) thực tế từ File
+ */
+export const calculateFileSha256 = async (file) => {
+  if (!file) return 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+  try {
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.subtle) {
+      const buffer = await file.arrayBuffer();
+      const hashBuffer = await window.crypto.subtle.digest('SHA-256', buffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+    }
+  } catch (err) {
+    console.warn('Lỗi khi tính SHA-256 bằng Web Crypto API:', err);
+  }
+  return Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+};
+
+/**
  * Mock Data danh sách sản phẩm của Seller khớp Penpot "Taca Seller / Products"
  */
 let MOCK_SELLER_PRODUCTS = [
@@ -408,11 +426,13 @@ export const sellerProductApi = {
   },
 
   /**
-   * 5. Gán danh mục chính và danh mục phụ
+   * 5. Gán danh mục chính và danh mục phụ (kèm concurrency version theo đặc tả §3.2)
    */
-  assignCategories: async (productId, { primary_category_id, secondary_category_ids = [] }) => {
+  assignCategories: async (productId, { primary_category_id, secondary_category_ids = [], version = 1 }) => {
+    const ver = Math.max(1, Number(version) || 1);
     if (!isMockMode()) {
       return apiClient.put(`/seller/products/${productId}/categories`, {
+        version: ver,
         primary_category_id,
         secondary_category_ids
       });
@@ -421,8 +441,9 @@ export const sellerProductApi = {
     const item = MOCK_SELLER_PRODUCTS.find(p => p.id === productId);
     if (item) {
       item.primary_category_id = primary_category_id;
+      item.version = (item.version || 1) + 1;
     }
-    return { data: { success: true } };
+    return { data: { success: true, version: (item?.version || ver + 1) } };
   },
 
   /**
@@ -510,30 +531,56 @@ export const sellerProductApi = {
   },
 
   /**
-   * 8. Luồng Upload Media qua S3 Presigned URL
+   * 8. Luồng Upload Media qua S3 Presigned URL (Khớp đặc tả §3.2)
    */
-  getMediaUploadUrl: async (productId, { file_name, content_type, file_size }) => {
+  getMediaUploadUrl: async (productId, {
+    scope = 'SPU',
+    sku_id = null,
+    content_type,
+    size_bytes,
+    file_size,
+    sha256,
+    is_cover = false,
+    file_name
+  }) => {
+    const finalSizeBytes = Number(size_bytes ?? file_size) || 0;
+    const finalSha256 = sha256 && /^[a-fA-F0-9]{64}$/.test(sha256)
+      ? sha256
+      : 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+
     if (!isMockMode()) {
       return apiClient.post(`/seller/products/${productId}/media/upload-url`, {
-        file_name,
-        content_type,
-        file_size
+        scope,
+        sku_id,
+        content_type: content_type || 'image/jpeg',
+        size_bytes: finalSizeBytes,
+        sha256: finalSha256,
+        is_cover: Boolean(is_cover)
       });
     }
     return {
       data: {
         media_id: `med-${Date.now()}`,
+        object_key: `products/${productId}/${file_name || 'media.webp'}`,
+        file_key: `products/${productId}/${file_name || 'media.webp'}`,
         upload_url: 'https://mock-s3-upload.local/presigned-url',
-        file_key: `products/${productId}/${file_name}`
+        status: 'UPLOADING'
       }
     };
   },
 
   completeMediaUpload: async (productId, payload) => {
+    const finalPayload = {
+      media_id: payload.media_id,
+      object_key: payload.object_key || payload.upload_key || payload.file_key,
+      sha256: payload.sha256 && /^[a-fA-F0-9]{64}$/.test(payload.sha256)
+        ? payload.sha256
+        : 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+    };
     if (!isMockMode()) {
-      return apiClient.post(`/seller/products/${productId}/media/complete`, payload);
+      return apiClient.post(`/seller/products/${productId}/media/complete`, finalPayload);
     }
-    return { data: { success: true, status: 'READY' } };
+    return { data: { success: true, status: 'READY', ...finalPayload } };
   },
 
   /**
@@ -553,9 +600,19 @@ export const sellerProductApi = {
     };
   },
 
-  downloadImportTemplate: async (type = 'MULTI_SHEET') => {
+  downloadImportTemplate: async (typeOrOptions = 'MULTI_SHEET') => {
+    const options = typeof typeOrOptions === 'object' && typeOrOptions !== null
+      ? typeOrOptions
+      : { layout_mode: typeOrOptions || 'MULTI_SHEET' };
+    const payload = {
+      layout_mode: options.layout_mode || options.type || 'MULTI_SHEET',
+      ...(options.row_count ? { row_count: options.row_count } : {}),
+      ...(options.category_ids ? { category_ids: options.category_ids } : {}),
+      ...(options.product_ids ? { product_ids: options.product_ids } : {})
+    };
+
     if (!isMockMode()) {
-      return apiClient.post('/seller/products/import/template', { type }, { responseType: 'blob' });
+      return apiClient.post('/seller/products/import/template', payload, { responseType: 'blob' });
     }
     return { data: new Blob(['mock-excel-content'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }) };
   },

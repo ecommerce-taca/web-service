@@ -18,8 +18,26 @@ const CHIPS = ['Phổ biến', 'Bán chạy', 'Mới nhất', 'Giá thấp → c
 const CategoryLandingPage = () => {
   const { categorySlug, subCategorySlug } = useParams();
   const [products, setProducts] = useState([]);
+  const [categoryInfo, setCategoryInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeChip, setActiveChip] = useState('Phổ biến');
+
+  useEffect(() => {
+    let isMounted = true;
+    const targetCatId = subCategorySlug || categorySlug || 'dien-thoai';
+    productApi.getCategoryById(targetCatId)
+      .then(res => {
+        if (!isMounted) return;
+        setCategoryInfo(res?.data || null);
+      })
+      .catch(err => {
+        console.warn('[CategoryLandingPage] Lỗi lấy thông tin danh mục:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [categorySlug, subCategorySlug]);
 
   useEffect(() => {
     let isMounted = true;
@@ -67,7 +85,7 @@ const CategoryLandingPage = () => {
         </Link>
         <span>/</span>
         <span className="text-taca-text-main font-semibold capitalize">
-          {categorySlug ? categorySlug.replace(/-/g, ' ') : 'Điện thoại'} {subCategorySlug ? `- ${subCategorySlug.replace(/-/g, ' ')}` : ''}
+          {categoryInfo?.name || (categorySlug ? categorySlug.replace(/-/g, ' ') : 'Điện thoại')} {subCategorySlug ? `- ${subCategorySlug.replace(/-/g, ' ')}` : ''}
         </span>
       </div>
 
@@ -83,7 +101,7 @@ const CategoryLandingPage = () => {
           <div className="w-full h-[220px] bg-taca-primary rounded-[4px] flex items-center justify-between px-10 overflow-hidden relative">
             <div className="flex flex-col gap-3 z-10">
               <h1 className="text-white text-[28px] font-bold uppercase m-0">
-                {subCategorySlug ? subCategorySlug.replace(/-/g, ' ') : (categorySlug ? categorySlug.replace(/-/g, ' ') : 'ĐIỆN THOẠI')} CHÍNH HÃNG
+                {categoryInfo?.name || (subCategorySlug ? subCategorySlug.replace(/-/g, ' ') : (categorySlug ? categorySlug.replace(/-/g, ' ') : 'ĐIỆN THOẠI'))} CHÍNH HÃNG
               </h1>
               <div className="text-white text-[14px] leading-relaxed font-medium">
                 Apple - Samsung - Xiaomi - OPPO<br/>
