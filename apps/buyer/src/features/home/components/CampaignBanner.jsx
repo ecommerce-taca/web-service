@@ -1,28 +1,46 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
-const CampaignBanner = ({ brand, title, subtitle, ctaText, bgColor, textColor }) => {
+const CampaignBanner = ({ brand, title, subtitle, ctaText, bgColor, textColor, image }) => {
   return (
     <section
-      className="p-5 flex flex-col items-start justify-center gap-1.5 w-[424px] h-[151px] overflow-hidden"
+      className="p-5 rounded-2xl flex items-center justify-between gap-4 w-[400px] h-[152px] overflow-hidden relative shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 group"
       style={{ backgroundColor: bgColor, color: textColor }}
     >
-      <div className="border border-current px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-        {brand}
+      {/* Decorative gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-white/5 pointer-events-none" />
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col items-start justify-center gap-1.5 flex-1 min-w-0">
+        <div className="border border-current px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider backdrop-blur-xs">
+          {brand}
+        </div>
+        <h2 className="text-[17px] font-extrabold leading-tight line-clamp-1 m-0 drop-shadow-xs">
+          {title}
+        </h2>
+        <p className="text-[12px] font-medium opacity-85 line-clamp-1 m-0">
+          {subtitle}
+        </p>
+        <Link
+          to={`/search?q=${encodeURIComponent(brand.toLowerCase().replace(/\s+/g, '-'))}`}
+          className="mt-1 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 no-underline group-hover:gap-2"
+          style={{ color: textColor }}
+        >
+          <span>{ctaText || 'Xem sản phẩm'}</span>
+          <span>→</span>
+        </Link>
       </div>
-      <h2 className="text-[18px] font-extrabold leading-tight line-clamp-1 m-0">
-        {title}
-      </h2>
-      <p className="text-[13px] font-medium opacity-80 line-clamp-1 m-0">
-        {subtitle}
-      </p>
-      <Link
-        to={`/search?q=${brand.toLowerCase().replace(/\s+/g, '-')}`}
-        className="mt-1 bg-transparent border-none text-[11px] font-bold cursor-pointer hover:opacity-70 transition-opacity p-0 flex items-center gap-1 no-underline"
-        style={{ color: textColor }}
-      >
-        {ctaText || 'Xem sản phẩm'} →
-      </Link>
+
+      {/* Visual Product Thumb if available */}
+      {image && (
+        <div className="relative z-10 w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 shadow-lg border border-white/20">
+          <img
+            src={image}
+            alt={title}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          />
+        </div>
+      )}
     </section>
   );
 };
@@ -34,11 +52,13 @@ CampaignBanner.propTypes = {
   ctaText: PropTypes.string,
   bgColor: PropTypes.string.isRequired,
   textColor: PropTypes.string,
+  image: PropTypes.string,
 };
 
 CampaignBanner.defaultProps = {
   textColor: '#FFFFFF',
   ctaText: 'Xem sản phẩm',
+  image: '',
 };
 
 export default CampaignBanner;

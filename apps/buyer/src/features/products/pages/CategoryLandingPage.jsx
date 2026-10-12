@@ -1,26 +1,86 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import {
+  Flame,
+  Zap,
+  Sparkles,
+  ArrowUp,
+  Smartphone,
+  Laptop,
+  Utensils,
+  Shirt,
+  BookOpen,
+  Layers,
+  ArrowRight,
+  ShieldCheck,
+} from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import FilterSidebar from '../../search/components/FilterSidebar';
 import { productApi } from '../services/product.api';
 import { useFavorites } from '../hooks/useFavorites';
 
 const USE_CASES = [
-  'Chụp ảnh đẹp', 'Gaming', 'Pin trâu', 'Giá tốt', '5G', 'Gập'
+  'Chụp ảnh đẹp', 'Gaming & Đồ họa', 'Pin trâu', 'Học tập & Văn phòng', '5G Siêu tốc', 'Gập cao cấp'
 ];
 
 const BRANDS = [
-  'Apple', 'Samsung', 'Xiaomi', 'OPPO', 'vivo'
+  'Apple', 'Samsung', 'Xiaomi', 'OPPO', 'vivo', 'Sony', 'Anker'
 ];
 
-const CHIPS = ['Phổ biến', 'Bán chạy', 'Mới nhất', 'Giá thấp → cao'];
+const CHIPS = [
+  { id: 'popular', label: 'Phổ biến', icon: Flame },
+  { id: 'sales', label: 'Bán chạy', icon: Zap },
+  { id: 'newest', label: 'Mới nhất', icon: Sparkles },
+  { id: 'price-asc', label: 'Giá thấp → cao', icon: ArrowUp },
+];
+
+const CATEGORY_THEMES = {
+  'dien-thoai': {
+    title: 'ĐIỆN THOẠI & PHỤ KIỆN CHÍNH HÃNG',
+    subtitle: 'Apple, Samsung, Xiaomi, OPPO · Trả góp 0% · Giao nhanh 2H',
+    bgGradient: 'from-slate-950 via-indigo-950 to-blue-900',
+    icon: Smartphone,
+  },
+  'laptop': {
+    title: 'LAPTOP & MÁY TÍNH XÁCH TAY',
+    subtitle: 'MacBook, Dell, Asus, Lenovo · Hiệu năng vượt trội · Bảo hành 24T',
+    bgGradient: 'from-slate-950 via-slate-900 to-indigo-950',
+    icon: Laptop,
+  },
+  'gia-dung': {
+    title: 'GIA DỤNG & NHÀ BẾP THÔNG MINH',
+    subtitle: 'Lock&Lock, Philips, Tefal · Tiện nghi cuộc sống gia đình',
+    bgGradient: 'from-teal-950 via-emerald-950 to-slate-900',
+    icon: Utensils,
+  },
+  'thoi-trang': {
+    title: 'THỜI TRANG & PHỤ KIỆN XUÂN HÈ',
+    subtitle: 'Quần áo, Giày dép, Túi xách · Xu hướng mới nhất 2026',
+    bgGradient: 'from-rose-950 via-pink-950 to-slate-900',
+    icon: Shirt,
+  },
+  'nha-sach': {
+    title: 'NHÀ SÁCH & VĂN PHÒNG PHẨM',
+    subtitle: 'Sách kinh tế, Kỹ năng sống, Văn học · Tuyển chọn tinh hoa tri thức',
+    bgGradient: 'from-amber-950 via-yellow-950 to-slate-900',
+    icon: BookOpen,
+  },
+};
 
 const CategoryLandingPage = () => {
   const { categorySlug, subCategorySlug } = useParams();
   const [products, setProducts] = useState([]);
   const [categoryInfo, setCategoryInfo] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeChip, setActiveChip] = useState('Phổ biến');
+  const [activeChip, setActiveChip] = useState('popular');
+
+  const currentTheme = CATEGORY_THEMES[categorySlug] || {
+    title: `${(categorySlug || 'DANH MỤC').replace(/-/g, ' ').toUpperCase()} CHÍNH HÃNG`,
+    subtitle: 'Cam kết 100% hàng thật · Ưu đãi độc quyền hôm nay',
+    bgGradient: 'from-slate-950 via-indigo-950 to-blue-900',
+    icon: Layers,
+  };
+  const ThemeIcon = currentTheme.icon;
 
   useEffect(() => {
     let isMounted = true;
@@ -43,16 +103,9 @@ const CategoryLandingPage = () => {
     let isMounted = true;
     setLoading(true);
 
-    const sortMap = {
-      'Phổ biến': 'popular',
-      'Bán chạy': 'sales',
-      'Mới nhất': 'newest',
-      'Giá thấp → cao': 'price-asc'
-    };
-
     productApi.getProducts({ 
       category: categorySlug || 'dien-thoai',
-      sort: sortMap[activeChip] || 'popular',
+      sort: activeChip,
       size: 12
     })
       .then(res => {
@@ -77,102 +130,138 @@ const CategoryLandingPage = () => {
   const { isFavorite, toggleFavorite } = useFavorites();
 
   return (
-    <div className="py-6 flex flex-col gap-6">
+    <div className="py-2 flex flex-col gap-6">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1 text-[13px] text-taca-text-muted">
-        <Link to="/" className="text-taca-text-muted hover:text-taca-primary transition-colors">
+      <div className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-500">
+        <Link to="/" className="text-slate-500 no-underline hover:text-indigo-600 transition-colors">
           Trang chủ
         </Link>
         <span>/</span>
-        <span className="text-taca-text-main font-semibold capitalize">
+        <Link to="/category" className="text-slate-500 no-underline hover:text-indigo-600 transition-colors">
+          Danh mục
+        </Link>
+        <span>/</span>
+        <span className="text-slate-900 font-bold capitalize">
           {categoryInfo?.name || (categorySlug ? categorySlug.replace(/-/g, ' ') : 'Điện thoại')} {subCategorySlug ? `- ${subCategorySlug.replace(/-/g, ' ')}` : ''}
         </span>
       </div>
 
-      <div className="flex gap-8 items-start">
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* Sidebar Filters */}
-        <div className="hidden lg:block w-[240px] flex-shrink-0">
+        <div className="hidden lg:block w-[250px] flex-shrink-0">
           <FilterSidebar selectedCategory={categorySlug || 'dien-thoai'} />
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col gap-8 min-w-0">
-          {/* Category Hero */}
-          <div className="w-full h-[220px] bg-taca-primary rounded-[4px] flex items-center justify-between px-10 overflow-hidden relative">
-            <div className="flex flex-col gap-3 z-10">
-              <h1 className="text-white text-[28px] font-bold uppercase m-0">
-                {categoryInfo?.name || (subCategorySlug ? subCategorySlug.replace(/-/g, ' ') : (categorySlug ? categorySlug.replace(/-/g, ' ') : 'ĐIỆN THOẠI'))} CHÍNH HÃNG
-              </h1>
-              <div className="text-white text-[14px] leading-relaxed font-medium">
-                Apple - Samsung - Xiaomi - OPPO<br/>
-                Ưu đãi đến 30% - Giao nhanh 2H
+        <div className="flex-1 flex flex-col gap-6 min-w-0 w-full">
+          {/* Category Hero Banner */}
+          <div className={`w-full min-h-[220px] bg-gradient-to-r ${currentTheme.bgGradient} rounded-3xl p-8 flex flex-col sm:flex-row items-center justify-between overflow-hidden relative shadow-sm border border-white/10`}>
+            {/* Ambient blur glow */}
+            <div className="absolute -top-16 -right-16 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-16 -left-16 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="flex flex-col gap-2.5 z-10 max-w-xl">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 rounded-full bg-white/20 text-white text-[10px] font-extrabold uppercase tracking-wider backdrop-blur-xs flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-white" />
+                  CHÍNH HÃNG 100%
+                </span>
+                <span className="px-2.5 py-1 rounded-full bg-amber-400 text-slate-950 text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1">
+                  <Zap className="w-3.5 h-3.5 fill-slate-950" />
+                  FREESHIP 0Đ
+                </span>
               </div>
-              <Link to="/search" className="mt-2 inline-flex items-center justify-center bg-white text-taca-primary font-bold text-[14px] px-6 py-2.5 rounded-[4px] w-fit hover:bg-gray-50 transition-colors no-underline">
-                Khám phá deal
-              </Link>
+
+              <h1 className="text-white text-[28px] sm:text-[32px] font-black uppercase m-0 leading-tight tracking-tight drop-shadow-sm">
+                {categoryInfo?.name || currentTheme.title}
+              </h1>
+
+              <p className="text-white/85 text-[13px] font-medium leading-relaxed m-0">
+                {currentTheme.subtitle}
+              </p>
+
+              <div className="pt-2">
+                <Link
+                  to="/search?q=deal"
+                  className="inline-flex items-center gap-2 bg-white text-slate-900 font-extrabold text-[12px] px-6 py-2.5 rounded-xl hover:bg-amber-300 transition-all shadow-md no-underline w-fit cursor-pointer group"
+                >
+                  <span>Khám phá Deal Hôm Nay</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
             </div>
-            {/* Visual background decoration */}
-            <div className="absolute right-[-20px] top-[-20px] w-[300px] h-[300px] bg-white/10 rounded-full blur-2xl pointer-events-none" />
+
+            {/* Icon Graphic */}
+            <div className="hidden md:flex w-28 h-28 rounded-3xl bg-white/10 border border-white/20 items-center justify-center shadow-2xl backdrop-blur-xs transform hover:rotate-6 hover:scale-105 transition-transform duration-300 text-white">
+              <ThemeIcon className="w-14 h-14 text-white" strokeWidth={1.5} />
+            </div>
           </div>
 
-          {/* Nhu cầu sử dụng (Tags filter) */}
-          <div className="flex flex-col gap-3">
-            <div className="text-[13px] font-bold text-taca-text-main uppercase tracking-wider">
-              Nhu cầu sử dụng
+          {/* Nhu cầu sử dụng & Thương hiệu (Quick Filter Chips) */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
+            {/* Nhu cầu sử dụng */}
+            <div>
+              <div className="text-[12px] font-extrabold text-slate-500 uppercase tracking-wider mb-2">
+                Nhu cầu sử dụng nổi bật
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {USE_CASES.map(useCase => (
+                  <Link
+                    key={useCase}
+                    to={`/search?q=${encodeURIComponent(useCase)}`}
+                    className="px-3.5 py-1.5 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 rounded-xl text-[12px] text-slate-700 hover:text-indigo-600 font-semibold transition-all no-underline shadow-2xs"
+                  >
+                    {useCase}
+                  </Link>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {USE_CASES.map(useCase => (
-                <Link
-                  key={useCase}
-                  to={`/search?q=${encodeURIComponent(useCase)}`}
-                  className="px-4 py-1.5 bg-white border border-taca-border rounded-full text-[13px] text-taca-text-main font-medium hover:border-taca-primary hover:text-taca-primary transition-colors no-underline"
-                >
-                  {useCase}
-                </Link>
-              ))}
-            </div>
-          </div>
 
-          {/* Thương hiệu nổi bật */}
-          <div className="flex flex-col gap-3">
-            <div className="text-[13px] font-bold text-taca-text-main uppercase tracking-wider">
-              Thương hiệu
-            </div>
-            <div className="flex flex-wrap gap-3">
-              {BRANDS.map(brand => (
-                <Link
-                  key={brand}
-                  to={`/search?brand=${brand}`}
-                  className="px-5 py-2 bg-white border border-taca-border rounded-[4px] text-[13px] font-bold text-taca-text-main hover:border-taca-primary hover:text-taca-primary transition-colors no-underline"
-                >
-                  {brand}
-                </Link>
-              ))}
+            {/* Thương hiệu */}
+            <div>
+              <div className="text-[12px] font-extrabold text-slate-500 uppercase tracking-wider mb-2">
+                Thương hiệu hàng đầu
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {BRANDS.map(brand => (
+                  <Link
+                    key={brand}
+                    to={`/search?brand=${brand}`}
+                    className="px-4 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 hover:border-indigo-400 rounded-xl text-[12px] font-bold text-slate-800 hover:text-indigo-600 transition-all no-underline shadow-2xs"
+                  >
+                    {brand}
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Section: Danh sách sản phẩm */}
-          <div className="flex flex-col gap-4">
+          <div className="space-y-4">
             {/* Header: Sắp xếp theo chip */}
-            <div className="flex items-center justify-between pb-2 border-b border-taca-border">
-              <span className="text-[16px] font-bold text-taca-text-main">
-                Danh sách sản phẩm ({products.length})
+            <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <span className="text-[15px] font-extrabold text-slate-900">
+                Sản phẩm trong ngành ({products.length})
               </span>
-              <div className="flex items-center gap-2">
-                {CHIPS.map(chip => (
-                  <button
-                    key={chip}
-                    type="button"
-                    onClick={() => setActiveChip(chip)}
-                    className={`px-3 py-1 text-[13px] rounded-full border transition-colors cursor-pointer ${
-                      activeChip === chip 
-                        ? 'border-taca-primary bg-[#f4f7ff] text-taca-primary font-bold' 
-                        : 'border-taca-border text-taca-text-muted hover:border-taca-primary'
-                    }`}
-                  >
-                    {chip}
-                  </button>
-                ))}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {CHIPS.map(chip => {
+                  const ChipIcon = chip.icon;
+                  return (
+                    <button
+                      key={chip.id}
+                      type="button"
+                      onClick={() => setActiveChip(chip.id)}
+                      className={`px-3 py-1.5 text-[12px] rounded-xl font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                        activeChip === chip.id 
+                          ? 'bg-taca-primary text-white shadow-xs' 
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+                      }`}
+                    >
+                      <ChipIcon className={`w-3.5 h-3.5 ${activeChip === chip.id ? 'text-white' : 'text-slate-500'}`} />
+                      <span>{chip.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -180,10 +269,10 @@ const CategoryLandingPage = () => {
             {loading ? (
               <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-pulse">
                 {[...Array(8)].map((_, i) => (
-                  <div key={i} className="bg-white border border-gray-100 rounded-[12px] p-3 flex flex-col gap-3">
-                    <div className="w-full aspect-square bg-gray-200 rounded-[8px]"></div>
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div key={i} className="bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col gap-3 shadow-2xs">
+                    <div className="w-full aspect-square bg-slate-100 rounded-xl"></div>
+                    <div className="h-4 bg-slate-100 rounded w-3/4"></div>
+                    <div className="h-4 bg-slate-100 rounded w-1/2"></div>
                   </div>
                 ))}
               </div>
@@ -208,27 +297,70 @@ const CategoryLandingPage = () => {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+              <div className="text-center py-12 text-slate-400 bg-white rounded-2xl border border-dashed border-slate-300">
                 Chưa có sản phẩm nào trong danh mục này
               </div>
             )}
           </div>
           
           {/* Deal theo thương hiệu */}
-          <div className="flex flex-col gap-4 mb-8">
-            <h2 className="text-[16px] font-bold text-taca-text-main m-0">Deal theo thương hiệu</h2>
-            <div className="flex gap-4">
-              <Link to="/search?brand=Apple" className="flex-1 h-[80px] bg-white rounded-[4px] border border-taca-primary flex flex-col justify-center px-4 cursor-pointer hover:shadow-md transition-shadow no-underline">
-                <span className="font-bold text-[14px] text-taca-primary uppercase mb-1">APPLE WEEK - giảm đến 15%</span>
-                <span className="text-[12px] text-taca-primary font-semibold">Xem sản phẩm →</span>
+          <div className="space-y-3 pt-2">
+            <h2 className="text-[16px] font-black text-slate-900 m-0 uppercase tracking-tight">
+              ƯU ĐÃI THƯƠNG HIỆU HÀNG ĐẦU
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Link
+                to="/search?brand=Apple"
+                className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white flex flex-col justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all no-underline group border border-white/10"
+              >
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-white/20 text-white">
+                    APPLE WEEK
+                  </span>
+                  <div className="text-[15px] font-black mt-2 group-hover:text-amber-300 transition-colors">
+                    Giảm Đến 5 Triệu Đồng
+                  </div>
+                </div>
+                <span className="text-[11px] font-bold text-white/80 mt-3 flex items-center gap-1 group-hover:text-amber-200 transition-colors">
+                  <span>Xem sản phẩm</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </span>
               </Link>
-              <Link to="/search?brand=Samsung" className="flex-1 h-[80px] bg-white rounded-[4px] border border-taca-border hover:border-taca-primary flex flex-col justify-center px-4 cursor-pointer hover:shadow-md transition-shadow no-underline">
-                <span className="font-bold text-[14px] text-taca-text-main uppercase mb-1">SAMSUNG AI - quà 3 triệu</span>
-                <span className="text-[12px] text-taca-primary font-semibold">Xem sản phẩm →</span>
+
+              <Link
+                to="/search?brand=Samsung"
+                className="p-4 rounded-2xl bg-gradient-to-br from-blue-950 to-blue-900 text-white flex flex-col justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all no-underline group border border-white/10"
+              >
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-white/20 text-white">
+                    SAMSUNG GALAXY AI
+                  </span>
+                  <div className="text-[15px] font-black mt-2 group-hover:text-amber-300 transition-colors">
+                    Tặng Quà Lên Đến 3 Triệu
+                  </div>
+                </div>
+                <span className="text-[11px] font-bold text-white/80 mt-3 flex items-center gap-1 group-hover:text-amber-200 transition-colors">
+                  <span>Xem sản phẩm</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </span>
               </Link>
-              <Link to="/search?brand=Xiaomi" className="flex-1 h-[80px] bg-white rounded-[4px] border border-taca-border hover:border-taca-primary flex flex-col justify-center px-4 cursor-pointer hover:shadow-md transition-shadow no-underline">
-                <span className="font-bold text-[14px] text-taca-text-main uppercase mb-1">XIAOMI DEAL - freeship</span>
-                <span className="text-[12px] text-taca-primary font-semibold">Xem sản phẩm →</span>
+
+              <Link
+                to="/search?brand=Anker"
+                className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950 to-indigo-900 text-white flex flex-col justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all no-underline group border border-white/10"
+              >
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-white/20 text-white">
+                    ANKER GANPRIME
+                  </span>
+                  <div className="text-[15px] font-black mt-2 group-hover:text-amber-300 transition-colors">
+                    Sạc Siêu Nhanh Freeship 0Đ
+                  </div>
+                </div>
+                <span className="text-[11px] font-bold text-white/80 mt-3 flex items-center gap-1 group-hover:text-amber-200 transition-colors">
+                  <span>Xem sản phẩm</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </span>
               </Link>
             </div>
           </div>

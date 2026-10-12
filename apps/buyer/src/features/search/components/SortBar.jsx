@@ -1,36 +1,49 @@
 import PropTypes from 'prop-types';
+import { Flame, Zap, Sparkles, ArrowUp, ArrowDown } from 'lucide-react';
 
 const SORT_OPTIONS = [
-  { id: 'popular', label: 'Phổ biến' },
-  { id: 'sales', label: 'Bán chạy' },
-  { id: 'newest', label: 'Mới nhất' },
-  { id: 'price-asc', label: 'Giá thấp → cao' },
-  { id: 'price-desc', label: 'Giá cao → thấp' },
+  { id: 'popular', label: 'Phổ biến', icon: Flame },
+  { id: 'sales', label: 'Bán chạy', icon: Zap },
+  { id: 'newest', label: 'Mới nhất', icon: Sparkles },
+  { id: 'price-asc', label: 'Giá thấp → cao', icon: ArrowUp },
+  { id: 'price-desc', label: 'Giá cao → thấp', icon: ArrowDown },
 ];
 
-const SortBar = ({ currentSort = 'popular', onSortChange }) => {
+const SortBar = ({ currentSort = 'popular', onSortChange, totalCount = 0 }) => {
   return (
-    <div className="flex flex-wrap items-center gap-4 mb-6">
-      <span className="text-[14px] font-semibold text-taca-text-main">Sắp xếp:</span>
-      <div className="flex flex-wrap items-center gap-2">
-        {SORT_OPTIONS.map((opt) => {
-          const isActive = currentSort === opt.id;
-          return (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => onSortChange && onSortChange(opt.id)}
-              className={`px-4 py-2 border text-[13px] font-semibold rounded-[8px] cursor-pointer transition-colors ${
-                isActive
-                  ? 'border-taca-primary bg-[#f4f7ff] text-taca-primary shadow-sm'
-                  : 'border-taca-border bg-white text-taca-text-main hover:border-taca-primary hover:text-taca-primary'
-              }`}
-            >
-              {opt.label}
-            </button>
-          );
-        })}
+    <div className="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-2xs mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex items-center gap-2">
+        <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider pl-1">
+          Ưu tiên xem:
+        </span>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {SORT_OPTIONS.map((opt) => {
+            const isActive = currentSort === opt.id;
+            const IconComponent = opt.icon;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => onSortChange && onSortChange(opt.id)}
+                className={`px-3 py-1.5 text-[12px] font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                  isActive
+                    ? 'bg-taca-primary text-white shadow-xs scale-102'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900'
+                }`}
+              >
+                <IconComponent className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
+                <span>{opt.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {totalCount > 0 && (
+        <div className="text-[12px] text-slate-400 font-medium pr-1 text-right hidden md:block">
+          Hiển thị <span className="font-bold text-slate-700">{totalCount}</span> sản phẩm
+        </div>
+      )}
     </div>
   );
 };
@@ -38,6 +51,12 @@ const SortBar = ({ currentSort = 'popular', onSortChange }) => {
 SortBar.propTypes = {
   currentSort: PropTypes.string,
   onSortChange: PropTypes.func.isRequired,
+  totalCount: PropTypes.number,
+};
+
+SortBar.defaultProps = {
+  currentSort: 'popular',
+  totalCount: 0,
 };
 
 export default SortBar;

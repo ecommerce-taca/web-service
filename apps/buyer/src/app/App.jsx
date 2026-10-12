@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, useInRouterContext, Routes, Route, Navigate } from 'react-router-dom';
+import { Store } from 'lucide-react';
 import BuyerLayout from '../layouts/BuyerLayout';
 import { AuthProvider } from '../features/auth/contexts/AuthProvider';
 import { CartProvider } from '../features/cart/contexts/CartProvider';
@@ -43,8 +44,8 @@ function SellerRedirectNotice() {
 
   return (
     <div className="py-16 text-center max-w-lg mx-auto space-y-5">
-      <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-[#4F46E5] border border-indigo-200 flex items-center justify-center text-3xl mx-auto shadow-xs">
-        🏪
+      <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-[#4F46E5] border border-indigo-200 flex items-center justify-center mx-auto shadow-xs">
+        <Store className="w-8 h-8 text-[#4F46E5]" />
       </div>
       <div>
         <h2 className="text-xl font-extrabold text-slate-900">
@@ -102,7 +103,7 @@ function AppContent() {
             <Route path="/account" element={<AccountLayout />}>
               <Route index element={<Navigate to="profile" replace />} />
               <Route path="profile" element={<ProfilePage />} />
-              <Route path="overview" element={<div className="p-8">Tổng quan (Sắp ra mắt)</div>} />
+              <Route path="overview" element={<Navigate to="profile" replace />} />
               <Route path="orders" element={<OrdersPage />} />
               <Route path="orders/:id" element={<OrderDetailPage />} />
               <Route path="reviews" element={<ReviewsPage />} />

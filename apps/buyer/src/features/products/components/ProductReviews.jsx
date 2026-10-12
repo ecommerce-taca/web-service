@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { Star, Check, ThumbsUp, MessageSquare } from 'lucide-react';
 
 const ProductReviews = ({ rating, reviewCount }) => {
   // Mock data based on Penpot design
@@ -39,7 +40,11 @@ const ProductReviews = ({ rating, reviewCount }) => {
         <div className="flex items-center gap-8">
           <div className="flex flex-col items-center min-w-[120px]">
             <span className="text-[48px] font-extrabold text-taca-sale leading-none">{rating}</span>
-            <span className="text-[20px] text-taca-warning tracking-widest mt-1">★★★★★</span>
+            <div className="flex items-center gap-0.5 mt-1.5">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+              ))}
+            </div>
             <span className="text-[12px] text-taca-text-muted mt-2">{reviewCount} đánh giá đã xác thực</span>
           </div>
           
@@ -47,7 +52,10 @@ const ProductReviews = ({ rating, reviewCount }) => {
           <div className="flex flex-col gap-2 w-[150px]">
             {ratingDistribution.map((item) => (
               <div key={item.stars} className="flex items-center gap-3 text-[12px] font-medium text-taca-text-main">
-                <span>{item.stars} ★</span>
+                <span className="flex items-center gap-1 w-8">
+                  <span>{item.stars}</span>
+                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                </span>
                 <div className="flex-1 h-[8px] bg-taca-surface rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-taca-warning rounded-full" 
@@ -89,12 +97,28 @@ const ProductReviews = ({ rating, reviewCount }) => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-[14px] font-bold text-taca-text-main">{review.author}</span>
-                <span className="text-[12px] text-taca-warning">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
+                <div className="flex items-center gap-0.5">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`w-3.5 h-3.5 ${
+                        i < review.rating
+                          ? 'fill-amber-400 text-amber-400'
+                          : 'text-slate-300'
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
             
-            <div className="text-[12px] text-taca-text-muted flex items-center gap-1">
-              {review.verified && <span className="text-taca-success font-bold">✓ Đã mua hàng</span>}
+            <div className="text-[12px] text-taca-text-muted flex items-center gap-1.5">
+              {review.verified && (
+                <span className="text-emerald-600 font-bold flex items-center gap-1">
+                  <Check className="w-3.5 h-3.5" />
+                  Đã mua hàng
+                </span>
+              )}
               <span>· {review.variant}</span>
             </div>
             
@@ -104,8 +128,14 @@ const ProductReviews = ({ rating, reviewCount }) => {
               </p>
               {/* Helpful / Comment on the right side of the comment text */}
               <div className="flex gap-4 text-[12px] text-taca-text-muted flex-shrink-0 mt-1">
-                <button className="hover:text-taca-primary flex items-center gap-1">👍 Hữu ích ({review.helpful})</button>
-                <button className="hover:text-taca-primary flex items-center gap-1">💬 Bình luận</button>
+                <button className="hover:text-taca-primary flex items-center gap-1.5 transition-colors">
+                  <ThumbsUp className="w-3.5 h-3.5" />
+                  Hữu ích ({review.helpful})
+                </button>
+                <button className="hover:text-taca-primary flex items-center gap-1.5 transition-colors">
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  Bình luận
+                </button>
               </div>
             </div>
             

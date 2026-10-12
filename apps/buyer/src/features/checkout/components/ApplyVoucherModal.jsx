@@ -224,7 +224,9 @@ export default function ApplyVoucherModal({
                               {v.code}
                             </span>
                             {isEligible ? (
-                              <span className="text-[11px] text-emerald-600 font-medium">✓ Đủ điều kiện</span>
+                              <span className="text-[11px] text-emerald-600 font-medium inline-flex items-center gap-1">
+                                <Check className="w-3 h-3" /> Đủ điều kiện
+                              </span>
                             ) : (
                               <span className="text-[11px] text-taca-sale font-medium">Chưa đủ đơn tối thiểu</span>
                             )}
@@ -305,7 +307,9 @@ export default function ApplyVoucherModal({
                               {v.code}
                             </span>
                             {isEligible ? (
-                              <span className="text-[11px] text-emerald-600 font-medium">✓ Đủ điều kiện</span>
+                              <span className="text-[11px] text-emerald-600 font-medium inline-flex items-center gap-1">
+                                <Check className="w-3 h-3" /> Đủ điều kiện
+                              </span>
                             ) : (
                               <span className="text-[11px] text-taca-sale font-medium">Chưa đủ đơn tối thiểu</span>
                             )}

@@ -1,6 +1,30 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  Smartphone,
+  Laptop,
+  Home,
+  Tv,
+  BookOpen,
+  Shirt,
+  Sparkles,
+  ChevronRight,
+  ArrowRight,
+  ShieldCheck,
+  Zap,
+  RotateCcw,
+} from 'lucide-react';
 import { MEGA_MENU_DATA } from '../../constants/megaMenuData';
+
+const CATEGORY_ICONS = {
+  'dien-thoai-tablet': Smartphone,
+  'laptop-may-tinh': Laptop,
+  'nha-cua-doi-song': Home,
+  'tv-dien-may': Tv,
+  'nha-sach-taca': BookOpen,
+  'thoi-trang': Shirt,
+  'lam-dep-suc-khoe': Sparkles,
+};
 
 const MegaMenu = ({ isOpen }) => {
   const [activeCategoryId, setActiveCategoryId] = useState(MEGA_MENU_DATA[0].id);
@@ -8,6 +32,7 @@ const MegaMenu = ({ isOpen }) => {
   if (!isOpen) return null;
 
   const activeCategory = MEGA_MENU_DATA.find((c) => c.id === activeCategoryId);
+  const ActiveIcon = activeCategory ? (CATEGORY_ICONS[activeCategory.id] || Sparkles) : Sparkles;
 
   return (
     <div className="absolute top-[42px] left-0 w-[820px] min-h-[452px] bg-white rounded-[20px] shadow-xl flex z-50 border border-taca-border/30 overflow-hidden cursor-default">
@@ -15,6 +40,7 @@ const MegaMenu = ({ isOpen }) => {
       <div className="w-[256px] bg-white border-r border-taca-border/30 py-4 flex flex-col">
         {MEGA_MENU_DATA.map((cat) => {
           const isActive = cat.id === activeCategoryId;
+          const IconComponent = CATEGORY_ICONS[cat.id] || Sparkles;
           return (
             <div
               key={cat.id}
@@ -29,16 +55,12 @@ const MegaMenu = ({ isOpen }) => {
               )}
               
               <div className="flex items-center gap-3">
-                <span className={`text-[12px] ${isActive ? 'text-taca-primary' : 'text-taca-text-muted'}`}>
-                  {cat.icon}
-                </span>
+                <IconComponent className={`w-4 h-4 ${isActive ? 'text-taca-primary' : 'text-taca-text-muted'}`} />
                 <span className={`text-[13px] font-semibold ${isActive ? 'text-taca-primary' : 'text-taca-text-main'}`}>
                   {cat.title}
                 </span>
               </div>
-              <span className={`text-[12px] ${isActive ? 'text-taca-primary' : 'text-gray-300'}`}>
-                ›
-              </span>
+              <ChevronRight className={`w-3.5 h-3.5 ${isActive ? 'text-taca-primary' : 'text-gray-300'}`} />
             </div>
           );
         })}
@@ -49,12 +71,13 @@ const MegaMenu = ({ isOpen }) => {
         {activeCategory ? (
           <div className="p-8 h-full flex flex-col">
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-taca-border/30">
-              <h3 className="text-[16px] font-bold text-taca-text-main flex items-center gap-2">
-                <span className="text-[12px] text-taca-text-main">{activeCategory.icon}</span>
-                {activeCategory.title}
+              <h3 className="text-[16px] font-bold text-taca-text-main flex items-center gap-2.5">
+                <ActiveIcon className="w-4 h-4 text-taca-primary" />
+                <span>{activeCategory.title}</span>
               </h3>
-              <Link to={`/category/${activeCategory.id}`} className="text-[13px] font-semibold text-taca-primary no-underline hover:underline">
-                Xem tất cả →
+              <Link to={`/category/${activeCategory.id}`} className="text-[13px] font-semibold text-taca-primary no-underline hover:underline flex items-center gap-1">
+                <span>Xem tất cả</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
@@ -82,14 +105,23 @@ const MegaMenu = ({ isOpen }) => {
             </div>
 
             {/* Trust Strip */}
-            <div className="mt-8 bg-[#f4f7ff] rounded-lg p-4 flex flex-col gap-2">
-              <div className="flex items-center gap-4 text-[13px] font-bold text-taca-primary">
-                <span>✓ Chính hãng 100%</span>
-                <span>⚡ Giao nhanh 2H</span>
-                <span>↺ Đổi trả 30 ngày</span>
+            <div className="mt-8 bg-[#f4f7ff] rounded-xl p-4 flex flex-col gap-2">
+              <div className="flex items-center gap-5 text-[12px] font-bold text-slate-800">
+                <span className="flex items-center gap-1.5 text-indigo-700">
+                  <ShieldCheck className="w-4 h-4 text-indigo-600" />
+                  Chính hãng 100%
+                </span>
+                <span className="flex items-center gap-1.5 text-amber-700">
+                  <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
+                  Giao nhanh 2H
+                </span>
+                <span className="flex items-center gap-1.5 text-emerald-700">
+                  <RotateCcw className="w-4 h-4 text-emerald-600" />
+                  Đổi trả 30 ngày
+                </span>
               </div>
-              <div className="text-[12px] text-taca-text-muted">
-                Taca bảo vệ người mua trong mọi giao dịch.
+              <div className="text-[11px] text-taca-text-muted">
+                Taca bảo vệ người mua trong mọi giao dịch với chính sách cam kết chất lượng.
               </div>
             </div>
           </div>

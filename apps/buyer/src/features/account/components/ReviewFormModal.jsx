@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import { useState } from 'react';
+import { Star } from 'lucide-react';
 import Modal from '../../../../../../shared/ui-components/src/components/Modal';
 import Button from '../../../../../../shared/ui-components/src/components/Button';
 import { reviewApi } from '../services/review.api';
@@ -44,18 +45,24 @@ const ReviewFormModal = ({ isOpen, onClose, reviewItem, onSuccess }) => {
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div>
           <p className="text-[14px] font-semibold text-taca-text-main mb-2">Chất lượng sản phẩm</p>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
                 key={star}
                 type="button"
                 onClick={() => setRating(star)}
-                className={`text-[32px] transition-colors leading-none bg-transparent border-none cursor-pointer ${star <= rating ? 'text-[#ff9d00]' : 'text-gray-300'}`}
+                className="p-1 transition-transform hover:scale-110 bg-transparent border-none cursor-pointer flex items-center justify-center"
               >
-                ★
+                <Star
+                  className={`w-7 h-7 transition-colors ${
+                    star <= rating
+                      ? 'fill-amber-400 text-amber-400'
+                      : 'text-gray-300'
+                  }`}
+                />
               </button>
             ))}
-            <span className="ml-2 text-[14px] text-gray-500 self-center">
+            <span className="ml-3 text-[14px] text-gray-500 font-medium">
               {rating === 5 ? 'Tuyệt vời' : rating === 4 ? 'Hài lòng' : rating === 3 ? 'Bình thường' : rating === 2 ? 'Tạm được' : 'Rất tệ'}
             </span>
           </div>

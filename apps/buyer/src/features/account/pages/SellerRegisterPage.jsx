@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Store, Mail, FileText, AlertTriangle, XCircle, CheckCircle2, Rocket } from 'lucide-react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { registerSeller, getSellerRegistrationStatus, fetchSellerRegistrationStatus } from '../services/seller-register.api';
 
@@ -10,6 +12,7 @@ const getSellerUrl = (path = '/seller') => {
 };
 
 export default function SellerRegisterPage() {
+  const navigate = useNavigate();
   const { user, openAuthModal } = useAuth();
   const [form, setForm] = useState({
     name: '',
@@ -20,6 +23,7 @@ export default function SellerRegisterPage() {
   });
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [registrationStatus, setRegistrationStatus] = useState(() => getSellerRegistrationStatus(user?.id));
 
@@ -105,13 +109,22 @@ export default function SellerRegisterPage() {
         description: form.description.trim(),
       });
       setRegistrationStatus(getSellerRegistrationStatus(user?.id));
+      setIsRedirecting(true);
+
+      // Chuyển tiếp mượt mà (Seamless Handover) sang Seller Onboarding
+      setTimeout(() => {
+        if (typeof window !== 'undefined' && window.location.port === '5174') {
+          window.location.href = getSellerUrl('/seller/onboarding');
+        } else {
+          navigate('/seller/onboarding');
+        }
+      }, 1000);
     } catch (err) {
       setErrorMessage(
         err?.response?.data?.error?.message ||
         err?.message ||
         'Đăng ký không thành công. Vui lòng kiểm tra lại thông tin.'
       );
-    } finally {
       setLoading(false);
     }
   };
@@ -130,8 +143,8 @@ export default function SellerRegisterPage() {
   if (!user) {
     return (
       <div className="p-8 text-center space-y-4">
-        <div className="w-16 h-16 rounded-2xl bg-blue-50 text-[#0A68FF] border border-blue-200 flex items-center justify-center text-3xl mx-auto shadow-2xs">
-          🏪
+        <div className="w-16 h-16 rounded-2xl bg-blue-50 text-[#0A68FF] border border-blue-200 flex items-center justify-center mx-auto shadow-2xs">
+          <Store className="w-8 h-8 text-[#0A68FF]" />
         </div>
         <h2 className="text-[20px] font-extrabold text-slate-900">
           Đăng ký Bán hàng cùng Taca
@@ -154,8 +167,8 @@ export default function SellerRegisterPage() {
   if (user.email_verified === false) {
     return (
       <div className="p-8 text-center space-y-4">
-        <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center text-3xl mx-auto shadow-2xs">
-          ✉
+        <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto shadow-2xs">
+          <Mail className="w-8 h-8" />
         </div>
         <h2 className="text-[20px] font-extrabold text-slate-900">
           Yêu cầu xác thực Email
@@ -177,8 +190,8 @@ export default function SellerRegisterPage() {
       <div className="p-8 space-y-6">
         <div className="p-6 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-4 text-center sm:text-left">
           <div className="flex flex-col sm:flex-row items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-white border border-indigo-200 flex items-center justify-center text-2xl shadow-xs shrink-0">
-              📝
+            <div className="w-14 h-14 rounded-2xl bg-white border border-indigo-200 flex items-center justify-center text-indigo-600 shadow-xs shrink-0">
+              <FileText className="w-7 h-7" />
             </div>
             <div>
               <div className="flex items-center gap-2 justify-center sm:justify-start">
@@ -207,12 +220,19 @@ export default function SellerRegisterPage() {
           <span className="text-[12px] text-slate-600 text-center sm:text-left">
             Tiếp tục đến trang Onboarding để hoàn tất các bước và gửi duyệt.
           </span>
-          <a
-            href={getSellerUrl('/seller/onboarding')}
-            className="px-6 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl font-bold text-[13px] shadow-sm transition-colors no-underline inline-flex items-center gap-1.5"
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.location.port === '5174') {
+                window.location.href = getSellerUrl('/seller/onboarding');
+              } else {
+                navigate('/seller/onboarding');
+              }
+            }}
+            className="px-6 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl font-bold text-[13px] shadow-sm transition-colors cursor-pointer inline-flex items-center gap-1.5"
           >
             <span>Đến Kênh Người Bán hoàn tất hồ sơ →</span>
-          </a>
+          </button>
         </div>
       </div>
     );
@@ -268,10 +288,10 @@ export default function SellerRegisterPage() {
           isNeedsInfo ? 'bg-amber-50/70 border-amber-200' : 'bg-rose-50/70 border-rose-200'
         }`}>
           <div className="flex flex-col sm:flex-row items-center gap-4">
-            <div className={`w-14 h-14 rounded-2xl bg-white border flex items-center justify-center text-2xl shadow-xs shrink-0 ${
+            <div className={`w-14 h-14 rounded-2xl bg-white border flex items-center justify-center shadow-xs shrink-0 ${
               isNeedsInfo ? 'border-amber-200 text-amber-600' : 'border-rose-200 text-rose-600'
             }`}>
-              {isNeedsInfo ? '⚠️' : '✕'}
+              {isNeedsInfo ? <AlertTriangle className="w-7 h-7" /> : <XCircle className="w-7 h-7" />}
             </div>
             <div>
               <div className="flex items-center gap-2 justify-center sm:justify-start">
@@ -328,8 +348,8 @@ export default function SellerRegisterPage() {
     return (
       <div className="p-8 space-y-6 text-center">
         <div className="p-8 rounded-3xl bg-emerald-50 border border-emerald-200 max-w-lg mx-auto space-y-4">
-          <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mx-auto">
-            ✓
+          <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-8 h-8" />
           </div>
           <div>
             <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-800 tracking-wider">
@@ -468,13 +488,45 @@ export default function SellerRegisterPage() {
         <div>
           <button
             type="submit"
-            disabled={loading}
-            className="px-8 py-3 bg-[#0A68FF] hover:bg-[#0855D2] text-white rounded-xl font-bold text-[13px] shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+            disabled={loading || isRedirecting}
+            className="px-8 py-3 bg-[#0A68FF] hover:bg-[#0855D2] text-white rounded-xl font-bold text-[13px] shadow-sm transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
           >
-            {loading ? 'Đang gửi hồ sơ...' : 'Gửi hồ sơ đăng ký Người Bán'}
+            {isRedirecting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Đang chuyển sang Kênh Người Bán...</span>
+              </>
+            ) : loading ? (
+              'Đang gửi hồ sơ...'
+            ) : (
+              'Gửi hồ sơ đăng ký Người Bán'
+            )}
           </button>
         </div>
       </form>
+
+      {/* Seamless Handover Modal Overlay */}
+      {isRedirecting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center space-y-4 border border-slate-100">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200 flex items-center justify-center mx-auto shadow-inner animate-pulse">
+              <Rocket className="w-8 h-8" />
+            </div>
+            <div>
+              <h3 className="text-lg font-extrabold text-slate-900">
+                Tạo thông tin gian hàng thành công!
+              </h3>
+              <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+                Hệ thống đang tự động chuyển tiếp bạn sang <strong>Kênh Người Bán (Seller Onboarding)</strong> để hoàn tất nộp CCCD, Tài khoản ngân hàng và Địa chỉ kho...
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-2 text-indigo-600 text-xs font-bold pt-2">
+              <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+              <span>Đang chuyển hướng trong giây lát...</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

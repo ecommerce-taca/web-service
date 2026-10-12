@@ -9,6 +9,7 @@ import DeliveryAddressModal from '../components/DeliveryAddressModal';
 import ApplyVoucherModal from '../components/ApplyVoucherModal';
 import VnpayQrModal from '../components/VnpayQrModal';
 import { Button } from '@taca/ui-components';
+import { Check } from 'lucide-react';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -221,8 +222,15 @@ export default function CheckoutPage() {
               </div>
 
               <div className="mt-6 pt-4 border-t border-taca-border">
-                <p className="text-[12px] font-bold text-emerald-600">
-                  {shippingFee === 0 ? '✓ Miễn phí vận chuyển tiêu chuẩn toàn quốc' : 'Phí vận chuyển tiêu chuẩn: 30.000 ₫'}
+                <p className="text-[12px] font-bold text-emerald-600 flex items-center gap-1.5">
+                  {shippingFee === 0 ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Miễn phí vận chuyển tiêu chuẩn toàn quốc</span>
+                    </>
+                  ) : (
+                    'Phí vận chuyển tiêu chuẩn: 30.000 ₫'
+                  )}
                 </p>
               </div>
             </div>

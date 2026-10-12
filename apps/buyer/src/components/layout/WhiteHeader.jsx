@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Menu } from 'lucide-react';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 
 const WhiteHeader = () => {
@@ -86,7 +87,8 @@ const WhiteHeader = () => {
       <div className="bg-white border-b border-taca-border h-[42px]">
         <div className="max-w-[1440px] mx-auto h-full flex items-center px-[80px] gap-0">
           <button className="bg-transparent border-none text-[12px] font-bold text-taca-text-main cursor-pointer hover:text-taca-primary transition-colors py-2 mr-12 flex items-center gap-2">
-            ☰  Danh mục
+            <Menu className="w-4 h-4 text-taca-text-muted" />
+            <span>Danh mục</span>
           </button>
           <nav className="flex items-center">
             {['Điện thoại', 'Laptop', 'Nhà sách', 'Gia dụng', 'Làm đẹp', 'Thời trang', 'Voucher'].map((cat) => (

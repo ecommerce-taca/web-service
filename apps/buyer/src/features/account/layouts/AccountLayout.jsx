@@ -10,8 +10,9 @@ const AccountLayout = () => {
     if (location.pathname.includes('reviews')) return 'Đánh giá';
     if (location.pathname.includes('vouchers')) return 'Voucher của tôi';
     if (location.pathname.includes('wishlist')) return 'Sản phẩm yêu thích';
+    if (location.pathname.includes('following')) return 'Cửa hàng theo dõi';
     if (location.pathname.includes('seller-register')) return 'Đăng ký bán hàng';
-    return 'Tổng quan';
+    return 'Hồ sơ & địa chỉ';
   };
 
   return (

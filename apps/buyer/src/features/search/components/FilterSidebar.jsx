@@ -1,23 +1,50 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import {
+  SlidersHorizontal,
+  ShieldCheck,
+  Star,
+  Check,
+  Layers,
+  Smartphone,
+  Laptop,
+  Utensils,
+  Tv,
+  BookOpen,
+  Shirt,
+  Sparkles,
+} from 'lucide-react';
 import { productApi } from '../../products/services/product.api';
+
+const CATEGORY_ICON_MAP = {
+  all: Layers,
+  'dien-thoai': Smartphone,
+  laptop: Laptop,
+  'gia-dung': Utensils,
+  'tv-loa': Tv,
+  'nha-sach': BookOpen,
+  'thoi-trang': Shirt,
+  'lam-dep': Sparkles,
+};
 
 const DEFAULT_CATEGORIES = [
   { id: 'all', label: 'Tất cả danh mục' },
   { id: 'dien-thoai', label: 'Điện thoại' },
   { id: 'laptop', label: 'Máy tính & Laptop' },
-  { id: 'am-thanh', label: 'Thiết bị Âm thanh' },
-  { id: 'gia-dung', label: 'Đồ gia dụng thông minh' },
-  { id: 'phu-kien', label: 'Phụ kiện & Khác' },
+  { id: 'gia-dung', label: 'Đồ gia dụng' },
+  { id: 'tv-loa', label: 'TV & Âm thanh' },
+  { id: 'nha-sach', label: 'Nhà sách' },
+  { id: 'thoi-trang', label: 'Thời trang' },
+  { id: 'lam-dep', label: 'Làm đẹp' },
 ];
 
-const BRANDS = ['Apple', 'Samsung', 'Sony', 'Xiaomi', 'Logitech', 'JBL', 'Amazon'];
+const BRANDS = ['Apple', 'Samsung', 'Sony', 'Xiaomi', 'Logitech', 'Anker', 'Lock&Lock'];
 
 const PRICE_RANGES = [
   { id: 'all', label: 'Tất cả mức giá' },
-  { id: 'under-5m', label: 'Dưới 5 triệu', min: 0, max: 5000000 },
-  { id: '5m-15m', label: '5 - 15 triệu', min: 5000000, max: 15000000 },
-  { id: 'over-15m', label: 'Trên 15 triệu', min: 15000000, max: Infinity },
+  { id: 'under-5m', label: 'Dưới 5 triệu' },
+  { id: '5m-15m', label: '5 - 15 triệu' },
+  { id: 'over-15m', label: 'Trên 15 triệu' },
 ];
 
 const FilterSidebar = ({
@@ -46,7 +73,7 @@ const FilterSidebar = ({
           tree.forEach(node => {
             dynamicCats.push({
               id: node.id || node.category_id || node.slug,
-              label: node.name || node.title || node.label
+              label: node.name || node.title || node.label,
             });
           });
           setCategories(dynamicCats);
@@ -61,141 +88,201 @@ const FilterSidebar = ({
     };
   }, []);
 
+  const hasActiveFilters = Boolean(
+    selectedCategory !== 'all' ||
+    selectedBrand ||
+    selectedPriceRange !== 'all' ||
+    isOfficialOnly ||
+    minRating > 0
+  );
+
   return (
-    <div className="w-[240px] flex flex-col gap-8 bg-white p-4 rounded-xl border border-taca-border">
+    <aside className="w-full lg:w-[250px] flex flex-col gap-6 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs sticky top-24">
+      {/* Header with Reset */}
+      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="flex items-center gap-2">
+          <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
+          <h3 className="text-[14px] font-black text-slate-900 m-0 uppercase tracking-tight">
+            BỘ LỌC TÌM KIẾM
+          </h3>
+        </div>
+        {hasActiveFilters && onResetFilters && (
+          <button
+            type="button"
+            onClick={onResetFilters}
+            className="text-[11px] font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer transition-colors"
+          >
+            Xóa bộ lọc
+          </button>
+        )}
+      </div>
+
       {/* DANH MỤC */}
-      <div className="flex flex-col gap-3">
-        <h3 className="text-[13px] font-extrabold text-taca-text-main m-0 uppercase tracking-wider">
-          DANH MỤC
-        </h3>
-        <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2.5">
+        <h4 className="text-[12px] font-extrabold text-slate-700 m-0 uppercase tracking-wider">
+          DANH MỤC SẢN PHẨM
+        </h4>
+        <div className="flex flex-col gap-1 max-h-[220px] overflow-y-auto pr-1">
           {categories.map(cat => {
             const isActive = selectedCategory === cat.id;
+            const IconComponent = CATEGORY_ICON_MAP[cat.id] || Layers;
             return (
               <button
                 key={cat.id}
                 type="button"
                 onClick={() => onCategoryChange && onCategoryChange(cat.id)}
-                className={`text-left text-[13px] py-1 px-2 rounded-md transition-colors cursor-pointer ${
+                className={`text-left text-[12px] py-1.5 px-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between ${
                   isActive 
-                    ? 'font-bold text-taca-primary bg-[#f4f7ff]' 
-                    : 'text-taca-text-main hover:text-taca-primary hover:bg-gray-50'
+                    ? 'font-bold text-white bg-taca-primary shadow-xs' 
+                    : 'text-slate-700 hover:text-indigo-600 hover:bg-indigo-50/50'
                 }`}
               >
-                {cat.label}
+                <span className="flex items-center gap-2 truncate">
+                  <IconComponent className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                  <span className="truncate">{cat.label}</span>
+                </span>
+                {isActive && <Check className="w-3.5 h-3.5" />}
               </button>
             );
           })}
         </div>
       </div>
 
-      <hr className="border-gray-100 m-0" />
+      <hr className="border-slate-100 m-0" />
 
-      {/* BỘ LỌC NHANH */}
-      <div className="flex flex-col gap-6">
-        <div className="flex justify-between items-center">
-          <h3 className="text-[13px] font-extrabold text-taca-text-main m-0 uppercase tracking-wider">
-            BỘ LỌC NHANH
-          </h3>
-          {onResetFilters && (
-            <button
-              type="button"
-              onClick={onResetFilters}
-              className="text-[11px] text-taca-primary hover:underline cursor-pointer font-medium"
-            >
-              Thiết lập lại
-            </button>
-          )}
-        </div>
-
-        {/* Thương hiệu */}
-        <div className="flex flex-col gap-3">
-          <h4 className="text-[13px] font-bold text-taca-text-main m-0">Thương hiệu</h4>
-          <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pr-1">
-            {BRANDS.map(brand => {
-              const checked = selectedBrand.toLowerCase() === brand.toLowerCase();
-              return (
-                <label key={brand} className="flex items-center gap-2 cursor-pointer group">
+      {/* THƯƠNG HIỆU */}
+      <div className="flex flex-col gap-2.5">
+        <h4 className="text-[12px] font-extrabold text-slate-700 m-0 uppercase tracking-wider">
+          THƯƠNG HIỆU
+        </h4>
+        <div className="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto pr-1">
+          {BRANDS.map(brand => {
+            const checked = selectedBrand.toLowerCase() === brand.toLowerCase();
+            return (
+              <label
+                key={brand}
+                className={`flex items-center justify-between p-1.5 rounded-lg cursor-pointer transition-colors ${
+                  checked ? 'bg-indigo-50/80 text-indigo-700 font-bold' : 'hover:bg-slate-50 text-slate-700'
+                }`}
+              >
+                <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={checked}
                     onChange={() => onBrandChange && onBrandChange(checked ? '' : brand)}
-                    className="w-[14px] h-[14px] border-gray-400 rounded-sm text-taca-primary focus:ring-taca-primary cursor-pointer"
+                    className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                   />
-                  <span className={`text-[13px] transition-colors ${checked ? 'text-taca-primary font-bold' : 'text-taca-text-main group-hover:text-taca-primary'}`}>
-                    {brand}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Khoảng giá */}
-        <div className="flex flex-col gap-3">
-          <h4 className="text-[13px] font-bold text-taca-text-main m-0">Khoảng giá</h4>
-          <div className="flex flex-col gap-2">
-            {PRICE_RANGES.map(range => {
-              const checked = selectedPriceRange === range.id;
-              return (
-                <label key={range.id} className="flex items-center gap-2 cursor-pointer group">
-                  <input
-                    type="radio"
-                    name="priceRange"
-                    checked={checked}
-                    onChange={() => onPriceRangeChange && onPriceRangeChange(range.id)}
-                    className="w-[14px] h-[14px] text-taca-primary focus:ring-taca-primary cursor-pointer"
-                  />
-                  <span className={`text-[13px] transition-colors ${checked ? 'text-taca-primary font-bold' : 'text-taca-text-main group-hover:text-taca-primary'}`}>
-                    {range.label}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Dịch vụ */}
-        <div className="flex flex-col gap-3">
-          <h4 className="text-[13px] font-bold text-taca-text-main m-0">Dịch vụ & Cam kết</h4>
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={isOfficialOnly}
-              onChange={(e) => onOfficialChange && onOfficialChange(e.target.checked)}
-              className="w-[14px] h-[14px] border-gray-400 rounded-sm text-taca-primary focus:ring-taca-primary cursor-pointer"
-            />
-            <span className={`text-[13px] transition-colors ${isOfficialOnly ? 'text-taca-primary font-bold' : 'text-taca-text-main group-hover:text-taca-primary'}`}>
-              Chính hãng 100%
-            </span>
-          </label>
-        </div>
-
-        {/* Đánh giá */}
-        <div className="flex flex-col gap-3">
-          <h4 className="text-[13px] font-bold text-taca-text-main m-0">Đánh giá tối thiểu</h4>
-          <div className="flex flex-col gap-2">
-            {[4.5, 4.0].map(star => {
-              const checked = minRating === star;
-              return (
-                <label key={star} className="flex items-center gap-2 cursor-pointer group">
-                  <input
-                    type="radio"
-                    name="minRating"
-                    checked={checked}
-                    onChange={() => onRatingChange && onRatingChange(checked ? 0 : star)}
-                    className="w-[14px] h-[14px] text-taca-primary focus:ring-taca-primary cursor-pointer"
-                  />
-                  <span className="text-[13px] text-taca-text-muted flex items-center gap-1">
-                    <span className="text-[#faad14] text-[13px]">{'★'.repeat(Math.floor(star))}</span> từ {star} sao
-                  </span>
-                </label>
-              );
-            })}
-          </div>
+                  <span className="text-[12px]">{brand}</span>
+                </div>
+              </label>
+            );
+          })}
         </div>
       </div>
-    </div>
+
+      <hr className="border-slate-100 m-0" />
+
+      {/* KHOẢNG GIÁ */}
+      <div className="flex flex-col gap-2.5">
+        <h4 className="text-[12px] font-extrabold text-slate-700 m-0 uppercase tracking-wider">
+          KHOẢNG GIÁ
+        </h4>
+        <div className="flex flex-col gap-1.5">
+          {PRICE_RANGES.map(range => {
+            const checked = selectedPriceRange === range.id;
+            return (
+              <label
+                key={range.id}
+                className={`flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition-colors ${
+                  checked ? 'bg-indigo-50/80 text-indigo-700 font-bold' : 'hover:bg-slate-50 text-slate-700'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="priceRange"
+                  checked={checked}
+                  onChange={() => onPriceRangeChange && onPriceRangeChange(range.id)}
+                  className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                />
+                <span className="text-[12px]">{range.label}</span>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+
+      <hr className="border-slate-100 m-0" />
+
+      {/* DỊCH VỤ & CAM KẾT */}
+      <div className="flex flex-col gap-2.5">
+        <h4 className="text-[12px] font-extrabold text-slate-700 m-0 uppercase tracking-wider">
+          DỊCH VỤ & CAM KẾT
+        </h4>
+        <label
+          className={`flex items-center gap-2.5 p-2 rounded-xl cursor-pointer border transition-all ${
+            isOfficialOnly
+              ? 'bg-rose-50/80 border-rose-300 text-rose-700 font-bold'
+              : 'border-slate-200/80 hover:bg-slate-50 text-slate-700'
+          }`}
+        >
+          <input
+            type="checkbox"
+            checked={isOfficialOnly}
+            onChange={(e) => onOfficialChange && onOfficialChange(e.target.checked)}
+            className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 cursor-pointer"
+          />
+          <div className="flex items-center gap-1.5 text-[12px]">
+            <ShieldCheck className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>Chính hãng 100% (Mall)</span>
+          </div>
+        </label>
+      </div>
+
+      <hr className="border-slate-100 m-0" />
+
+      {/* ĐÁNH GIÁ */}
+      <div className="flex flex-col gap-2.5">
+        <h4 className="text-[12px] font-extrabold text-slate-700 m-0 uppercase tracking-wider">
+          ĐÁNH GIÁ SẢN PHẨM
+        </h4>
+        <div className="flex flex-col gap-1.5">
+          {[4.5, 4.0].map(star => {
+            const checked = minRating === star;
+            return (
+              <label
+                key={star}
+                className={`flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition-colors ${
+                  checked ? 'bg-amber-50 text-amber-900 font-bold' : 'hover:bg-slate-50 text-slate-700'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="minRating"
+                  checked={checked}
+                  onChange={() => onRatingChange && onRatingChange(checked ? 0 : star)}
+                  className="w-4 h-4 text-amber-500 focus:ring-amber-400 cursor-pointer"
+                />
+                <span className="text-[12px] flex items-center gap-2">
+                  <div className="flex items-center gap-0.5">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-3.5 h-3.5 ${
+                          i < Math.floor(star)
+                            ? 'fill-amber-400 text-amber-400'
+                            : 'text-slate-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span>Từ {star} sao</span>
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+    </aside>
   );
 };
 
