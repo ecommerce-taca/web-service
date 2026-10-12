@@ -17,7 +17,7 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
   const handleDownloadTemplate = async () => {
     try {
       setDownloadingTemplate(true);
-      const res = await sellerProductApi.downloadImportTemplate();
+      const res = await sellerProductApi.downloadImportTemplate({ layout_mode: 'MULTI_SHEET' });
       if (res?.data) {
         const url = window.URL.createObjectURL(new Blob([res.data]));
         const link = document.createElement('a');

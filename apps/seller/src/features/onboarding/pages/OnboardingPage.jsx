@@ -16,18 +16,27 @@ import {
 } from '../../../services/seller-shop.api';
 import { formatPhoneDisplay, isValidVietnamesePhone } from '../../../../../../shared/utils/phone';
 import {
-  ALL_PROVINCES,
   getWardsByProvince,
-  findProvinceByCode,
-  findWardByCode,
   findProvinceByName,
   findWardByName,
 } from '../../../../../../shared/utils/location';
+
+// Subcomponents
+import OnboardingStepper from '../components/OnboardingStepper';
+import OnboardingAlerts from '../components/OnboardingAlerts';
+import ProfileStep from '../components/steps/ProfileStep';
+import KycStep from '../components/steps/KycStep';
+import WarehouseStep from '../components/steps/WarehouseStep';
+import BankStep from '../components/steps/BankStep';
+import { useSellerRealtimeStatus } from '../../../hooks/useSellerRealtimeStatus';
 
 export default function OnboardingPage() {
   const location = useLocation();
   const isShell = location.pathname.startsWith('/seller');
   const basePath = isShell ? '/seller' : '';
+
+  // Hook WebSocket / SSE Realtime Status (AUD-04)
+  const { notification: realtimeNotification, dismissNotification } = useSellerRealtimeStatus();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -61,11 +70,9 @@ export default function OnboardingPage() {
   const [newDocType, setNewDocType] = useState('BUSINESS_REGISTRATION');
 
   // Kiểm tra tài liệu KYC theo đặc tả docs/api/auth-user.md §2.25 & Backend user-auth-service
-  // Backend hiện hỗ trợ BUSINESS_REGISTRATION và yêu cầu tối thiểu 1 tài liệu hợp lệ
   const hasBusinessReg = kycDocs.some((d) => d.document_type === 'BUSINESS_REGISTRATION');
   const hasIdFront = kycDocs.some((d) => d.document_type === 'CITIZEN_ID_FRONT' || d.document_type === 'CITIZEN_ID');
   const hasIdBack = kycDocs.some((d) => d.document_type === 'CITIZEN_ID_BACK');
-  // Hoàn tất bước KYC khi đã có Giấy ĐKKD hoặc tối thiểu 1 tài liệu hợp lệ theo §2.25
   const isKycComplete = hasBusinessReg || kycDocs.length >= 1;
 
   // Step 3: Warehouse State
@@ -251,7 +258,6 @@ export default function OnboardingPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Kiểm tra dung lượng tối đa 10MB
     if (file.size > 10 * 1024 * 1024) {
       setErrorMessage('Tệp vượt quá kích thước cho phép (tối đa 10MB). Vui lòng chọn tệp khác.');
       e.target.value = '';
@@ -261,10 +267,8 @@ export default function OnboardingPage() {
     setUploadingDoc(true);
     setErrorMessage('');
     try {
-      // 1. Tính toán mã băm SHA-256 thật từ nội dung file bằng Web Crypto API
       const sha256 = await calculateFileSha256(file);
 
-      // 2. Presign: Gọi Backend để lấy ID và S3/MinIO upload URL
       const presign = await presignKycDocument({
         document_type: newDocType,
         file_name: file.name,
@@ -274,7 +278,6 @@ export default function OnboardingPage() {
         sha256,
       });
 
-      // 3. Upload File Binary lên S3 / MinIO Presigned URL (nếu có URL thật)
       if (presign?.upload_url && !presign.upload_url.includes('storage.example')) {
         try {
           const uploadHeaders = {
@@ -294,7 +297,6 @@ export default function OnboardingPage() {
         }
       }
 
-      // 4. Complete upload: Xác nhận với Backend
       await completeKycDocument({
         document_id: presign.document_id,
         object_key: presign.object_key || presign.s3_key,
@@ -307,7 +309,6 @@ export default function OnboardingPage() {
         filename: file.name,
       });
 
-      // 5. Cập nhật danh sách tài liệu
       const docs = await getKycDocuments();
       setKycDocs(docs);
       notifySuccess('✓ Tải lên tài liệu KYC thành công!');
@@ -343,7 +344,7 @@ export default function OnboardingPage() {
     }
   };
 
-  // Step 2: Chuyển sang Bước 3 (Yêu cầu tài liệu hợp lệ theo §2.25)
+  // Step 2: Chuyển sang Bước 3
   const handleContinueToWarehouse = () => {
     if (!isKycComplete) {
       setErrorMessage('Vui lòng tải lên Giấy chứng nhận ĐKKD / Hộ kinh doanh trước khi chuyển sang Bước 3.');
@@ -359,7 +360,6 @@ export default function OnboardingPage() {
     e.preventDefault();
     setErrorMessage('');
 
-    // Client Validations cho Bước 3
     if (!warehouseForm.warehouse_name || warehouseForm.warehouse_name.trim().length < 2) {
       setErrorMessage('Vui lòng nhập Tên kho lấy hàng (tối thiểu 2 ký tự).');
       return;
@@ -448,25 +448,21 @@ export default function OnboardingPage() {
 
   // Nộp toàn bộ hồ sơ Onboarding cho Admin thẩm định (§2.25)
   const handleSubmitKyc = async () => {
-    // 1. Kiểm tra Step 1: Profile
     if (!profileForm.name || !profileForm.tax_code) {
       setErrorMessage('Thông tin gian hàng chưa đầy đủ. Vui lòng hoàn thiện Bước 1.');
       setCurrentStep('PROFILE');
       return;
     }
-    // 2. Kiểm tra Step 2: KYC (khớp §2.25: có ít nhất 1 document hợp lệ)
     if (!isKycComplete) {
       setErrorMessage('Chưa có tài liệu pháp lý hợp lệ. Vui lòng tải lên Giấy chứng nhận ĐKKD ở Bước 2.');
       setCurrentStep('KYC');
       return;
     }
-    // 3. Kiểm tra Step 3: Warehouse
     if (!warehouseForm.warehouse_name || !warehouseForm.contact_name || !warehouseForm.contact_phone || !warehouseForm.province || !warehouseForm.ward || !warehouseForm.line1) {
       setErrorMessage('Thông tin kho lấy hàng chưa đầy đủ. Vui lòng kiểm tra lại Bước 3.');
       setCurrentStep('WAREHOUSE');
       return;
     }
-    // 4. Kiểm tra Step 4: Bank
     if (!bankForm.account_number || !bankForm.account_name) {
       setErrorMessage('Tài khoản ngân hàng chưa được hoàn tất. Vui lòng kiểm tra Bước 4.');
       setCurrentStep('BANK');
@@ -487,8 +483,6 @@ export default function OnboardingPage() {
     }
   };
 
-
-
   const stepsList = [
     { key: 'PROFILE', number: 1, label: 'Hồ sơ gian hàng', desc: 'Tên, mã số thuế & mô tả' },
     { key: 'KYC', number: 2, label: 'Định danh KYC', desc: 'Giấy tờ pháp lý & ĐKKD' },
@@ -507,6 +501,36 @@ export default function OnboardingPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
+      {/* Realtime Notification Banner (AUD-04) */}
+      {realtimeNotification && (
+        <div
+          className={`p-4 rounded-xl border flex items-start justify-between gap-4 animate-in slide-in-from-top duration-300 shadow-sm ${
+            realtimeNotification.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+              : realtimeNotification.type === 'error'
+              ? 'bg-rose-50 border-rose-200 text-rose-900'
+              : 'bg-amber-50 border-amber-200 text-amber-900'
+          }`}
+        >
+          <div className="flex gap-3">
+            <span className="text-xl">
+              {realtimeNotification.type === 'success' ? '🎉' : realtimeNotification.type === 'error' ? '⚠️' : '📋'}
+            </span>
+            <div>
+              <h4 className="font-bold text-[14px] m-0">{realtimeNotification.title}</h4>
+              <p className="text-[13px] mt-0.5 opacity-90">{realtimeNotification.message}</p>
+            </div>
+          </div>
+          <button
+            onClick={dismissNotification}
+            className="text-slate-400 hover:text-slate-600 font-bold text-sm cursor-pointer p-1"
+            aria-label="Đóng thông báo"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -560,700 +584,82 @@ export default function OnboardingPage() {
       )}
 
       {/* Stepper Header (4 Steps) */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {stepsList.map((step) => {
-                const isCompleted = stepStatuses[step.key];
-                const isActive = currentStep === step.key;
+      <OnboardingStepper
+        stepsList={stepsList}
+        stepStatuses={stepStatuses}
+        currentStep={currentStep}
+        onSelectStep={setCurrentStep}
+      />
 
-                return (
-                  <button
-                    key={step.key}
-                    type="button"
-                    onClick={() => setCurrentStep(step.key)}
-                    className={`text-left p-4 rounded-xl border transition-all flex items-start gap-3.5 ${
-                      isActive
-                        ? 'bg-indigo-50/70 border-[#4F46E5] shadow-xs'
-                        : isCompleted
-                        ? 'bg-slate-50/60 border-slate-200 hover:border-slate-300'
-                        : 'bg-white border-slate-200 hover:border-slate-300 opacity-80'
-                    }`}
-                  >
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
-                        isCompleted
-                          ? 'bg-emerald-600 text-white'
-                          : isActive
-                          ? 'bg-[#4F46E5] text-white'
-                          : 'bg-slate-200 text-slate-600'
-                      }`}
-                    >
-                      {isCompleted ? '✓' : step.number}
-                    </div>
-                    <div>
-                      <div className="text-[13px] font-bold text-slate-900 flex items-center gap-1.5">
-                        <span>{step.label}</span>
-                      </div>
-                      <p className="text-[11px] text-slate-500 mt-0.5">{step.desc}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+      {/* Cảnh báo khi bị từ chối hoặc cần bổ sung thông tin */}
+      <OnboardingAlerts
+        kycStatus={kycStatus}
+        rejectReason={rejectReason}
+        blockers={blockers}
+      />
 
-          {/* Cảnh báo khi bị từ chối hoặc cần bổ sung thông tin */}
-          {(kycStatus === 'REJECTED' || kycStatus === 'NEEDS_INFO') && (
-            <div className={`p-5 rounded-2xl border flex items-start gap-3.5 ${
-              kycStatus === 'NEEDS_INFO' ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-rose-50 border-rose-200 text-rose-900'
-            }`}>
-              <span className="text-2xl mt-0.5">{kycStatus === 'NEEDS_INFO' ? '⚠️' : '✕'}</span>
-              <div className="space-y-1.5 flex-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-extrabold text-[14px]">
-                    {kycStatus === 'NEEDS_INFO' ? 'Hồ sơ cần bổ sung thông tin theo yêu cầu của Ban Quản Trị' : 'Hồ sơ thẩm định chưa được phê duyệt (Đã giữ nguyên bản nháp)'}
-                  </h3>
-                  <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${
-                    kycStatus === 'NEEDS_INFO' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-rose-100 text-rose-800 border-rose-300'
-                  }`}>
-                    {kycStatus}
-                  </span>
-                </div>
-                <p className="text-[12px] opacity-90 leading-relaxed">
-                  Toàn bộ thông tin bạn đã nhập ở cả 4 bước vẫn được lưu trữ nguyên vẹn dưới dạng <strong>Bản nháp (Draft)</strong>. Vui lòng kiểm tra lý do bên dưới, chỉnh sửa các mục cần cập nhật và nhấn <strong>"Cập nhật & Gửi lại thẩm định"</strong> ở cuối trang.
-                </p>
-                {(rejectReason || blockers[0]) && (
-                  <div className="mt-2 p-3 bg-white/90 rounded-xl border border-rose-200/80 text-[12px] font-medium text-slate-800">
-                    <span className="font-bold text-rose-700 block mb-0.5">Lý do từ Ban Quản Trị:</span>
-                    <span className="italic">"{rejectReason || blockers[0]}"</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+      {/* STEP CONTENT PANELS */}
+      <div className="bg-white rounded-xl border border-slate-200 p-8 shadow-xs">
+        {currentStep === 'PROFILE' && (
+          <ProfileStep
+            profileForm={profileForm}
+            setProfileForm={setProfileForm}
+            onSaveProfile={handleSaveProfile}
+            saving={saving}
+          />
+        )}
 
-          {/* Blockers alert if any */}
-          {blockers.length > 0 && kycStatus !== 'REJECTED' && kycStatus !== 'NEEDS_INFO' && (
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-[13px] text-amber-800 flex items-center gap-3">
-              <span className="text-lg">⚠️</span>
-              <div>
-                <p className="font-bold">Các mục cần bổ sung để hoàn tất xét duyệt:</p>
-                <ul className="list-disc list-inside text-[12px] mt-1 space-y-0.5">
-                  {blockers.map((b) => (
-                    <li key={b}>{b}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
+        {currentStep === 'KYC' && (
+          <KycStep
+            kycStatus={kycStatus}
+            kycDocs={kycDocs}
+            newDocType={newDocType}
+            setNewDocType={setNewDocType}
+            uploadingDoc={uploadingDoc}
+            saving={saving}
+            hasBusinessReg={hasBusinessReg}
+            hasIdFront={hasIdFront}
+            hasIdBack={hasIdBack}
+            isKycComplete={isKycComplete}
+            onUploadKycDoc={handleUploadKycDoc}
+            onDeleteKycDoc={handleDeleteKycDoc}
+            onBackToProfile={() => setCurrentStep('PROFILE')}
+            onContinueToWarehouse={handleContinueToWarehouse}
+          />
+        )}
 
-          {/* STEP CONTENT PANELS */}
-          <div className="bg-white rounded-xl border border-slate-200 p-8 shadow-xs">
-            {/* STEP 1: PROFILE */}
-            {currentStep === 'PROFILE' && (
-              <form onSubmit={handleSaveProfile} className="space-y-6 text-[13px] max-w-3xl">
-                <div>
-                  <h2 className="text-[17px] font-bold text-slate-900 uppercase tracking-tight">
-                    BƯỚC 1: THÔNG TIN HỒ SƠ GIAN HÀNG
-                  </h2>
-                  <p className="text-[12px] text-slate-500 mt-1">
-                    Cập nhật tên thương hiệu, tên pháp lý doanh nghiệp và mã số thuế (PUT /seller/onboarding/profile).
-                  </p>
-                </div>
+        {currentStep === 'WAREHOUSE' && (
+          <WarehouseStep
+            warehouseForm={warehouseForm}
+            setWarehouseForm={setWarehouseForm}
+            selectedProvinceCode={selectedProvinceCode}
+            setSelectedProvinceCode={setSelectedProvinceCode}
+            selectedWardCode={selectedWardCode}
+            setSelectedWardCode={setSelectedWardCode}
+            wards={wards}
+            setWards={setWards}
+            saving={saving}
+            onSaveWarehouse={handleSaveWarehouse}
+            onBackToKyc={() => setCurrentStep('KYC')}
+          />
+        )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
-                      Tên gian hàng *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={profileForm.name}
-                      onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-[#4F46E5]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
-                      Tên công ty / Hộ kinh doanh *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={profileForm.business_name}
-                      onChange={(e) => setProfileForm({ ...profileForm, business_name: e.target.value })}
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-[#4F46E5]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
-                      Mã số thuế doanh nghiệp * (10–14 chữ số)
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={profileForm.tax_code}
-                      onChange={(e) => setProfileForm({ ...profileForm, tax_code: e.target.value })}
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-[#4F46E5]"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
-                    Mô tả gian hàng
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={profileForm.description}
-                    onChange={(e) => setProfileForm({ ...profileForm, description: e.target.value })}
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-[#4F46E5]"
-                  />
-                </div>
-
-                <div className="pt-4 border-t border-slate-200 flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="px-6 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg font-bold text-[13px] shadow-sm transition-colors disabled:opacity-50"
-                  >
-                    {saving ? 'Đang lưu...' : 'Lưu & Tiếp tục sang KYC →'}
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* STEP 2: KYC */}
-            {currentStep === 'KYC' && (
-              <div className="space-y-6 text-[13px] max-w-4xl">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-[17px] font-bold text-slate-900 uppercase tracking-tight">
-                      BƯỚC 2: HỒ SƠ PHÁP LÝ & ĐỊNH DANH (KYC)
-                    </h2>
-                    <span
-                      className={`text-[12px] font-bold px-3 py-1 rounded-full ${
-                        kycStatus === 'APPROVED'
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : kycStatus === 'PENDING'
-                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                          : 'bg-slate-100 text-slate-700 border border-slate-200'
-                      }`}
-                    >
-                      Trạng thái: {kycStatus}
-                    </span>
-                  </div>
-                  <p className="text-[12px] text-slate-500 mt-1">
-                    Tải lên tài liệu pháp lý kinh doanh (Giấy chứng nhận ĐKKD / Hộ kinh doanh) theo quy định của sàn (khớp đặc tả API §2.23–§2.25).
-                  </p>
-                </div>
-
-                {/* Tài liệu Checklist */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className={`p-4 rounded-xl border transition-all ${hasBusinessReg ? 'bg-emerald-50/70 border-emerald-300' : 'bg-amber-50/60 border-amber-200'}`}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-bold text-[12px] text-slate-800">1. Giấy phép ĐKKD *</span>
-                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded ${hasBusinessReg ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
-                        {hasBusinessReg ? '✓ ĐÃ TẢI' : 'BẮT BUỘC'}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500">Giấy ĐKKD hoặc Giấy chứng nhận hộ kinh doanh (Backend API hỗ trợ)</p>
-                  </div>
-
-                  <div className={`p-4 rounded-xl border transition-all ${hasIdFront ? 'bg-emerald-50/70 border-emerald-300' : 'bg-slate-50 border-slate-200'}`}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-bold text-[12px] text-slate-800">2. CCCD Mặt trước</span>
-                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded ${hasIdFront ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
-                        {hasIdFront ? '✓ ĐÃ TẢI' : 'TÙY CHỌN'}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500">Ảnh chụp rõ mặt trước CCCD người đại diện</p>
-                  </div>
-
-                  <div className={`p-4 rounded-xl border transition-all ${hasIdBack ? 'bg-emerald-50/70 border-emerald-300' : 'bg-slate-50 border-slate-200'}`}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-bold text-[12px] text-slate-800">3. CCCD Mặt sau</span>
-                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded ${hasIdBack ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
-                        {hasIdBack ? '✓ ĐÃ TẢI' : 'TÙY CHỌN'}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500">Ảnh chụp rõ mặt sau có chip CCCD</p>
-                  </div>
-                </div>
-
-                {/* Upload box */}
-                <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
-                  <h3 className="font-bold text-slate-800 text-[14px]">Tải lên tài liệu mới</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                        Chọn loại tài liệu cần tải *
-                      </label>
-                      <select
-                        value={newDocType}
-                        onChange={(e) => setNewDocType(e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:border-[#4F46E5]"
-                      >
-                        <option value="BUSINESS_REGISTRATION">1. Giấy chứng nhận ĐKKD / Đăng ký hộ kinh doanh (Hỗ trợ Backend)</option>
-                        <option value="CITIZEN_ID_FRONT">2. CCCD / Hộ chiếu đại diện (Mặt trước)</option>
-                        <option value="CITIZEN_ID_BACK">3. CCCD / Hộ chiếu đại diện (Mặt sau)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                        Chọn tệp (PDF, PNG, JPG - Tối đa 10MB) *
-                      </label>
-                      <input
-                        type="file"
-                        accept=".pdf,.png,.jpg,.jpeg"
-                        disabled={uploadingDoc}
-                        onChange={handleUploadKycDoc}
-                        className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-[#4F46E5] hover:file:bg-indigo-100"
-                      />
-                    </div>
-                  </div>
-                  {uploadingDoc && (
-                    <p className="text-xs text-[#4F46E5] font-semibold animate-pulse">
-                      Đang mã hóa SHA256 và tải lên bộ nhớ an toàn...
-                    </p>
-                  )}
-                </div>
-
-                {/* Documents table with Delete action */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-bold text-slate-800 text-[14px]">
-                      Danh sách tài liệu đã tải ({kycDocs.length} tài liệu)
-                    </h3>
-                    <span className={`text-[12px] font-bold ${isKycComplete ? 'text-emerald-700' : 'text-amber-700'}`}>
-                      {isKycComplete ? '✓ Đã có tài liệu hợp lệ theo §2.25' : 'Cần tải lên Giấy phép ĐKKD'}
-                    </span>
-                  </div>
-
-                  {kycDocs.length === 0 ? (
-                    <div className="py-8 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                      Chưa có tài liệu nào. Vui lòng tải lên ĐKKD, CCCD mặt trước và CCCD mặt sau.
-                    </div>
-                  ) : (
-                    <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-200">
-                      {kycDocs.map((doc) => {
-                        const typeLabel =
-                          doc.document_type === 'BUSINESS_REGISTRATION'
-                            ? 'Giấy phép ĐKKD'
-                            : doc.document_type === 'CITIZEN_ID_FRONT' || doc.document_type === 'CITIZEN_ID'
-                            ? 'CCCD Mặt trước'
-                            : doc.document_type === 'CITIZEN_ID_BACK'
-                            ? 'CCCD Mặt sau'
-                            : doc.document_type;
-
-                        return (
-                          <div key={doc.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                            <div className="flex items-center gap-3">
-                              <span className="text-2xl">📄</span>
-                              <div>
-                                <p className="font-bold text-slate-800 text-[13px] flex items-center gap-2">
-                                  <span>{doc.original_file_name || doc.file_name}</span>
-                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                    {typeLabel}
-                                  </span>
-                                </p>
-                                <p className="text-[11px] text-slate-400">
-                                  {(doc.size_bytes ? doc.size_bytes / (1024 * 1024) : 1.5).toFixed(2)} MB · {doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleString('vi-VN') : 'Mới tải'}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                {doc.status || 'VERIFIED'}
-                              </span>
-                              {/* Nút Xóa tài liệu nếu bấm nhầm */}
-                              <button
-                                type="button"
-                                disabled={saving}
-                                onClick={() => handleDeleteKycDoc(doc.id)}
-                                className="px-2.5 py-1 text-[11px] font-semibold text-rose-600 hover:text-rose-800 hover:bg-rose-50 border border-rose-200 rounded-lg transition-colors cursor-pointer"
-                                title="Xóa tài liệu nếu tải nhầm"
-                              >
-                                ✕ Xóa
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                {/* Navigation actions */}
-                <div className="pt-4 border-t border-slate-200 flex justify-between items-center">
-                  <button
-                    type="button"
-                    onClick={() => setCurrentStep('PROFILE')}
-                    className="px-4 py-2 text-slate-600 hover:text-slate-900 font-semibold"
-                  >
-                    ← Quay lại bước 1
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleContinueToWarehouse}
-                    className={`px-6 py-2.5 rounded-lg font-bold text-[13px] shadow-sm transition-colors flex items-center gap-2 ${
-                      isKycComplete
-                        ? 'bg-[#4F46E5] hover:bg-[#4338CA] text-white cursor-pointer'
-                        : 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                    }`}
-                  >
-                    <span>Xác nhận tài liệu & Tiếp tục sang Kho hàng →</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 3: WAREHOUSE */}
-            {currentStep === 'WAREHOUSE' && (
-              <form onSubmit={handleSaveWarehouse} className="space-y-6 text-[13px] max-w-3xl">
-                <div>
-                  <h2 className="text-[17px] font-bold text-slate-900 uppercase tracking-tight">
-                    BƯỚC 3: ĐỊA CHỈ KHO HÀNG & LẤY HÀNG
-                  </h2>
-                  <p className="text-[12px] text-slate-500 mt-1">
-                    Chọn địa chỉ lấy hàng chuẩn hóa để đối tác vận chuyển đến lấy kiện hàng (PUT /seller/onboarding/warehouse).
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
-                      Tên kho lấy hàng * (warehouse_name)
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={warehouseForm.warehouse_name}
-                      onChange={(e) => setWarehouseForm({ ...warehouseForm, warehouse_name: e.target.value })}
-                      placeholder="VD: Kho Tổng Quận 1, Kho Hàng Thủ Đức..."
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-[#4F46E5]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
-                      Người phụ trách kho * (contact_name)
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={warehouseForm.contact_name}
-                      onChange={(e) => setWarehouseForm({ ...warehouseForm, contact_name: e.target.value })}
-                      placeholder="VD: Nguyễn Văn A"
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-[#4F46E5]"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
-                      Hotline liên hệ lấy hàng * (contact_phone)
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={warehouseForm.contact_phone}
-                      onChange={(e) => setWarehouseForm({ ...warehouseForm, contact_phone: e.target.value })}
-                      placeholder="VD: 0901234567"
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-[#4F46E5]"
-                    />
-                  </div>
-
-                  {/* Dropdown Tỉnh / Thành phố */}
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
-                      Tỉnh / Thành phố *
-                    </label>
-                    <select
-                      value={selectedProvinceCode}
-                      onChange={(e) => {
-                        const code = e.target.value;
-                        setSelectedProvinceCode(code);
-                        setSelectedWardCode('');
-                        const p = findProvinceByCode(code);
-                        const wList = getWardsByProvince(code);
-                        setWards(wList);
-                        setWarehouseForm((prev) => ({
-                          ...prev,
-                          province: p ? p.name : '',
-                          ward: '',
-                          district: '',
-                        }));
-                      }}
-                      required
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:border-[#4F46E5]"
-                    >
-                      <option value="">-- Chọn Tỉnh / Thành phố --</option>
-                      {ALL_PROVINCES.map((p) => (
-                        <option key={p.code} value={p.code}>
-                          {p.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Dropdown Phường / Xã */}
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
-                      Phường / Xã *
-                    </label>
-                    <select
-                      value={selectedWardCode}
-                      onChange={(e) => {
-                        const wCode = e.target.value;
-                        setSelectedWardCode(wCode);
-                        const w = findWardByCode(selectedProvinceCode, wCode);
-                        setWarehouseForm((prev) => ({
-                          ...prev,
-                          ward: w ? w.name : '',
-                          district: '',
-                        }));
-                      }}
-                      disabled={!selectedProvinceCode}
-                      required
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:border-[#4F46E5] disabled:bg-slate-100 disabled:text-slate-400"
-                    >
-                      <option value="">{selectedProvinceCode ? '-- Chọn Phường / Xã --' : 'Vui lòng chọn Tỉnh/Thành trước'}</option>
-                      {wards.map((w) => (
-                        <option key={w.code} value={w.code}>
-                          {w.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
-                      Địa chỉ cụ thể * (line1: Số nhà, tên đường, tòa nhà...)
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={warehouseForm.line1}
-                      onChange={(e) => setWarehouseForm({ ...warehouseForm, line1: e.target.value })}
-                      placeholder="VD: Số 28 Đường Nguyễn Huệ, Tòa nhà Bitexco..."
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-[#4F46E5]"
-                    />
-                  </div>
-                </div>
-
-                {/* Preview địa chỉ kho hàng */}
-                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-[12px] text-slate-700 flex items-start gap-2.5">
-                  <span className="text-base text-[#4F46E5]">📍</span>
-                  <div>
-                    <span className="font-bold">Địa chỉ lấy hàng hoàn chỉnh: </span>
-                    <span className="font-medium text-slate-900">
-                      {warehouseForm.line1 ? `${warehouseForm.line1}, ` : ''}
-                      {warehouseForm.ward ? `${warehouseForm.ward}, ` : ''}
-                      {warehouseForm.province || 'Chưa hoàn tất chọn địa chỉ'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-slate-200 flex justify-between items-center">
-                  <button
-                    type="button"
-                    onClick={() => setCurrentStep('KYC')}
-                    className="px-4 py-2 text-slate-600 hover:text-slate-900 font-semibold"
-                  >
-                    ← Quay lại bước 2
-                  </button>
-
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="px-6 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg font-bold text-[13px] shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
-                  >
-                    {saving ? 'Đang lưu...' : 'Lưu địa chỉ kho & Sang bước Ngân hàng →'}
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* STEP 4: BANK */}
-            {currentStep === 'BANK' && (
-              <div className="space-y-8 max-w-3xl">
-                <form onSubmit={handleSaveBank} className="space-y-6 text-[13px]">
-                  <div>
-                    <h2 className="text-[17px] font-bold text-slate-900 uppercase tracking-tight">
-                      BƯỚC 4: TÀI KHOẢN NGÂN HÀNG ĐỐI SOÁT & RÚT TIỀN
-                    </h2>
-                    <p className="text-[12px] text-slate-500 mt-1">
-                      Hệ thống Taca chuyển doanh thu bán hàng định kỳ vào tài khoản này (PUT /seller/onboarding/bank).
-                    </p>
-                  </div>
-
-                  {bankSummary && (
-                    <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Tài khoản hiện tại</p>
-                        <p className="text-sm font-extrabold text-slate-900 mt-1">
-                          {bankSummary.bank_name}
-                        </p>
-                        <p className="text-xs text-slate-600 font-mono mt-0.5">
-                          {bankSummary.account_name} · {bankSummary.account_number_masked}
-                        </p>
-                      </div>
-                      <span className="text-xs font-bold px-2.5 py-1 bg-white text-emerald-700 border border-emerald-200 rounded-lg">
-                        ✓ Đã xác thực
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div className="sm:col-span-2">
-                      <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
-                        Ngân hàng thụ hưởng * (bank_code / bank_name)
-                      </label>
-                      <select
-                        value={bankForm.bank_code}
-                        onChange={(e) => {
-                          const b = VIETNAM_BANK_CATALOG.find((x) => x.code === e.target.value);
-                          setBankForm({
-                            ...bankForm,
-                            bank_code: e.target.value,
-                            bank_name: b ? b.name : '',
-                          });
-                        }}
-                        className="w-full px-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:border-[#4F46E5]"
-                      >
-                        {VIETNAM_BANK_CATALOG.map((b) => (
-                          <option key={b.code} value={b.code}>
-                            {b.name} ({b.code})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
-                        Số tài khoản ngân hàng * (account_number: 8–20 số)
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={bankForm.account_number}
-                        onChange={(e) => setBankForm({ ...bankForm, account_number: e.target.value.replace(/\D/g, '') })}
-                        placeholder="VD: 1012345678"
-                        className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-[#4F46E5]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
-                        Tên chủ tài khoản * (account_name: VIẾT HOA KHÔNG DẤU)
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={bankForm.account_name}
-                        onChange={(e) => setBankForm({ ...bankForm, account_name: e.target.value.toUpperCase() })}
-                        placeholder="VD: NGUYEN MINH ANH"
-                        className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-[#4F46E5]"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-slate-200 flex justify-between items-center">
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep('WAREHOUSE')}
-                      className="px-4 py-2 text-slate-600 hover:text-slate-900 font-semibold"
-                    >
-                      ← Quay lại bước 3
-                    </button>
-
-                    <button
-                      type="submit"
-                      disabled={saving}
-                      className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold text-[13px] shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
-                    >
-                      {saving ? 'Đang lưu...' : 'Lưu thông tin ngân hàng'}
-                    </button>
-                  </div>
-                </form>
-
-                {/* KHỐI TỔNG KẾT & NỘP XÉT DUYỆT ADMIN CHÍNH THỨC */}
-                <div className="p-6 bg-indigo-50/70 border-2 border-indigo-200 rounded-2xl space-y-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">📋</span>
-                    <div>
-                      <h3 className="text-[15px] font-extrabold text-slate-900 uppercase tracking-tight">
-                        TỔNG KẾT HỒ SƠ & GỬI THẨM ĐỊNH (FINAL SUBMISSION)
-                      </h3>
-                      <p className="text-[12px] text-slate-600">
-                        Kiểm tra lại toàn bộ 4 bước trước khi gửi hồ sơ cho Ban Quản Trị xét duyệt.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[12px]">
-                    <div className="bg-white p-3.5 rounded-xl border border-indigo-100">
-                      <span className="font-bold text-slate-500 uppercase text-[10px] block mb-1">1. Hồ sơ gian hàng</span>
-                      <p className="font-bold text-slate-900">{profileForm.name || '---'}</p>
-                      <p className="text-slate-500">MST: {profileForm.tax_code || '---'}</p>
-                    </div>
-
-                    <div className="bg-white p-3.5 rounded-xl border border-indigo-100">
-                      <span className="font-bold text-slate-500 uppercase text-[10px] block mb-1">2. Giấy tờ KYC</span>
-                      <p className={`font-bold ${isKycComplete ? 'text-emerald-700' : 'text-amber-700'}`}>
-                        {isKycComplete ? '✓ Đã có tài liệu hợp lệ (§2.25)' : '⚠️ Chưa có tài liệu'}
-                      </p>
-                      <p className="text-slate-500">Giấy phép ĐKKD / Hộ kinh doanh</p>
-                    </div>
-
-                    <div className="bg-white p-3.5 rounded-xl border border-indigo-100">
-                      <span className="font-bold text-slate-500 uppercase text-[10px] block mb-1">3. Kho lấy hàng</span>
-                      <p className="font-bold text-slate-900">{warehouseForm.warehouse_name || 'Chưa lưu kho'}</p>
-                      <p className="text-slate-500 truncate">{warehouseForm.province ? `${warehouseForm.ward}, ${warehouseForm.province}` : '---'}</p>
-                    </div>
-
-                    <div className="bg-white p-3.5 rounded-xl border border-indigo-100">
-                      <span className="font-bold text-slate-500 uppercase text-[10px] block mb-1">4. Tài khoản ngân hàng</span>
-                      <p className="font-bold text-slate-900">{bankSummary ? bankSummary.bank_name : (bankForm.account_number ? bankForm.bank_name : 'Chưa lưu ngân hàng')}</p>
-                      <p className="text-slate-500 font-mono">{bankSummary ? bankSummary.account_number_masked : (bankForm.account_number ? `STK: ${bankForm.account_number}` : '---')}</p>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <span className="text-[11px] text-slate-500 italic">
-                      * Sau khi bấm gửi, hồ sơ sẽ chuyển sang hàng đợi Admin để thẩm định.
-                    </span>
-
-                    <button
-                      type="button"
-                      disabled={saving || kycStatus === 'PENDING'}
-                      onClick={handleSubmitKyc}
-                      className={`w-full sm:w-auto px-8 py-3 rounded-xl font-bold text-[13px] shadow-sm transition-all flex items-center justify-center gap-2 ${
-                        kycStatus === 'PENDING'
-                          ? 'bg-amber-100 text-amber-800 border border-amber-300 cursor-not-allowed'
-                          : 'bg-[#4F46E5] hover:bg-[#4338CA] text-white cursor-pointer shadow-indigo-500/20'
-                      }`}
-                    >
-                      {kycStatus === 'PENDING' ? (
-                        <span>⏳ Đang chờ Admin phê duyệt</span>
-                      ) : saving ? (
-                        <span>Đang gửi hồ sơ...</span>
-                      ) : kycStatus === 'REJECTED' || kycStatus === 'NEEDS_INFO' ? (
-                        <span>CẬP NHẬT & GỬI LẠI HỒ SƠ THẨM ĐỊNH (POST /submit) →</span>
-                      ) : (
-                        <span>GỬI TOÀN BỘ HỒ SƠ THẨM ĐỊNH (POST /submit) →</span>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
+        {currentStep === 'BANK' && (
+          <BankStep
+            bankForm={bankForm}
+            setBankForm={setBankForm}
+            bankSummary={bankSummary}
+            saving={saving}
+            kycStatus={kycStatus}
+            profileForm={profileForm}
+            isKycComplete={isKycComplete}
+            warehouseForm={warehouseForm}
+            onSaveBank={handleSaveBank}
+            onBackToWarehouse={() => setCurrentStep('WAREHOUSE')}
+            onSubmitKyc={handleSubmitKyc}
+          />
+        )}
+      </div>
+    </div>
+  );
+}

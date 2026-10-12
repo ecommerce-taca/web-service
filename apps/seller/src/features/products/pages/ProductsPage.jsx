@@ -102,9 +102,18 @@ export default function ProductsPage() {
     setIsEditorOpen(true);
   };
 
-  const handleOpenEditModal = (product) => {
-    setEditingProduct(product);
-    setIsEditorOpen(true);
+  const handleOpenEditModal = async (product) => {
+    try {
+      const productId = product.id || product.productId;
+      const res = await sellerProductApi.getProductEditorDetail(productId);
+      const detail = res?.data || product;
+      setEditingProduct(detail);
+      setIsEditorOpen(true);
+    } catch (err) {
+      console.warn('Lỗi khi tải chi tiết sản phẩm editor:', err);
+      setEditingProduct(product);
+      setIsEditorOpen(true);
+    }
   };
 
   const handleTogglePublish = async (spu) => {
@@ -139,11 +148,44 @@ export default function ProductsPage() {
   const handleExportExcel = async () => {
     try {
       const res = await sellerProductApi.exportProductsExcelUrl();
-      if (res?.data?.download_url) {
-        alert('Đã sẵn sàng tải file Excel danh sách sản phẩm!');
+      const downloadUrl = res?.data?.download_url || res?.data?.export_url;
+      if (downloadUrl) {
+        if (downloadUrl.startsWith('http') || downloadUrl.startsWith('blob:')) {
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          link.setAttribute('download', `taca_products_export_${Date.now()}.xlsx`);
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+        } else {
+          // Tạo tệp CSV/Excel xuất dữ liệu thực tế cho Seller
+          const csvRows = [
+            ['Mã SPU', 'Tên sản phẩm', 'Thương hiệu', 'Danh mục', 'Số SKU', 'Kho', 'Đã bán', 'Trạng thái'],
+            ...items.map(p => [
+              p.spu_code || p.id,
+              p.title || p.name,
+              p.brand || '',
+              p.category_name || p.primary_category_id || '',
+              p.sku_count || (p.skus ? p.skus.length : 1),
+              p.stock_display ?? 0,
+              p.sold_count || 0,
+              p.status || 'DRAFT'
+            ])
+          ];
+          const csvContent = '\uFEFF' + csvRows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',')).join('\n');
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', `taca_products_export_${new Date().toISOString().slice(0, 10)}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+        }
       }
     } catch (err) {
-      alert(`Lỗi xuất Excel: ${err.message}`);
+      alert(`Lỗi xuất Excel: ${err?.message || err}`);
     }
   };
 

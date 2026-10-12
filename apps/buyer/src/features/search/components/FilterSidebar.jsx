@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { productApi } from '../../products/services/product.api';
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   { id: 'all', label: 'Tất cả danh mục' },
   { id: 'dien-thoai', label: 'Điện thoại' },
   { id: 'laptop', label: 'Máy tính & Laptop' },
@@ -31,6 +33,34 @@ const FilterSidebar = ({
   onRatingChange,
   onResetFilters
 }) => {
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+
+  useEffect(() => {
+    let isMounted = true;
+    productApi.getCategories()
+      .then(res => {
+        if (!isMounted) return;
+        const tree = res?.data || [];
+        if (Array.isArray(tree) && tree.length > 0) {
+          const dynamicCats = [{ id: 'all', label: 'Tất cả danh mục' }];
+          tree.forEach(node => {
+            dynamicCats.push({
+              id: node.id || node.category_id || node.slug,
+              label: node.name || node.title || node.label
+            });
+          });
+          setCategories(dynamicCats);
+        }
+      })
+      .catch(err => {
+        console.warn('[FilterSidebar] Lỗi tải danh mục từ API:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <div className="w-[240px] flex flex-col gap-8 bg-white p-4 rounded-xl border border-taca-border">
       {/* DANH MỤC */}
@@ -39,7 +69,7 @@ const FilterSidebar = ({
           DANH MỤC
         </h3>
         <div className="flex flex-col gap-2">
-          {CATEGORIES.map(cat => {
+          {categories.map(cat => {
             const isActive = selectedCategory === cat.id;
             return (
               <button

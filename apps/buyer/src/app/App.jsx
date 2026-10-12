@@ -1,27 +1,40 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, useInRouterContext, Routes, Route, Navigate } from 'react-router-dom';
 import BuyerLayout from '../layouts/BuyerLayout';
-import HomePage from '../features/home/pages/HomePage';
-import SearchPage from '../features/search/pages/SearchPage';
-import ProductDetailPage from '../features/products/pages/ProductDetailPage';
-import CategoryLandingPage from '../features/products/pages/CategoryLandingPage';
-import ShopPage from '../features/shops/pages/ShopPage';
 import { AuthProvider } from '../features/auth/contexts/AuthProvider';
 import { CartProvider } from '../features/cart/contexts/CartProvider';
 import { FavoritesProvider } from '../features/products/contexts/FavoritesProvider';
 import AuthModal from '../features/auth/components/AuthModal';
-import VerifyEmailPage from '../features/auth/pages/VerifyEmailPage';
-import ResetPasswordPage from '../features/auth/pages/ResetPasswordPage';
-import AccountLayout from '../features/account/layouts/AccountLayout';
-import ProfilePage from '../features/account/pages/ProfilePage';
-import OrdersPage from '../features/account/pages/OrdersPage';
-import OrderDetailPage from '../features/account/pages/OrderDetailPage';
-import ReviewsPage from '../features/account/pages/ReviewsPage';
-import VouchersPage from '../features/account/pages/VouchersPage';
-import WishlistPage from '../features/account/pages/WishlistPage';
-import SellerRegisterPage from '../features/account/pages/SellerRegisterPage';
-import CartPage from '../features/cart/pages/CartPage';
-import CheckoutPage from '../features/checkout/pages/CheckoutPage';
 import ScrollToTop from '../components/common/ScrollToTop';
+
+// Route-level Lazy Loading (AUD-03)
+const HomePage = lazy(() => import('../features/home/pages/HomePage'));
+const SearchPage = lazy(() => import('../features/search/pages/SearchPage'));
+const ProductDetailPage = lazy(() => import('../features/products/pages/ProductDetailPage'));
+const CategoryLandingPage = lazy(() => import('../features/products/pages/CategoryLandingPage'));
+const ShopPage = lazy(() => import('../features/shops/pages/ShopPage'));
+const VerifyEmailPage = lazy(() => import('../features/auth/pages/VerifyEmailPage'));
+const ResetPasswordPage = lazy(() => import('../features/auth/pages/ResetPasswordPage'));
+const AccountLayout = lazy(() => import('../features/account/layouts/AccountLayout'));
+const ProfilePage = lazy(() => import('../features/account/pages/ProfilePage'));
+const OrdersPage = lazy(() => import('../features/account/pages/OrdersPage'));
+const OrderDetailPage = lazy(() => import('../features/account/pages/OrderDetailPage'));
+const ReviewsPage = lazy(() => import('../features/account/pages/ReviewsPage'));
+const VouchersPage = lazy(() => import('../features/account/pages/VouchersPage'));
+const WishlistPage = lazy(() => import('../features/account/pages/WishlistPage'));
+const FollowingShopsPage = lazy(() => import('../features/account/pages/FollowingShopsPage'));
+const SellerRegisterPage = lazy(() => import('../features/account/pages/SellerRegisterPage'));
+const CartPage = lazy(() => import('../features/cart/pages/CartPage'));
+const CheckoutPage = lazy(() => import('../features/checkout/pages/CheckoutPage'));
+
+function PageLoadingFallback() {
+  return (
+    <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3 p-8">
+      <div className="w-8 h-8 border-3 border-taca-primary border-t-transparent rounded-full animate-spin" />
+      <span className="text-[13px] font-medium text-slate-500">Đang tải trang...</span>
+    </div>
+  );
+}
 
 function SellerRedirectNotice() {
   const hostUrl = typeof window !== 'undefined'
@@ -64,37 +77,46 @@ function AppContent() {
     <>
       <ScrollToTop />
       <AuthModal />
-      <Routes>
-        <Route element={<BuyerLayout />}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/search" element={<SearchPage />} />
-          <Route path="/product/:id" element={<ProductDetailPage />} />
-          <Route path="/products/:id" element={<ProductDetailPage />} />
-          <Route path="/category/:categorySlug?" element={<CategoryLandingPage />} />
-          <Route path="/category/:categorySlug/:subCategorySlug" element={<CategoryLandingPage />} />
-          <Route path="/shop/:id" element={<ShopPage />} />
-          <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/wishlist" element={<Navigate to="/account/wishlist" replace />} />
-          
-          <Route path="/account" element={<AccountLayout />}>
-            <Route index element={<Navigate to="profile" replace />} />
-            <Route path="profile" element={<ProfilePage />} />
-            <Route path="overview" element={<div className="p-8">Tổng quan (Sắp ra mắt)</div>} />
-            <Route path="orders" element={<OrdersPage />} />
-            <Route path="orders/:id" element={<OrderDetailPage />} />
-            <Route path="reviews" element={<ReviewsPage />} />
-            <Route path="vouchers" element={<VouchersPage />} />
-            <Route path="wishlist" element={<WishlistPage />} />
-            <Route path="seller-register" element={<SellerRegisterPage />} />
-          </Route>
+      <Suspense fallback={<PageLoadingFallback />}>
+        <Routes>
+          <Route element={<BuyerLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/search" element={<SearchPage />} />
+            <Route path="/product/:id" element={<ProductDetailPage />} />
+            <Route path="/products/:id" element={<ProductDetailPage />} />
+            <Route path="/category/:categorySlug?" element={<CategoryLandingPage />} />
+            <Route path="/category/:categorySlug/:subCategorySlug" element={<CategoryLandingPage />} />
+            
+            {/* Dynamic Shop ID Routing (AUD-02) */}
+            <Route path="/shop/:id" element={<ShopPage />} />
+            <Route path="/shop/:shopId" element={<ShopPage />} />
+            <Route path="/shops/:id" element={<ShopPage />} />
+            <Route path="/shops/:shopId" element={<ShopPage />} />
 
-          <Route path="/seller/*" element={<SellerRedirectNotice />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-      </Routes>
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/wishlist" element={<Navigate to="/account/wishlist" replace />} />
+            
+            <Route path="/account" element={<AccountLayout />}>
+              <Route index element={<Navigate to="profile" replace />} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="overview" element={<div className="p-8">Tổng quan (Sắp ra mắt)</div>} />
+              <Route path="orders" element={<OrdersPage />} />
+              <Route path="orders/:id" element={<OrderDetailPage />} />
+              <Route path="reviews" element={<ReviewsPage />} />
+              <Route path="vouchers" element={<VouchersPage />} />
+              <Route path="wishlist" element={<WishlistPage />} />
+              <Route path="following" element={<FollowingShopsPage />} />
+              <Route path="seller-register" element={<SellerRegisterPage />} />
+            </Route>
+
+            <Route path="/seller/*" element={<SellerRedirectNotice />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+        </Routes>
+      </Suspense>
     </>
   );
 }
