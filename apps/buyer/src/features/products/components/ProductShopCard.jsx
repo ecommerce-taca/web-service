@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
+import { Star } from 'lucide-react';
 import { Button } from '@taca/ui-components';
 
 const ProductShopCard = ({ shop }) => {
@@ -16,8 +17,15 @@ const ProductShopCard = ({ shop }) => {
         {/* Shop Info */}
         <div className="flex flex-col gap-2">
           <span className="text-[18px] font-bold text-taca-text-main group-hover:text-taca-primary transition-colors">{shop.name}</span>
-          <span className="text-[14px] text-taca-text-muted">
-            Official Store <span className="mx-2">·</span> {shop.rating} ★ <span className="mx-2">·</span> {shop.followers} người theo dõi
+          <span className="text-[14px] text-taca-text-muted flex items-center gap-1.5 flex-wrap">
+            <span>Official Store</span>
+            <span className="text-slate-300">·</span>
+            <span className="inline-flex items-center gap-0.5 text-amber-500 font-bold">
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              <span>{shop.rating}</span>
+            </span>
+            <span className="text-slate-300">·</span>
+            <span>{shop.followers} người theo dõi</span>
           </span>
         </div>
       </Link>

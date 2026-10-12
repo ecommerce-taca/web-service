@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
+import { Star, Zap, Check } from 'lucide-react';
 import { Button } from '@taca/ui-components';
 import { useCart } from '../../cart/hooks/useCart';
 import FavoriteButton from './FavoriteButton';
@@ -145,8 +146,9 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
             {product.name || product.title}
           </h1>
           <div className="flex items-center gap-3 text-[14px] text-taca-text-muted mt-3">
-            <div className="flex items-center text-taca-warning text-[14px]">
-              ★★★★★ <span className="text-taca-text-main ml-1 font-semibold">{product.rating || 4.9}</span>
+            <div className="flex items-center text-amber-500 text-[14px] font-bold gap-1">
+              <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+              <span className="text-taca-text-main font-bold">{product.rating || 4.9}</span>
             </div>
             <div className="w-[1px] h-3 bg-taca-border"></div>
             <div>{(product.reviewCount || product.rating_summary?.review_count || 1284).toLocaleString()} đánh giá</div>
@@ -164,8 +166,9 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
         {/* Price Area */}
         <div className="bg-[#fafafa] rounded-xl border border-slate-200/70 p-4 flex flex-col gap-2">
           {product.isFlashSale && (
-            <div className="text-[#ff424e] text-[12px] font-bold flex items-center gap-1">
-              ⚡ FLASH SALE · Kết thúc trong 02:45:18
+            <div className="text-[#ff424e] text-[12px] font-bold flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 fill-[#ff424e]" />
+              <span>FLASH SALE · Kết thúc trong 02:45:18</span>
             </div>
           )}
           <div className="flex items-end gap-3 flex-wrap">
@@ -184,8 +187,9 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
             )}
           </div>
           <div className="flex items-center gap-2 pt-0.5">
-            <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded">
-              ✓ Giá đã bao gồm thuế VAT {product.tax_rate_bps ? `(${product.tax_rate_bps / 100}%)` : '(10%)'}
+            <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded flex items-center gap-1">
+              <Check className="w-3 h-3 text-emerald-600 flex-shrink-0" />
+              Giá đã bao gồm thuế VAT {product.tax_rate_bps ? `(${product.tax_rate_bps / 100}%)` : '(10%)'}
             </span>
           </div>
         </div>
@@ -267,16 +271,16 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
 
           {addedToast && (
             <div className="absolute -top-12 left-0 right-0 mx-auto w-fit bg-emerald-600 text-white text-[13px] font-bold py-1.5 px-4 rounded-[6px] shadow-lg animate-in fade-in duration-200 flex items-center gap-1.5 z-20">
-              <span>✓</span>
+              <Check className="w-4 h-4 text-white" />
               <span>Đã thêm vào giỏ hàng thành công!</span>
             </div>
           )}
         </div>
         
         <div className="text-[12px] text-taca-text-muted flex items-center gap-6 pt-1">
-          <span className="flex items-center gap-1">✓ Thanh toán an toàn</span>
-          <span className="flex items-center gap-1">✓ Hoàn tiền nếu hàng giả</span>
-          <span className="flex items-center gap-1">✓ Bảo hành 12 tháng</span>
+          <span className="flex items-center gap-1"><Check className="w-3.5 h-3.5 text-emerald-600" /> Thanh toán an toàn</span>
+          <span className="flex items-center gap-1"><Check className="w-3.5 h-3.5 text-emerald-600" /> Hoàn tiền nếu hàng giả</span>
+          <span className="flex items-center gap-1"><Check className="w-3.5 h-3.5 text-emerald-600" /> Bảo hành 12 tháng</span>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
+import { Star } from 'lucide-react';
 import { Badge } from '@taca/ui-components';
 import FavoriteButton from './FavoriteButton';
 
@@ -128,8 +129,9 @@ const ProductCard = ({
             {(actualRating || actualSoldCount) && (
               <div className="flex items-center text-[11px] text-taca-text-muted">
                 {actualRating && (
-                  <span className="flex items-center text-[#faad14] mr-2">
-                    <span className="mr-1 tracking-[2px]">★★★★★</span> <span className="text-taca-text-muted font-medium">{actualRating}</span>
+                  <span className="flex items-center text-amber-500 mr-2 font-semibold">
+                    <Star className="w-3 h-3 fill-amber-400 text-amber-400 mr-1" />
+                    <span className="text-slate-700 font-bold">{actualRating}</span>
                   </span>
                 )}
                 {actualRating && actualSoldCount && <span>·</span>}

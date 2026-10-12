@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { ShoppingCart } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
 import { Button } from '@taca/ui-components';
 
@@ -39,8 +40,8 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <div className="bg-taca-surface min-h-[60vh] py-16 flex flex-col items-center justify-center text-center">
-        <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-slate-300 text-4xl mb-4 border border-taca-border shadow-sm">
-          🛒
+        <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-slate-300 mb-4 border border-taca-border shadow-sm">
+          <ShoppingCart className="w-10 h-10 text-slate-300" strokeWidth={1.5} />
         </div>
         <h2 className="text-xl font-bold text-taca-text-main mb-2">Giỏ hàng của bạn đang trống</h2>
         <p className="text-sm text-taca-text-muted mb-6 max-w-sm">

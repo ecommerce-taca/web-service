@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Heart } from 'lucide-react';
 import ProductCard from '../../products/components/ProductCard';
 import { useFavorites } from '../../products/hooks/useFavorites';
 
@@ -69,8 +70,8 @@ const WishlistPage = () => {
           </div>
         ) : (
           <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-200 mt-4 flex flex-col items-center">
-            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-2xl mb-3">
-              ♥
+            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-3">
+              <Heart className="w-7 h-7" />
             </div>
             <h3 className="text-[16px] font-bold text-taca-text-main mb-1">
               {search ? 'Không tìm thấy sản phẩm nào' : 'Chưa có sản phẩm nào trong danh sách yêu thích'}

@@ -1,4 +1,13 @@
 import { NavLink, useNavigate } from 'react-router-dom';
+import {
+  User,
+  Package,
+  Star,
+  Ticket,
+  Heart,
+  Store,
+  LogOut,
+} from 'lucide-react';
 import { useAuth } from '../../auth/hooks/useAuth';
 
 const AccountSidebar = () => {
@@ -11,13 +20,12 @@ const AccountSidebar = () => {
   };
 
   const navItems = [
-    { name: 'Tổng quan', path: '/account/overview', icon: '⌂' },
-    { name: 'Hồ sơ & địa chỉ', path: '/account/profile', icon: '♙' },
-    { name: 'Đơn mua', path: '/account/orders', icon: '▣' },
-    { name: 'Đánh giá', path: '/account/reviews', icon: '★' },
-    { name: 'Voucher của tôi', path: '/account/vouchers', icon: 'V' },
-    { name: 'Sản phẩm yêu thích', path: '/account/wishlist', icon: '♥' },
-    { name: 'Cửa hàng theo dõi', path: '/account/following', icon: '🏪' },
+    { name: 'Hồ sơ & địa chỉ', path: '/account/profile', icon: User },
+    { name: 'Đơn mua', path: '/account/orders', icon: Package },
+    { name: 'Đánh giá', path: '/account/reviews', icon: Star },
+    { name: 'Voucher của tôi', path: '/account/vouchers', icon: Ticket },
+    { name: 'Sản phẩm yêu thích', path: '/account/wishlist', icon: Heart },
+    { name: 'Cửa hàng theo dõi', path: '/account/following', icon: Store },
   ];
 
   return (
@@ -34,64 +42,48 @@ const AccountSidebar = () => {
 
       {/* Navigation */}
       <nav className="flex flex-col">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) =>
-              `relative flex items-center gap-4 px-6 py-3 text-[14px] font-medium transition-colors ${
-                isActive
-                  ? 'bg-gray-50 text-taca-primary font-bold'
-                  : 'text-taca-text-main hover:bg-gray-50 hover:text-taca-primary'
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                {/* Active Indicator */}
-                {isActive && (
-                  <div className="absolute left-0 top-0 bottom-0 w-[6px] rounded-r-sm bg-[#00a69c]" />
-                )}
-                {/* Icon */}
-                <div className={`w-8 h-8 rounded flex items-center justify-center text-lg ${isActive ? 'bg-[#00a69c] text-white' : 'text-gray-400'}`}>
-                  {item.icon}
-                </div>
-                <span>{item.name}</span>
-              </>
-            )}
-          </NavLink>
-        ))}
+        {navItems.map((item) => {
+          const IconComponent = item.icon;
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) =>
+                `relative flex items-center gap-4 px-6 py-3 text-[14px] font-medium transition-colors ${
+                  isActive
+                    ? 'bg-gray-50 text-taca-primary font-bold'
+                    : 'text-taca-text-main hover:bg-gray-50 hover:text-taca-primary'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {/* Active Indicator */}
+                  {isActive && (
+                    <div className="absolute left-0 top-0 bottom-0 w-[6px] rounded-r-sm bg-[#00a69c]" />
+                  )}
+                  {/* Icon */}
+                  <div className={`w-8 h-8 rounded flex items-center justify-center ${isActive ? 'bg-[#00a69c] text-white' : 'text-gray-400'}`}>
+                    <IconComponent className="w-4 h-4" />
+                  </div>
+                  <span>{item.name}</span>
+                </>
+              )}
+            </NavLink>
+          );
+        })}
 
-        <div className="pt-2 border-t border-slate-100">
-          <NavLink
-            to="/account/seller-register"
-            className={({ isActive }) =>
-              `flex items-center gap-3.5 px-6 py-3 text-[13px] font-bold rounded-xl transition-colors mx-2 no-underline ${
-                isActive
-                  ? 'bg-indigo-50 text-[#4F46E5]'
-                  : 'text-[#4F46E5] hover:bg-indigo-50/60'
-              }`
-            }
+        <div className="pt-2 mt-1 border-t border-slate-100">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-4 px-6 py-3 text-[14px] font-medium text-taca-text-main hover:bg-gray-50 hover:text-rose-600 text-left transition-colors cursor-pointer group"
           >
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-[#4F46E5] flex items-center justify-center text-base shrink-0">
-              🏪
+            <div className="w-8 h-8 rounded flex items-center justify-center text-gray-400 group-hover:text-rose-600 transition-colors">
+              <LogOut className="w-4 h-4" />
             </div>
-            <div>
-              <div className="leading-tight">Đăng ký Bán hàng</div>
-              <div className="text-[11px] text-slate-400 font-normal">Kênh Người Bán & Xét duyệt ↗</div>
-            </div>
-          </NavLink>
+            <span>Đăng xuất</span>
+          </button>
         </div>
-
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-4 px-6 py-3 text-[14px] font-medium text-taca-text-main hover:bg-gray-50 hover:text-taca-primary text-left transition-colors mt-1"
-        >
-          <div className="w-8 h-8 rounded flex items-center justify-center text-lg text-gray-400">
-            ↗
-          </div>
-          <span>Đăng xuất</span>
-        </button>
       </nav>
     </div>
   );

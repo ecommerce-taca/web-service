@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Star } from 'lucide-react';
 import { reviewApi } from '../services/review.api';
 import { Button } from '@taca/ui-components';
 import ReviewFormModal from '../components/ReviewFormModal';
@@ -78,9 +79,16 @@ const ReviewsPage = () => {
                     
                     {activeTab === 'completed' && (
                       <div className="mt-2 bg-gray-50 p-4 rounded-lg">
-                        <div className="flex gap-1 mb-2">
+                        <div className="flex items-center gap-1 mb-2">
                           {Array.from({ length: 5 }).map((_, i) => (
-                            <span key={i} className={`text-[16px] ${i < review.rating ? 'text-[#ff9d00]' : 'text-gray-300'}`}>★</span>
+                            <Star
+                              key={i}
+                              className={`w-4 h-4 ${
+                                i < review.rating
+                                  ? 'fill-amber-400 text-amber-400'
+                                  : 'text-gray-300'
+                              }`}
+                            />
                           ))}
                         </div>
                         <p className="text-[13px] text-taca-text-main m-0 leading-relaxed mb-2">{review.content}</p>

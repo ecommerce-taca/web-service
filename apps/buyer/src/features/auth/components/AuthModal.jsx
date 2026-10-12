@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Modal, Input, Button } from '@taca/ui-components';
+import { ExternalLink } from 'lucide-react';
 import { authApi, isMockMode } from '../services/auth.api';
 import { useAuth } from '../hooks/useAuth';
 import { getAuthErrorMessage } from '../utils/authError';
@@ -397,7 +398,8 @@ const AuthModal = () => {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-[13px] font-bold text-taca-primary hover:underline"
                   >
-                    🔗 Bấm vào đây để mở link xác nhận email thử nghiệm &rarr;
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Bấm vào đây để mở link xác nhận email thử nghiệm &rarr;</span>
                   </a>
                 </div>
               )

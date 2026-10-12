@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useParams } from 'react-router-dom';
+import { Star, Check, Plus } from 'lucide-react';
 import { Button, Badge } from '@taca/ui-components';
 import { shopApi } from '../services/shop.api';
 
@@ -160,7 +161,11 @@ const ShopHero = ({ shopId, onShopLoaded }) => {
 
           <div className="text-[13px] text-taca-text-main font-medium flex flex-wrap items-center gap-3 sm:gap-4 mt-0.5">
             <span className="flex items-center gap-1">
-              <span className="text-amber-500 font-bold">★ {rating}</span> Đánh giá
+              <span className="text-amber-500 font-bold flex items-center gap-0.5">
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                <span>{rating}</span>
+              </span>
+              <span>Đánh giá</span>
             </span>
             <span className="text-taca-border">|</span>
             <span>{responseRate} phản hồi</span>
@@ -191,11 +196,11 @@ const ShopHero = ({ shopId, onShopLoaded }) => {
             </span>
           ) : isFollowing ? (
             <span className="flex items-center gap-1.5">
-              <span>✓</span> Đang theo dõi
+              <Check className="w-3.5 h-3.5 text-emerald-600" /> Đang theo dõi
             </span>
           ) : (
             <span className="flex items-center gap-1.5">
-              <span>+</span> Theo dõi
+              <Plus className="w-3.5 h-3.5" /> Theo dõi
             </span>
           )}
         </Button>
