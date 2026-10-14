@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { Check, FileText, Trash2 } from 'lucide-react';
 
 /**
  * Step 2: Hồ sơ pháp lý & Định danh người bán (KYC)
@@ -48,8 +49,13 @@ export default function KycStep({
         <div className={`p-4 rounded-xl border transition-all ${hasBusinessReg ? 'bg-emerald-50/70 border-emerald-300' : 'bg-amber-50/60 border-amber-200'}`}>
           <div className="flex items-center justify-between mb-1.5">
             <span className="font-bold text-[12px] text-slate-800">1. Giấy phép ĐKKD *</span>
-            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded ${hasBusinessReg ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
-              {hasBusinessReg ? '✓ ĐÃ TẢI' : 'BẮT BUỘC'}
+            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded flex items-center gap-1 ${hasBusinessReg ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+              {hasBusinessReg ? (
+                <>
+                  <Check className="w-3 h-3" aria-hidden="true" />
+                  <span>ĐÃ TẢI</span>
+                </>
+              ) : 'BẮT BUỘC'}
             </span>
           </div>
           <p className="text-[11px] text-slate-500">Giấy ĐKKD hoặc Giấy chứng nhận hộ kinh doanh (Backend API hỗ trợ)</p>
@@ -58,8 +64,13 @@ export default function KycStep({
         <div className={`p-4 rounded-xl border transition-all ${hasIdFront ? 'bg-emerald-50/70 border-emerald-300' : 'bg-slate-50 border-slate-200'}`}>
           <div className="flex items-center justify-between mb-1.5">
             <span className="font-bold text-[12px] text-slate-800">2. CCCD Mặt trước</span>
-            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded ${hasIdFront ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
-              {hasIdFront ? '✓ ĐÃ TẢI' : 'TÙY CHỌN'}
+            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded flex items-center gap-1 ${hasIdFront ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
+              {hasIdFront ? (
+                <>
+                  <Check className="w-3 h-3" aria-hidden="true" />
+                  <span>ĐÃ TẢI</span>
+                </>
+              ) : 'TÙY CHỌN'}
             </span>
           </div>
           <p className="text-[11px] text-slate-500">Ảnh chụp rõ mặt trước CCCD người đại diện</p>
@@ -68,8 +79,13 @@ export default function KycStep({
         <div className={`p-4 rounded-xl border transition-all ${hasIdBack ? 'bg-emerald-50/70 border-emerald-300' : 'bg-slate-50 border-slate-200'}`}>
           <div className="flex items-center justify-between mb-1.5">
             <span className="font-bold text-[12px] text-slate-800">3. CCCD Mặt sau</span>
-            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded ${hasIdBack ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
-              {hasIdBack ? '✓ ĐÃ TẢI' : 'TÙY CHỌN'}
+            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded flex items-center gap-1 ${hasIdBack ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
+              {hasIdBack ? (
+                <>
+                  <Check className="w-3 h-3" aria-hidden="true" />
+                  <span>ĐÃ TẢI</span>
+                </>
+              ) : 'TÙY CHỌN'}
             </span>
           </div>
           <p className="text-[11px] text-slate-500">Ảnh chụp rõ mặt sau có chip CCCD</p>
@@ -121,8 +137,13 @@ export default function KycStep({
           <h3 className="font-bold text-slate-800 text-[14px]">
             Danh sách tài liệu đã tải ({kycDocs.length} tài liệu)
           </h3>
-          <span className={`text-[12px] font-bold ${isKycComplete ? 'text-emerald-700' : 'text-amber-700'}`}>
-            {isKycComplete ? '✓ Đã có tài liệu hợp lệ theo §2.25' : 'Cần tải lên Giấy phép ĐKKD'}
+          <span className={`text-[12px] font-bold inline-flex items-center gap-1 ${isKycComplete ? 'text-emerald-700' : 'text-amber-700'}`}>
+            {isKycComplete ? (
+              <>
+                <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Đã có tài liệu hợp lệ theo §2.25</span>
+              </>
+            ) : 'Cần tải lên Giấy phép ĐKKD'}
           </span>
         </div>
 
@@ -145,7 +166,7 @@ export default function KycStep({
               return (
                 <div key={doc.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">📄</span>
+                    <FileText className="w-6 h-6 text-slate-500 shrink-0" aria-hidden="true" />
                     <div>
                       <p className="font-bold text-slate-800 text-[13px] flex items-center gap-2">
                         <span>{doc.original_file_name || doc.file_name}</span>
@@ -167,10 +188,11 @@ export default function KycStep({
                       type="button"
                       disabled={saving}
                       onClick={() => onDeleteKycDoc(doc.id)}
-                      className="px-2.5 py-1 text-[11px] font-semibold text-rose-600 hover:text-rose-800 hover:bg-rose-50 border border-rose-200 rounded-lg transition-colors cursor-pointer"
+                      className="px-2.5 py-1 text-[11px] font-semibold text-rose-600 hover:text-rose-800 hover:bg-rose-50 border border-rose-200 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1"
                       title="Xóa tài liệu nếu tải nhầm"
                     >
-                      ✕ Xóa
+                      <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>Xóa</span>
                     </button>
                   </div>
                 </div>

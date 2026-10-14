@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { Check } from 'lucide-react';
 import { VIETNAM_BANK_CATALOG } from '../../../../services/seller-shop.api';
 
 /**
@@ -28,8 +29,9 @@ export default function PaymentTab({
             <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
               Tài khoản liên kết hiện tại
             </span>
-            <span className="text-xs font-bold px-2 py-0.5 bg-white text-emerald-700 border border-emerald-200 rounded">
-              ✓ Đã xác thực KYC
+            <span className="text-xs font-bold px-2 py-0.5 bg-white text-emerald-700 border border-emerald-200 rounded inline-flex items-center gap-1">
+              <Check className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Đã xác thực KYC</span>
             </span>
           </div>
           <p className="text-[15px] font-extrabold text-slate-900">{bankSummary.bank_name}</p>

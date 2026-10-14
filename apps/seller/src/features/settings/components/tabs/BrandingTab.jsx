@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { Check, ExternalLink, Store } from 'lucide-react';
 
 /**
  * Tab 2: Nhận diện thương hiệu & Giao diện cửa hàng
@@ -21,15 +22,16 @@ export default function BrandingTab({ shopId, shopName, slug, logoUrl, isShell }
             {logoUrl ? (
               <img src={logoUrl} alt={shopName} className="w-full h-full object-cover" />
             ) : (
-              <span className="text-3xl">🍎</span>
+              <Store className="w-8 h-8 text-slate-400" aria-hidden="true" />
             )}
           </div>
           <div>
             <h3 className="text-lg font-bold text-slate-900">{shopName}</h3>
             <p className="text-xs text-slate-500 mt-0.5">Slug: /{slug || 'taca-apple-store'}</p>
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-xs font-semibold px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded">
-                ✓ Chính hãng Official
+              <span className="text-xs font-semibold px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded inline-flex items-center gap-1">
+                <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Chính hãng Official</span>
               </span>
               <span className="text-xs text-slate-400">· 1.284 người theo dõi</span>
             </div>
@@ -42,9 +44,10 @@ export default function BrandingTab({ shopId, shopName, slug, logoUrl, isShell }
             href={isShell ? `/shop/${shopId || 'shop_apple_001'}` : `http://localhost:5173/shop/${shopId || 'shop_apple_001'}`}
             target="_blank"
             rel="noreferrer"
-            className="px-4 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+            className="px-4 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 rounded-lg text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5"
           >
-            Mở trang Người Mua ↗
+            <span>Mở trang Người Mua</span>
+            <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
           </a>
         </div>
       </div>

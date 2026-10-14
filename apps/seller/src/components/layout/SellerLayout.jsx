@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { Check, Clock, Lock, RefreshCw, AlertTriangle, XCircle, FileEdit, Store, ExternalLink } from 'lucide-react';
 import SellerHeader from './SellerHeader';
 import SellerNav from './SellerNav';
 import { getShopProfile } from '../../services/seller-shop.api';
@@ -174,15 +175,24 @@ export default function SellerLayout() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg mx-auto mb-8 text-left">
                   <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
                     <span className="font-bold block">1. Đăng ký tại Buyer</span>
-                    <span className="text-[11px] text-emerald-700">✓ Đã nộp thành công</span>
+                    <span className="text-[11px] text-emerald-700 flex items-center gap-1">
+                      <Check className="w-3 h-3 inline" aria-hidden="true" />
+                      <span>Đã nộp thành công</span>
+                    </span>
                   </div>
                   <div className="p-3 rounded-lg bg-amber-50 border border-amber-300 text-amber-800 text-xs ring-2 ring-amber-400/30">
                     <span className="font-bold block">2. Admin phê duyệt</span>
-                    <span className="text-[11px] text-amber-700">⏳ Đang xử lý hồ sơ</span>
+                    <span className="text-[11px] text-amber-700 flex items-center gap-1">
+                      <Clock className="w-3 h-3 inline" aria-hidden="true" />
+                      <span>Đang xử lý hồ sơ</span>
+                    </span>
                   </div>
                   <div className="p-3 rounded-lg bg-slate-100 border border-slate-200 text-slate-500 text-xs">
                     <span className="font-bold block">3. Kênh Người Bán</span>
-                    <span className="text-[11px] text-slate-400">🔒 Mở sau khi duyệt</span>
+                    <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                      <Lock className="w-3 h-3 inline" aria-hidden="true" />
+                      <span>Mở sau khi duyệt</span>
+                    </span>
                   </div>
                 </div>
 
@@ -198,18 +208,23 @@ export default function SellerLayout() {
                     onClick={fetchShopData}
                     className="w-full sm:w-auto px-6 py-3 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
                   >
-                    <span>⟳ Kiểm tra lại trạng thái</span>
+                    <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Kiểm tra lại trạng thái</span>
                   </button>
                 </div>
               </>
             ) : kycStatus === 'REJECTED' || kycStatus === 'NEEDS_INFO' ? (
               <>
-                <div className={`w-20 h-20 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-6 shadow-xs ${
+                <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xs ${
                   kycStatus === 'NEEDS_INFO'
                     ? 'bg-amber-50 border border-amber-200 text-amber-600'
                     : 'bg-rose-50 border border-rose-200 text-rose-600'
                 }`}>
-                  {kycStatus === 'NEEDS_INFO' ? '⚠️' : '✕'}
+                  {kycStatus === 'NEEDS_INFO' ? (
+                    <AlertTriangle className="w-10 h-10 text-amber-600" aria-hidden="true" />
+                  ) : (
+                    <XCircle className="w-10 h-10 text-rose-600" aria-hidden="true" />
+                  )}
                 </div>
                 <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 ${
                   kycStatus === 'NEEDS_INFO'
@@ -252,8 +267,8 @@ export default function SellerLayout() {
               </>
             ) : kycStatus === 'DRAFT' ? (
               <>
-                <div className="w-20 h-20 bg-indigo-50 border border-indigo-200 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-6 text-[#4F46E5] shadow-xs">
-                  📝
+                <div className="w-20 h-20 bg-indigo-50 border border-indigo-200 rounded-2xl flex items-center justify-center mx-auto mb-6 text-[#4F46E5] shadow-xs">
+                  <FileEdit className="w-10 h-10 text-[#4F46E5]" aria-hidden="true" />
                 </div>
                 <div className="inline-block px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 text-xs font-bold uppercase tracking-wider mb-3">
                   Hoàn thiện hồ sơ (Onboarding)
@@ -281,8 +296,8 @@ export default function SellerLayout() {
               </>
             ) : (
               <>
-                <div className="w-20 h-20 bg-indigo-50 border border-indigo-200 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-6 text-[#4F46E5] shadow-xs">
-                  🏪
+                <div className="w-20 h-20 bg-indigo-50 border border-indigo-200 rounded-2xl flex items-center justify-center mx-auto mb-6 text-[#4F46E5] shadow-xs">
+                  <Store className="w-10 h-10 text-[#4F46E5]" aria-hidden="true" />
                 </div>
                 <div className="inline-block px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 text-xs font-bold uppercase tracking-wider mb-3">
                   Chưa đăng ký bán hàng
@@ -298,7 +313,8 @@ export default function SellerLayout() {
                     href={buyerRegisterUrl}
                     className="w-full sm:w-auto px-6 py-3 bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-bold rounded-xl transition-all shadow-xs no-underline flex items-center justify-center gap-2"
                   >
-                    <span>Đến trang Đăng ký Người Bán tại Buyer ↗</span>
+                    <span>Đến trang Đăng ký Người Bán tại Buyer</span>
+                    <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                   </a>
                   <a
                     href={buyerHomeUrl}

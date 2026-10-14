@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
+import { X, MessageSquare, Package, Check, CheckCircle2 } from 'lucide-react';
 import StatusBadge from '../../../components/common/StatusBadge';
 
 export default function OrderDetailModal({ order, isOpen, onClose, onPrepare }) {
@@ -36,9 +37,10 @@ export default function OrderDetailModal({ order, isOpen, onClose, onPrepare }) 
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors text-lg"
+            aria-label="Đóng"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
           >
-            ×
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -53,9 +55,10 @@ export default function OrderDetailModal({ order, isOpen, onClose, onPrepare }) 
               <button
                 type="button"
                 onClick={() => alert(`Mở khung chat với ${order.customer || 'Nguyễn Minh Anh'}`)}
-                className="text-[11px] font-semibold text-[#4F46E5] hover:underline flex items-center gap-1"
+                className="text-[11px] font-semibold text-[#4F46E5] hover:underline flex items-center gap-1.5"
               >
-                💬 Chat với buyer
+                <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Chat với buyer</span>
               </button>
             </div>
             <p className="text-[13px] font-semibold text-slate-900 mt-1.5">
@@ -70,7 +73,7 @@ export default function OrderDetailModal({ order, isOpen, onClose, onPrepare }) 
             </span>
             <div className="flex items-start gap-4 p-4 rounded-xl border border-slate-200 bg-white">
               <div className="w-16 h-16 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
-                <span className="text-2xl">📱</span>
+                <Package className="w-7 h-7 text-slate-400" aria-hidden="true" />
               </div>
               <div className="flex-1">
                 <div className="flex items-start justify-between">
@@ -102,7 +105,14 @@ export default function OrderDetailModal({ order, isOpen, onClose, onPrepare }) 
                 onClick={handleCopy}
                 className="text-[11px] font-semibold text-[#4F46E5] hover:underline"
               >
-                {copied ? '✓ Đã sao chép' : 'Sao chép địa chỉ'}
+                {copied ? (
+                  <span className="inline-flex items-center gap-1">
+                    <Check className="w-3 h-3 text-emerald-600" aria-hidden="true" />
+                    <span>Đã sao chép</span>
+                  </span>
+                ) : (
+                  'Sao chép địa chỉ'
+                )}
               </button>
             </div>
             <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-1">
@@ -149,8 +159,9 @@ export default function OrderDetailModal({ order, isOpen, onClose, onPrepare }) 
           </div>
 
           {actionDone && (
-            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 font-semibold text-[13px] text-center">
-              ✓ {actionDone}
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 font-semibold text-[13px] text-center flex items-center justify-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" aria-hidden="true" />
+              <span>{actionDone}</span>
             </div>
           )}
         </div>

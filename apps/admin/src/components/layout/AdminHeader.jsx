@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
+import { Menu, Search, AlertTriangle, Bell, ChevronDown } from 'lucide-react';
 
 export default function AdminHeader({
   title = 'Shops / KYC',
@@ -21,7 +22,7 @@ export default function AdminHeader({
             className="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer flex items-center justify-center shrink-0"
             aria-label="Toggle navigation menu"
           >
-            <span className="text-lg leading-none">☰</span>
+            <Menu className="w-5 h-5 text-slate-700" aria-hidden="true" />
           </button>
         )}
         <div className="min-w-0">
@@ -38,8 +39,8 @@ export default function AdminHeader({
       <div className="flex items-center gap-2 sm:gap-4 shrink-0">
         {/* Search Input */}
         <div className="relative w-36 sm:w-64">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[13px]">
-            ⌕
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+            <Search className="w-3.5 h-3.5" aria-hidden="true" />
           </span>
           <input
             id="admin-global-search"
@@ -59,7 +60,7 @@ export default function AdminHeader({
           onClick={() => alert('Quy tắc rủi ro hệ thống: Tự động gắn nhãn HIGH khi trùng IP, trùng thiết bị hoặc nghi vấn sao kê ngân hàng.')}
           className="hidden md:flex px-3.5 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-[12px] transition-colors cursor-pointer items-center gap-1.5 shadow-2xs"
         >
-          <span className="text-amber-500">⚠</span>
+          <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" aria-hidden="true" />
           <span>Quy tắc rủi ro</span>
         </button>
 
@@ -70,11 +71,14 @@ export default function AdminHeader({
             onClick={() => setShowNotifications(!showNotifications)}
             className="px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-[12px] flex items-center gap-2 cursor-pointer"
           >
-            <span>🔔</span>
+            <Bell className="w-4 h-4 text-slate-600" aria-hidden="true" />
             <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-black">
               12
             </span>
-            <span className="text-slate-400 text-[10px]">Trần Hoàng ▾</span>
+            <span className="text-slate-600 text-[11px] font-semibold flex items-center gap-1">
+              <span>Trần Hoàng</span>
+              <ChevronDown className="w-3 h-3 text-slate-400" aria-hidden="true" />
+            </span>
           </button>
 
           {showNotifications && (

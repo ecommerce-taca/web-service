@@ -1,5 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import {
+  CheckCircle2,
+  AlertTriangle,
+  ClipboardList,
+  X,
+  Check,
+  Download,
+  ShieldCheck,
+  ClipboardCheck,
+  ExternalLink,
+} from 'lucide-react';
 import MetricCard from '../../../components/common/MetricCard';
 import StatusBadge from '../../../components/common/StatusBadge';
 import OrderDetailModal from '../../orders/components/OrderDetailModal';
@@ -61,8 +72,14 @@ export default function DashboardPage() {
           }`}
         >
           <div className="flex gap-3">
-            <span className="text-xl">
-              {notification.type === 'success' ? '🎉' : notification.type === 'error' ? '⚠️' : '📋'}
+            <span className="shrink-0 mt-0.5">
+              {notification.type === 'success' ? (
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" aria-hidden="true" />
+              ) : notification.type === 'error' ? (
+                <AlertTriangle className="w-5 h-5 text-rose-600" aria-hidden="true" />
+              ) : (
+                <ClipboardList className="w-5 h-5 text-amber-600" aria-hidden="true" />
+              )}
             </span>
             <div>
               <h4 className="font-bold text-[14px] m-0">{notification.title}</h4>
@@ -74,7 +91,7 @@ export default function DashboardPage() {
             className="text-slate-400 hover:text-slate-600 font-bold text-sm cursor-pointer p-1"
             aria-label="Đóng thông báo"
           >
-            ✕
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       )}
@@ -90,8 +107,9 @@ export default function DashboardPage() {
         </div>
         <div className="flex items-center gap-3">
           {reportDownloaded && (
-            <span className="text-[12px] text-emerald-600 font-semibold bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 animate-in fade-in">
-              ✓ Đã tải báo cáo hôm nay (.csv)
+            <span className="text-[12px] text-emerald-600 font-semibold bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 animate-in fade-in flex items-center gap-1.5">
+              <Check className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Đã tải báo cáo hôm nay (.csv)</span>
             </span>
           )}
           <button
@@ -99,7 +117,7 @@ export default function DashboardPage() {
             onClick={handleDownloadReport}
             className="px-4 py-2 bg-white border border-slate-300 hover:border-slate-400 text-slate-800 rounded-lg font-semibold text-[13px] shadow-2xs hover:bg-slate-50 transition-colors flex items-center gap-2"
           >
-            <span>📥</span>
+            <Download className="w-4 h-4 text-slate-600" aria-hidden="true" />
             <span>Tải báo cáo</span>
           </button>
         </div>
@@ -110,7 +128,11 @@ export default function DashboardPage() {
         <div className="bg-gradient-to-r from-indigo-50/90 to-blue-50/60 rounded-xl border border-indigo-100 p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
             <div className="w-10 h-10 rounded-xl bg-white border border-indigo-100 flex items-center justify-center text-lg shadow-2xs shrink-0">
-              {onboardingProgress.kyc_status === 'APPROVED' ? '🛡️' : '📋'}
+              {onboardingProgress.kyc_status === 'APPROVED' ? (
+                <ShieldCheck className="w-5 h-5 text-indigo-600" aria-hidden="true" />
+              ) : (
+                <ClipboardCheck className="w-5 h-5 text-indigo-600" aria-hidden="true" />
+              )}
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -148,13 +170,20 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2 flex-wrap">
             <Link
               to={`${basePath}/onboarding`}
-              className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-[#4F46E5] rounded-lg font-bold text-[12px] shadow-2xs whitespace-nowrap self-start sm:self-auto transition-colors no-underline"
+              className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-[#4F46E5] rounded-lg font-bold text-[12px] shadow-2xs whitespace-nowrap self-start sm:self-auto transition-colors no-underline inline-flex items-center gap-1"
             >
-              {onboardingProgress.kyc_status === 'APPROVED'
-                ? 'Xem hồ sơ & KYC ↗'
-                : onboardingProgress.kyc_status === 'PENDING'
-                ? 'Xem tiến độ KYC ↗'
-                : 'Tiếp tục hoàn thiện hồ sơ →'}
+              <span>
+                {onboardingProgress.kyc_status === 'APPROVED'
+                  ? 'Xem hồ sơ & KYC'
+                  : onboardingProgress.kyc_status === 'PENDING'
+                  ? 'Xem tiến độ KYC'
+                  : 'Tiếp tục hoàn thiện hồ sơ'}
+              </span>
+              {onboardingProgress.kyc_status === 'APPROVED' || onboardingProgress.kyc_status === 'PENDING' ? (
+                <ExternalLink className="w-3 h-3" aria-hidden="true" />
+              ) : (
+                <span aria-hidden="true">→</span>
+              )}
             </Link>
           </div>
         </div>

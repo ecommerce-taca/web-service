@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, Fragment } from 'react';
+import { FileSpreadsheet, Download, Lock, Zap, AlertTriangle } from 'lucide-react';
 import MetricCard from '../../../components/common/MetricCard';
 import StatusBadge from '../../../components/common/StatusBadge';
 import ProductEditorModal from '../components/ProductEditorModal';
@@ -269,7 +270,7 @@ export default function ProductsPage() {
             onClick={() => setIsImportModalOpen(true)}
             className="px-3.5 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-[12px] font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            <span>📄</span>
+            <FileSpreadsheet className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />
             <span>Nhập Excel</span>
           </button>
           <button
@@ -277,7 +278,7 @@ export default function ProductsPage() {
             onClick={handleExportExcel}
             className="px-3.5 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-[12px] font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            <span>📊</span>
+            <Download className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />
             <span>Xuất Excel</span>
           </button>
         </div>
@@ -291,7 +292,9 @@ export default function ProductsPage() {
           </div>
         ) : error ? (
           <div className="py-12 px-6 text-center space-y-3">
-            <div className="text-3xl">🔒</div>
+            <div className="flex justify-center">
+              <Lock className="w-8 h-8 text-slate-400" aria-hidden="true" />
+            </div>
             <p className="text-rose-600 font-semibold text-[14px] max-w-lg mx-auto">
               {error}
             </p>
@@ -310,9 +313,10 @@ export default function ProductsPage() {
                     quickDemoLogin();
                     loadProducts();
                   }}
-                  className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg font-bold text-xs transition-colors cursor-pointer"
+                  className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg font-bold text-xs transition-colors cursor-pointer inline-flex items-center gap-1.5"
                 >
-                  ⚡ Đăng nhập nhanh Demo
+                  <Zap className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+                  <span>Đăng nhập nhanh Demo</span>
                 </button>
               </div>
             )}
@@ -353,8 +357,9 @@ export default function ProductsPage() {
                               {spu.spu_code || spu.code || `SPU-${spu.id}`}
                             </div>
                             {spu.status === 'BLOCKED' && spu.block_reason && (
-                              <div className="text-[11px] text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded mt-1 font-medium inline-block">
-                                ⚠️ Vi phạm: {spu.block_reason}
+                              <div className="text-[11px] text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded mt-1 font-medium inline-flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3 text-rose-600 shrink-0" aria-hidden="true" />
+                                <span>Vi phạm: {spu.block_reason}</span>
                               </div>
                             )}
                           </div>

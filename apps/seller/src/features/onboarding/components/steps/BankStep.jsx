@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { Check, AlertTriangle, ClipboardList } from 'lucide-react';
 import { VIETNAM_BANK_CATALOG } from '../../../../services/seller-shop.api';
 
 /**
@@ -40,8 +41,9 @@ export default function BankStep({
                 {bankSummary.account_name} · {bankSummary.account_number_masked}
               </p>
             </div>
-            <span className="text-xs font-bold px-2.5 py-1 bg-white text-emerald-700 border border-emerald-200 rounded-lg">
-              ✓ Đã xác thực
+            <span className="text-xs font-bold px-2.5 py-1 bg-white text-emerald-700 border border-emerald-200 rounded-lg inline-flex items-center gap-1">
+              <Check className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Đã xác thực</span>
             </span>
           </div>
         )}
@@ -122,7 +124,7 @@ export default function BankStep({
       {/* KHỐI TỔNG KẾT & NỘP XÉT DUYỆT ADMIN CHÍNH THỨC */}
       <div className="p-6 bg-indigo-50/70 border-2 border-indigo-200 rounded-2xl space-y-4">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">📋</span>
+          <ClipboardList className="w-6 h-6 text-indigo-600 shrink-0" aria-hidden="true" />
           <div>
             <h3 className="text-[15px] font-extrabold text-slate-900 uppercase tracking-tight">
               TỔNG KẾT HỒ SƠ & GỬI THẨM ĐỊNH (FINAL SUBMISSION)
@@ -142,8 +144,18 @@ export default function BankStep({
 
           <div className="bg-white p-3.5 rounded-xl border border-indigo-100">
             <span className="font-bold text-slate-500 uppercase text-[10px] block mb-1">2. Giấy tờ KYC</span>
-            <p className={`font-bold ${isKycComplete ? 'text-emerald-700' : 'text-amber-700'}`}>
-              {isKycComplete ? '✓ Đã có tài liệu hợp lệ (§2.25)' : '⚠️ Chưa có tài liệu'}
+            <p className={`font-bold inline-flex items-center gap-1 ${isKycComplete ? 'text-emerald-700' : 'text-amber-700'}`}>
+              {isKycComplete ? (
+                <>
+                  <Check className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                  <span>Đã có tài liệu hợp lệ (§2.25)</span>
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                  <span>Chưa có tài liệu</span>
+                </>
+              )}
             </p>
             <p className="text-slate-500">Giấy phép ĐKKD / Hộ kinh doanh</p>
           </div>

@@ -1,5 +1,23 @@
 import { Link, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import {
+  LayoutDashboard,
+  Megaphone,
+  Layers,
+  Store,
+  Package,
+  Receipt,
+  WalletCards,
+  ShoppingCart,
+  Ticket,
+  Users,
+  ScrollText,
+  Settings,
+  X,
+  ShoppingBag,
+  ExternalLink,
+  KeyRound,
+} from 'lucide-react';
 
 export default function AdminSidebar({ user, onSignOut, onOpen2FA, onClose }) {
   const location = useLocation();
@@ -8,18 +26,18 @@ export default function AdminSidebar({ user, onSignOut, onOpen2FA, onClose }) {
   const basePath = isShell ? '/admin' : '';
 
   const navItems = [
-    { label: 'Dashboard', path: `${basePath}/dashboard`, icon: '▦' },
-    { label: 'Campaigns', path: `${basePath}/campaigns`, icon: '▦' },
-    { label: 'Categories', path: `${basePath}/categories`, icon: '▦' },
-    { label: 'Shops / KYC', path: `${basePath}/shops/kyc`, icon: '▦', exact: true },
-    { label: 'Products / SKU', path: `${basePath}/products`, icon: '▦' },
-    { label: 'Fees / Taxes', path: `${basePath}/fees`, icon: '▦' },
-    { label: 'Finance', path: `${basePath}/finance`, icon: '▦' },
-    { label: 'Orders / Disputes', path: `${basePath}/orders`, icon: '▦' },
-    { label: 'Vouchers', path: `${basePath}/vouchers`, icon: '▦' },
-    { label: 'Users / Roles', path: `${basePath}/users/roles`, icon: '▦' },
-    { label: 'Audit Logs', path: `${basePath}/audit-logs`, icon: '▦' },
-    { label: 'Settings', path: `${basePath}/settings`, icon: '▦' },
+    { label: 'Dashboard', path: `${basePath}/dashboard`, icon: LayoutDashboard },
+    { label: 'Campaigns', path: `${basePath}/campaigns`, icon: Megaphone },
+    { label: 'Categories', path: `${basePath}/categories`, icon: Layers },
+    { label: 'Shops / KYC', path: `${basePath}/shops/kyc`, icon: Store, exact: true },
+    { label: 'Products / SKU', path: `${basePath}/products`, icon: Package },
+    { label: 'Fees / Taxes', path: `${basePath}/fees`, icon: Receipt },
+    { label: 'Finance', path: `${basePath}/finance`, icon: WalletCards },
+    { label: 'Orders / Disputes', path: `${basePath}/orders`, icon: ShoppingCart },
+    { label: 'Vouchers', path: `${basePath}/vouchers`, icon: Ticket },
+    { label: 'Users / Roles', path: `${basePath}/users/roles`, icon: Users },
+    { label: 'Audit Logs', path: `${basePath}/audit-logs`, icon: ScrollText },
+    { label: 'Settings', path: `${basePath}/settings`, icon: Settings },
   ];
 
   const isItemActive = (itemPath) => {
@@ -44,10 +62,10 @@ export default function AdminSidebar({ user, onSignOut, onOpen2FA, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="lg:hidden text-slate-400 hover:text-white p-1 text-xl font-bold cursor-pointer"
+            className="lg:hidden text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
             aria-label="Close Sidebar"
           >
-            ×
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         )}
       </div>
@@ -61,6 +79,7 @@ export default function AdminSidebar({ user, onSignOut, onOpen2FA, onClose }) {
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const active = isItemActive(item.path);
+          const IconComponent = item.icon;
           return (
             <Link
               key={item.label}
@@ -72,9 +91,10 @@ export default function AdminSidebar({ user, onSignOut, onOpen2FA, onClose }) {
                   : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
               }`}
             >
-              <span className={`text-[15px] opacity-70 ${active ? 'opacity-100' : ''}`}>
-                {item.icon}
-              </span>
+              <IconComponent
+                className={`w-4 h-4 shrink-0 ${active ? 'opacity-100 text-white' : 'opacity-70 text-slate-400'}`}
+                aria-hidden="true"
+              />
               <span>{item.label}</span>
               {item.label === 'Shops / KYC' && (
                 <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
@@ -96,20 +116,20 @@ export default function AdminSidebar({ user, onSignOut, onOpen2FA, onClose }) {
           className="flex items-center justify-between text-slate-400 hover:text-white transition-colors py-1 px-1 rounded-md hover:bg-slate-800/60 no-underline"
         >
           <span className="flex items-center gap-1.5">
-            <span>🛍</span>
+            <ShoppingBag className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
             <span>Kênh Người Mua</span>
           </span>
-          <span className="text-[10px] opacity-60">↗</span>
+          <ExternalLink className="w-3 h-3 opacity-60" aria-hidden="true" />
         </a>
         <a
           href="/seller"
           className="flex items-center justify-between text-slate-400 hover:text-white transition-colors py-1 px-1 rounded-md hover:bg-slate-800/60 no-underline"
         >
           <span className="flex items-center gap-1.5">
-            <span>🏪</span>
+            <Store className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
             <span>Kênh Người Bán</span>
           </span>
-          <span className="text-[10px] opacity-60">↗</span>
+          <ExternalLink className="w-3 h-3 opacity-60" aria-hidden="true" />
         </a>
       </div>
 
@@ -122,7 +142,7 @@ export default function AdminSidebar({ user, onSignOut, onOpen2FA, onClose }) {
             className="w-full py-1.5 px-2.5 bg-blue-950/60 hover:bg-blue-900/60 border border-blue-800/40 rounded-xl text-[11px] font-bold text-[#38BDF8] flex items-center justify-between transition-colors cursor-pointer"
           >
             <span className="flex items-center gap-1.5">
-              <span>🔐</span>
+              <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Cài đặt 2FA (TOTP)</span>
             </span>
             <span className="text-[10px] bg-blue-500/20 px-1 rounded">#11, #12</span>

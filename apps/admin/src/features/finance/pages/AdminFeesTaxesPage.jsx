@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Check } from 'lucide-react';
 import { adminFinanceApi } from '../../../services/admin-finance.api';
 
 export default function AdminFeesTaxesPage() {
@@ -93,7 +94,7 @@ export default function AdminFeesTaxesPage() {
 
       {notice && (
         <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-[12px] font-semibold flex items-center gap-2 animate-in fade-in">
-          <span>✓</span>
+          <Check className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
           <span>{notice}</span>
         </div>
       )}

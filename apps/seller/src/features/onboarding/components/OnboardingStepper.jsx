@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { Check } from 'lucide-react';
 
 /**
  * Stepper Header hiển thị 4 bước thiết lập gian hàng
@@ -33,7 +34,7 @@ export default function OnboardingStepper({ stepsList, stepStatuses, currentStep
                     : 'bg-slate-200 text-slate-600'
                 }`}
               >
-                {isCompleted ? '✓' : step.number}
+                {isCompleted ? <Check className="w-4 h-4 text-white" aria-hidden="true" /> : step.number}
               </div>
               <div>
                 <div className="text-[13px] font-bold text-slate-900 flex items-center gap-1.5">

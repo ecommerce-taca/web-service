@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Download, Check, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { adminFinanceApi } from '../../../services/admin-finance.api';
 
 export default function AdminFinancePage() {
@@ -77,14 +78,14 @@ export default function AdminFinancePage() {
           onClick={handleExport}
           className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 rounded-lg font-bold text-[13px] shadow-2xs transition-colors flex items-center gap-2 cursor-pointer self-start sm:self-auto disabled:opacity-50"
         >
-          <span>📥</span>
+          <Download className="w-4 h-4 text-slate-600" aria-hidden="true" />
           <span>{isExporting ? 'Đang xuất...' : 'Xuất báo cáo tài chính'}</span>
         </button>
       </div>
 
       {notice && (
         <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-[12px] font-semibold flex items-center gap-2 animate-in fade-in">
-          <span>✓</span>
+          <Check className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
           <span>{notice}</span>
         </div>
       )}
@@ -171,12 +172,14 @@ export default function AdminFinancePage() {
                   </td>
                   <td className="py-3.5 px-6">
                     {r.match ? (
-                      <span className="inline-flex items-center gap-1 font-bold text-emerald-600 text-[12px]">
-                        ✓ Khớp hoàn toàn
+                      <span className="inline-flex items-center gap-1.5 font-bold text-emerald-600 text-[12px]">
+                        <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden="true" />
+                        <span>Khớp hoàn toàn</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 font-bold text-rose-600 text-[12px]">
-                        ⚠ Lệch dữ liệu ({r.mismatch_reason})
+                      <span className="inline-flex items-center gap-1.5 font-bold text-rose-600 text-[12px]">
+                        <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                        <span>Lệch dữ liệu ({r.mismatch_reason})</span>
                       </span>
                     )}
                   </td>

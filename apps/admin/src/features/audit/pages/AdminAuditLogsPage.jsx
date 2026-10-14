@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Search } from 'lucide-react';
 import { getAuditLogs } from '../../../services/admin-kyc.api';
 
 const DEFAULT_DEMO_LOGS = [
@@ -256,8 +257,8 @@ export default function AdminAuditLogsPage() {
                 placeholder="Tìm email, shop, lý do..."
                 className="pl-8 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[12px] text-slate-800 outline-none focus:border-[#0A68FF] w-[220px]"
               />
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">
-                🔍
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                <Search className="w-3.5 h-3.5" aria-hidden="true" />
               </span>
             </div>
           </div>

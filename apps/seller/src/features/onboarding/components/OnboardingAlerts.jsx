@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { AlertTriangle, XCircle } from 'lucide-react';
 
 /**
  * Hiển thị các khối cảnh báo trạng thái KYC (Từ chối, Cần bổ sung, Blockers)
@@ -14,7 +15,11 @@ export default function OnboardingAlerts({ kycStatus, rejectReason, blockers }) 
         <div className={`p-5 rounded-2xl border flex items-start gap-3.5 ${
           kycStatus === 'NEEDS_INFO' ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-rose-50 border-rose-200 text-rose-900'
         }`}>
-          <span className="text-2xl mt-0.5">{kycStatus === 'NEEDS_INFO' ? '⚠️' : '✕'}</span>
+          {kycStatus === 'NEEDS_INFO' ? (
+            <AlertTriangle className="w-6 h-6 mt-0.5 shrink-0 text-amber-600" aria-hidden="true" />
+          ) : (
+            <XCircle className="w-6 h-6 mt-0.5 shrink-0 text-rose-600" aria-hidden="true" />
+          )}
           <div className="space-y-1.5 flex-1">
             <div className="flex items-center gap-2">
               <h3 className="font-extrabold text-[14px]">
@@ -42,7 +47,7 @@ export default function OnboardingAlerts({ kycStatus, rejectReason, blockers }) 
       {/* Blockers alert if any */}
       {hasBlockersOnly && (
         <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-[13px] text-amber-800 flex items-center gap-3">
-          <span className="text-lg">⚠️</span>
+          <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600" aria-hidden="true" />
           <div>
             <p className="font-bold">Các mục cần bổ sung để hoàn tất xét duyệt:</p>
             <ul className="list-disc list-inside text-[12px] mt-1 space-y-0.5">

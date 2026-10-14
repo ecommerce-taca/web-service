@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
+import { X, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { reviewKyc } from '../../../services/admin-kyc.api';
 
 export default function KycReviewModal({ isOpen, onClose, item, onDecisionSuccess }) {
@@ -74,8 +75,9 @@ export default function KycReviewModal({ isOpen, onClose, item, onDecisionSucces
             type="button"
             onClick={onClose}
             className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+            aria-label="Đóng cửa sổ duyệt"
           >
-            ✕
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -124,7 +126,7 @@ export default function KycReviewModal({ isOpen, onClose, item, onDecisionSucces
                     className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl hover:border-slate-300 transition-colors"
                   >
                     <div className="flex items-center gap-2.5 truncate">
-                      <span className="text-emerald-600 font-bold">✓</span>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
                       <span className="font-semibold text-slate-800 truncate">{doc.title || doc.file_name}</span>
                     </div>
                     <a
@@ -146,7 +148,7 @@ export default function KycReviewModal({ isOpen, onClose, item, onDecisionSucces
           {/* Risk Signal Banner matching Penpot */}
           {item.risk_signal && (
             <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-2xl flex items-start gap-2.5 text-amber-900 text-[12px] leading-relaxed">
-              <span className="text-amber-600 font-bold text-[14px]">⚠</span>
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
               <div>
                 <span className="font-bold">Tín hiệu: </span>
                 <span>{item.risk_signal.replace(/^Tín hiệu:\s*/, '')}</span>

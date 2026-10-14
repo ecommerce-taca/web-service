@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Check } from 'lucide-react';
 import { updateUserRole, updateUserStatus } from '../../../services/admin-kyc.api';
 
 const INITIAL_USERS = [
@@ -88,8 +89,9 @@ export default function AdminUsersRolesPage() {
   return (
     <div className="space-y-6">
       {toastMessage && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-[13px] font-bold shadow-xs animate-in fade-in duration-150">
-          ✓ {toastMessage}
+        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-[13px] font-bold shadow-xs animate-in fade-in duration-150 flex items-center gap-2">
+          <Check className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
+          <span>{toastMessage}</span>
         </div>
       )}
 

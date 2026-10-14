@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { X, Plus, RefreshCw } from 'lucide-react';
 
 /**
  * Step 2: Quản lý thuộc tính SKU linh hoạt theo ngành hàng
@@ -52,9 +53,10 @@ export default function AttributesStep({
                   <button
                     type="button"
                     onClick={() => onRemoveValue(attr.id, val)}
-                    className="text-slate-400 hover:text-rose-500 text-xs font-bold cursor-pointer"
+                    aria-label={`Xóa giá trị ${val}`}
+                    className="text-slate-400 hover:text-rose-500 cursor-pointer p-0.5"
                   >
-                    ×
+                    <X className="w-3 h-3" aria-hidden="true" />
                   </button>
                 </span>
               ))}
@@ -93,7 +95,8 @@ export default function AttributesStep({
           onClick={onOpenAddAttrModal}
           className="font-bold text-[#4F46E5] hover:underline flex items-center gap-1 cursor-pointer"
         >
-          ＋ Thêm thuộc tính
+          <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>Thêm thuộc tính</span>
         </button>
         <div className="flex items-center gap-3">
           <span className="text-slate-500 font-medium">
@@ -102,9 +105,9 @@ export default function AttributesStep({
           <button
             type="button"
             onClick={onRegenerateSkus}
-            className="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-[#4F46E5] border border-indigo-200 rounded-lg font-bold text-xs transition-colors cursor-pointer flex items-center gap-1"
+            className="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-[#4F46E5] border border-indigo-200 rounded-lg font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5"
           >
-            <span>🔄</span>
+            <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Sinh bảng SKU từ {combosCount} tổ hợp</span>
           </button>
         </div>
