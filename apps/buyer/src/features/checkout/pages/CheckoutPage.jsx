@@ -85,6 +85,41 @@ export default function CheckoutPage() {
   const tacaDiscount = selectedTacaVoucher ? (selectedTacaVoucher.discount_amount || 0) : 0;
   const total = Math.max(0, subtotal + shippingFee - shopDiscount - tacaDiscount);
 
+  const [pendingPayment, setPendingPayment] = useState(null);
+  const [checkoutError, setCheckoutError] = useState('');
+
+  // Tích hợp POST /checkout/preview để backend thẩm định giá và cảnh báo tồn kho trước khi submit (P2)
+  useEffect(() => {
+    let isMounted = true;
+    const runPreview = async () => {
+      if (items.length === 0) return;
+      try {
+        const res = await orderApi.previewCheckout({
+          selected_item_ids: items.map(i => i.id || i.product_id),
+          address_id: selectedAddress?.id,
+          voucher_codes: [selectedShopVoucher?.code, selectedTacaVoucher?.code].filter(Boolean),
+          subtotal,
+          shipping_fee: shippingFee,
+          discount: shopDiscount + tacaDiscount,
+          total
+        });
+        if (!isMounted) return;
+        const previewData = res?.data?.data;
+        if (previewData?.warnings && previewData.warnings.length > 0) {
+          setCheckoutError(previewData.warnings.join('. '));
+        }
+      } catch (err) {
+        console.warn('Checkout preview error', err);
+      }
+    };
+
+    const timer = setTimeout(runPreview, 400);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [items, selectedAddress, selectedShopVoucher, selectedTacaVoucher, subtotal, shippingFee, shopDiscount, tacaDiscount, total]);
+
   const handlePlaceOrder = async () => {
     if (items.length === 0) {
       alert('Không có sản phẩm nào để thanh toán!');
@@ -92,52 +127,66 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (paymentMethod === 'VNPAY QR') {
-      setIsVnpayModalOpen(true);
-      return;
-    }
+    if (isSubmitting) return;
 
     try {
       setIsSubmitting(true);
-      await orderApi.createOrder({
+      setCheckoutError('');
+
+      const res = await orderApi.createOrder({
         items,
         total,
         shipping_fee: shippingFee,
         discount_amount: shopDiscount + tacaDiscount,
         voucher_codes: [selectedShopVoucher?.code, selectedTacaVoucher?.code].filter(Boolean),
-        payment_method: 'COD',
-        shipping_address: selectedAddress
+        payment_method: paymentMethod === 'VNPAY QR' ? 'VNPAY QR' : 'COD',
+        shipping_address: selectedAddress,
+        note: orderNote
       });
-      // KHÔNG gọi clearCart() để giỏ hàng vẫn còn sau khi mua hàng
-      navigate('/account/orders');
+
+      const responseData = res?.data || {};
+      const orders = responseData?.orders || (responseData?.data ? [responseData.data] : []);
+      const primaryOrder = orders[0] || {};
+      const orderId = primaryOrder?.order_id || primaryOrder?.id || `TACA-${Date.now().toString().slice(-6)}`;
+      const nextAction = responseData?.payment_next_action;
+
+      if (paymentMethod === 'VNPAY QR') {
+        const paymentId = nextAction?.payment_id || primaryOrder?.payment_id || `pay-${Date.now()}`;
+        const expiresAt = responseData?.reservation_expires_at || new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+        setPendingPayment({
+          paymentId,
+          orderId,
+          amount: total,
+          expiresAt
+        });
+        setIsVnpayModalOpen(true);
+      } else {
+        // COD - Thanh toán khi nhận hàng
+        navigate('/account/orders');
+      }
     } catch (e) {
       console.error('Failed to create order', e);
-      alert('Không thể tạo đơn hàng, vui lòng thử lại.');
+      if (e?.response?.status === 409) {
+        setCheckoutError('Giá sản phẩm hoặc tồn kho đã thay đổi trong giỏ hàng. Vui lòng kiểm tra lại đơn hàng.');
+      } else {
+        setCheckoutError('Không thể tạo đơn hàng, vui lòng thử lại sau giây lát.');
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleVnpaySuccess = async () => {
-    setIsVnpayModalOpen(false);
+  const handlePaymentSuccess = async ({ paymentId, orderId }) => {
     try {
-      setIsSubmitting(true);
-      await orderApi.createOrder({
-        items,
-        total,
-        shipping_fee: shippingFee,
-        discount_amount: shopDiscount + tacaDiscount,
-        voucher_codes: [selectedShopVoucher?.code, selectedTacaVoucher?.code].filter(Boolean),
-        payment_method: 'VNPAY QR',
-        shipping_address: selectedAddress
-      });
-      // KHÔNG gọi clearCart() để giỏ hàng vẫn còn sau khi mua hàng
-      navigate('/account/orders');
-    } catch (e) {
-      console.error('Failed to create order via VNPAY', e);
-      alert('Đã thanh toán nhưng chưa lưu đơn hàng, vui lòng liên hệ hỗ trợ.');
+      if (orderId && paymentId) {
+        await orderApi.markOrderPaid(orderId, paymentId);
+      }
+    } catch (err) {
+      console.warn('Error marking order as paid', err);
     } finally {
-      setIsSubmitting(false);
+      setIsVnpayModalOpen(false);
+      navigate('/account/orders');
     }
   };
 
@@ -166,6 +215,16 @@ export default function CheckoutPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-2">
         <h1 className="text-2xl font-bold text-taca-text-main mb-6">Thanh toán</h1>
+
+        {checkoutError && (
+          <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3 animate-in fade-in">
+            <span className="text-amber-600 font-bold text-base">⚠️</span>
+            <div>
+              <h4 className="text-[13px] font-bold text-amber-900 uppercase">Thông báo đặt hàng</h4>
+              <p className="text-[12px] text-amber-800 mt-0.5">{checkoutError}</p>
+            </div>
+          </div>
+        )}
         
         <div className="flex flex-col lg:flex-row gap-6 items-start">
           {/* Left Column */}
@@ -373,8 +432,11 @@ export default function CheckoutPage() {
       <VnpayQrModal 
         isOpen={isVnpayModalOpen} 
         onClose={() => setIsVnpayModalOpen(false)} 
-        onSuccess={handleVnpaySuccess}
-        amount={total} 
+        paymentId={pendingPayment?.paymentId}
+        orderId={pendingPayment?.orderId}
+        expiresAt={pendingPayment?.expiresAt}
+        amount={pendingPayment?.amount || total}
+        onPaymentSuccess={handlePaymentSuccess}
       />
     </div>
   );
