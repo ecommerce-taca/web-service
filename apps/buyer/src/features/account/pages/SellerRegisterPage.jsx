@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, Mail, FileText, AlertTriangle, XCircle, CheckCircle2, Rocket } from 'lucide-react';
+import { Store, Mail, FileText, AlertTriangle, XCircle, CheckCircle2, Rocket, Clock } from 'lucide-react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { registerSeller, getSellerRegistrationStatus, fetchSellerRegistrationStatus } from '../services/seller-register.api';
 
@@ -245,8 +245,8 @@ export default function SellerRegisterPage() {
       <div className="p-4 sm:p-6 md:p-8 space-y-6">
         <div className="p-6 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-4 text-center sm:text-left">
           <div className="flex flex-col sm:flex-row items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-white border border-amber-200 flex items-center justify-center text-2xl shadow-xs shrink-0">
-              ⏳
+            <div className="w-14 h-14 rounded-2xl bg-white border border-amber-200 flex items-center justify-center shadow-xs shrink-0">
+              <Clock className="w-7 h-7 text-amber-600" aria-hidden="true" />
             </div>
             <div>
               <div className="flex items-center gap-2 justify-center sm:justify-start">

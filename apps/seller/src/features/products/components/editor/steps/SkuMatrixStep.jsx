@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { RefreshCw, AlertTriangle } from 'lucide-react';
 import SkuMatrixRow from '../components/SkuMatrixRow';
 
 /**
@@ -36,7 +37,7 @@ export default function SkuMatrixStep({
           onClick={onRegenerateSkus}
           className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-[#4F46E5] border border-indigo-200 rounded-lg font-bold text-xs transition-colors cursor-pointer self-start sm:self-auto flex items-center gap-1.5"
         >
-          <span>🔄</span>
+          <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Sinh lại bảng ({combosCount} tổ hợp)</span>
         </button>
       </div>
@@ -102,7 +103,7 @@ export default function SkuMatrixStep({
       {skus.every(s => !s.enabled) && (
         <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between text-[12px] text-amber-800">
           <div className="flex items-center gap-2">
-            <span className="text-base">⚠️</span>
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" aria-hidden="true" />
             <span>Tất cả biến thể SKU đang bị <strong>TẮT (OFF)</strong> nên giá ngoài danh mục hiển thị 0 ₫. Bấm <strong>Bật tất cả</strong> để kích hoạt!</span>
           </div>
           <button

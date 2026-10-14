@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
+import { ShieldCheck, X, Check } from 'lucide-react';
 import { setup2FA, verify2FA } from '../../services/admin-auth.api';
 
 export default function Admin2FASetupModal({ isOpen, onClose, onEnrollSuccess }) {
@@ -107,8 +108,8 @@ export default function Admin2FASetupModal({ isOpen, onClose, onEnrollSuccess })
       <div className="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden text-slate-100 animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="p-6 bg-slate-950 border-b border-slate-800/80 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🔐</span>
+          <div className="flex items-center gap-2.5">
+            <ShieldCheck className="w-6 h-6 text-blue-400 shrink-0" aria-hidden="true" />
             <div>
               <h2 className="text-[16px] font-bold text-white m-0">
                 Thiết lập Xác thực 2 yếu tố (2FA TOTP)
@@ -123,8 +124,9 @@ export default function Admin2FASetupModal({ isOpen, onClose, onEnrollSuccess })
               type="button"
               onClick={handleModalClose}
               className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              aria-label="Đóng cửa sổ"
             >
-              ✕
+              <X className="w-5 h-5" aria-hidden="true" />
             </button>
           )}
         </div>
@@ -133,8 +135,8 @@ export default function Admin2FASetupModal({ isOpen, onClose, onEnrollSuccess })
         <div className="p-6 space-y-5">
           {success ? (
             <div className="py-8 text-center space-y-3">
-              <div className="w-16 h-16 bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 rounded-full flex items-center justify-center text-3xl mx-auto">
-                ✓
+              <div className="w-16 h-16 bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 rounded-full flex items-center justify-center mx-auto">
+                <Check className="w-8 h-8" aria-hidden="true" />
               </div>
               <h3 className="text-lg font-bold text-white">Bật 2FA thành công!</h3>
               <p className="text-[13px] text-slate-400 max-w-sm mx-auto">

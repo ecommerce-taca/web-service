@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
+import { X, Zap } from 'lucide-react';
 import { signinSeller, quickDemoLogin } from '../../services/seller-auth.api';
 
 export default function SellerLoginModal({ isOpen, onClose, onSuccess }) {
@@ -51,8 +52,9 @@ export default function SellerLoginModal({ isOpen, onClose, onSuccess }) {
             type="button"
             onClick={onClose}
             className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+            aria-label="Đóng cửa sổ đăng nhập"
           >
-            ✕
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -121,7 +123,7 @@ export default function SellerLoginModal({ isOpen, onClose, onSuccess }) {
               onClick={handleQuickDemo}
               className="w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl font-bold text-[12px] transition-colors cursor-pointer flex items-center justify-center gap-1.5"
             >
-              <span>⚡</span>
+              <Zap className="w-4 h-4 text-emerald-600" aria-hidden="true" />
               <span>Đăng nhập nhanh (Tài khoản mẫu Seller)</span>
             </button>
           </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { CheckCircle2 } from 'lucide-react';
 import { getKycQueue } from '../../../services/admin-kyc.api';
 import KycReviewModal from '../components/KycReviewModal';
 
@@ -195,8 +196,8 @@ export default function AdminKycPage() {
             Đang tải danh sách hàng đợi KYC...
           </div>
         ) : queue.length === 0 ? (
-          <div className="p-12 text-center text-slate-400 text-[13px] space-y-1">
-            <div className="text-[24px]">✓</div>
+          <div className="p-12 text-center text-slate-400 text-[13px] space-y-2">
+            <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" aria-hidden="true" />
             <div className="font-bold text-slate-700">Hàng đợi trống</div>
             <div className="text-[12px]">Hiện không có hồ sơ nào thuộc trạng thái này.</div>
           </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
+import { X, Zap, Lock } from 'lucide-react';
 import { signinAdmin, quickDemoAdminLogin, verify2FA } from '../../services/admin-auth.api';
 
 export default function AdminLoginModal({ isOpen, onClose, onSuccess }) {
@@ -104,8 +105,9 @@ export default function AdminLoginModal({ isOpen, onClose, onSuccess }) {
               type="button"
               onClick={onClose}
               className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              aria-label="Đóng cửa sổ đăng nhập"
             >
-              ✕
+              <X className="w-5 h-5" aria-hidden="true" />
             </button>
           )}
         </div>
@@ -197,7 +199,7 @@ export default function AdminLoginModal({ isOpen, onClose, onSuccess }) {
                   onClick={handleQuickDemo}
                   className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 rounded-xl font-bold text-[12px] transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <span>⚡</span>
+                  <Zap className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
                   <span>Đăng nhập Super Admin (Trần Hoàng · 2FA ON)</span>
                 </button>
               </div>
@@ -207,7 +209,7 @@ export default function AdminLoginModal({ isOpen, onClose, onSuccess }) {
             <>
               <div>
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-950/80 border border-blue-800/60 text-[#38BDF8] text-[10px] font-bold uppercase mb-2">
-                  <span>🔒</span>
+                  <Lock className="w-3.5 h-3.5 text-[#38BDF8] shrink-0" aria-hidden="true" />
                   <span>Xác thực 2 yếu tố (2FA TOTP)</span>
                 </div>
                 <h2 className="text-[18px] font-extrabold text-white tracking-tight">

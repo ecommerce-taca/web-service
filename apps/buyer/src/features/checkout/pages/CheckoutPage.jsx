@@ -9,7 +9,7 @@ import DeliveryAddressModal from '../components/DeliveryAddressModal';
 import ApplyVoucherModal from '../components/ApplyVoucherModal';
 import VnpayQrModal from '../components/VnpayQrModal';
 import { Button } from '@taca/ui-components';
-import { Check } from 'lucide-react';
+import { Check, AlertTriangle } from 'lucide-react';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -218,7 +218,7 @@ export default function CheckoutPage() {
 
         {checkoutError && (
           <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3 animate-in fade-in">
-            <span className="text-amber-600 font-bold text-base">⚠️</span>
+            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
             <div>
               <h4 className="text-[13px] font-bold text-amber-900 uppercase">Thông báo đặt hàng</h4>
               <p className="text-[12px] text-amber-800 mt-0.5">{checkoutError}</p>

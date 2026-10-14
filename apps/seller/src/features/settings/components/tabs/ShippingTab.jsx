@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { Check } from 'lucide-react';
 
 /**
  * Tab 4: Đối tác vận chuyển & Hình thức COD
@@ -62,7 +63,7 @@ export default function ShippingTab({
                   }`}
                 >
                   <span>{carrier}</span>
-                  {isSelected && <span>✓</span>}
+                  {isSelected && <Check className="w-4 h-4 text-[#4F46E5]" aria-hidden="true" />}
                 </button>
               );
             })}

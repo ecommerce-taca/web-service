@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { X, Camera } from 'lucide-react';
 
 /**
  * Step 1: Thông tin cơ bản SPU & Hình ảnh sản phẩm (S3 Presigned URL)
@@ -118,9 +119,10 @@ export default function BasicInfoStep({
               <button
                 type="button"
                 onClick={() => onRemoveImage(idx)}
-                className="absolute top-1.5 right-1.5 w-6 h-6 bg-slate-900/70 hover:bg-rose-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
+                aria-label="Xóa ảnh"
+                className="absolute top-1.5 right-1.5 w-6 h-6 bg-slate-900/70 hover:bg-rose-600 text-white rounded-full flex items-center justify-center transition-colors cursor-pointer"
               >
-                ×
+                <X className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             </div>
           ))}
@@ -144,7 +146,7 @@ export default function BasicInfoStep({
                 </span>
               ) : (
                 <>
-                  <span className="text-xl text-slate-400 mb-1">📷</span>
+                  <Camera className="w-6 h-6 text-slate-400 mb-1" aria-hidden="true" />
                   <span className="text-[11px] font-bold text-slate-700">Tải ảnh lên</span>
                   <span className="text-[9px] text-slate-400 mt-0.5">S3 Presigned</span>
                 </>

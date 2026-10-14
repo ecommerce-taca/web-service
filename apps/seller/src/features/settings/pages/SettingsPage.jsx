@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { ClipboardList, X } from 'lucide-react';
 import {
   getShopProfile,
   updateShopProfile,
@@ -153,7 +154,7 @@ export default function SettingsPage() {
         logo_object_key: logoUrl,
       });
       if (res?.name) setShopName(res.name);
-      notifySuccess('✓ Đã lưu thay đổi hồ sơ gian hàng thành công!');
+      notifySuccess('Đã lưu thay đổi hồ sơ gian hàng thành công!');
     } catch (err) {
       setErrorMessage(err?.response?.data?.error?.message || 'Lỗi khi lưu thông tin cửa hàng.');
     } finally {
@@ -182,7 +183,7 @@ export default function SettingsPage() {
         carrier_preferences: carrierPreferences,
         cod_enabled: codEnabled,
       });
-      notifySuccess('✓ Đã cập nhật địa chỉ kho hàng và lấy hàng!');
+      notifySuccess('Đã cập nhật địa chỉ kho hàng và lấy hàng!');
     } catch (err) {
       setErrorMessage(err?.response?.data?.error?.message || 'Lỗi khi lưu địa chỉ kho.');
     } finally {
@@ -216,7 +217,7 @@ export default function SettingsPage() {
         verified: true,
       });
       setBankForm((prev) => ({ ...prev, account_number: '' }));
-      notifySuccess('✓ Đã cập nhật tài khoản ngân hàng nhận tiền đối soát!');
+      notifySuccess('Đã cập nhật tài khoản ngân hàng nhận tiền đối soát!');
     } catch (err) {
       setErrorMessage(err?.response?.data?.error?.message || 'Lỗi khi lưu tài khoản ngân hàng.');
     } finally {
@@ -271,9 +272,10 @@ export default function SettingsPage() {
           )}
           <Link
             to={`${basePath}/onboarding`}
-            className="px-4 py-2 border border-indigo-200 hover:bg-indigo-50 text-[#4F46E5] rounded-lg font-semibold text-[13px] shadow-2xs transition-colors"
+            className="px-4 py-2 border border-indigo-200 hover:bg-indigo-50 text-[#4F46E5] rounded-lg font-semibold text-[13px] shadow-2xs transition-colors inline-flex items-center gap-1.5"
           >
-            📋 Tiến độ Onboarding & KYC
+            <ClipboardList className="w-4 h-4" aria-hidden="true" />
+            <span>Tiến độ Onboarding & KYC</span>
           </Link>
           <button
             type="button"
@@ -289,7 +291,9 @@ export default function SettingsPage() {
       {errorMessage && (
         <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-[13px] text-rose-700 flex items-center justify-between">
           <span>{errorMessage}</span>
-          <button type="button" onClick={() => setErrorMessage('')} className="text-rose-500 hover:text-rose-700 text-sm">✕</button>
+          <button type="button" onClick={() => setErrorMessage('')} aria-label="Đóng lỗi" className="text-rose-500 hover:text-rose-700 p-1">
+            <X className="w-4 h-4" aria-hidden="true" />
+          </button>
         </div>
       )}
 

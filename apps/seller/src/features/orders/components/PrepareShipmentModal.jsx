@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
+import { X, Package, CheckCircle2 } from 'lucide-react';
 
 export default function PrepareShipmentModal({ order, isOpen, onClose, onConfirm }) {
   const [carrier, setCarrier] = useState('GHN Express');
@@ -37,9 +38,10 @@ export default function PrepareShipmentModal({ order, isOpen, onClose, onConfirm
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors text-lg"
+            aria-label="Đóng"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
           >
-            ×
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -47,8 +49,8 @@ export default function PrepareShipmentModal({ order, isOpen, onClose, onConfirm
         <div className="p-6 space-y-6 text-[13px]">
           {/* Product card */}
           <div className="flex items-center gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
-            <div className="w-12 h-12 bg-white rounded-lg border border-slate-200 flex items-center justify-center text-xl shrink-0">
-              📦
+            <div className="w-12 h-12 bg-white rounded-lg border border-slate-200 flex items-center justify-center shrink-0">
+              <Package className="w-6 h-6 text-slate-500" aria-hidden="true" />
             </div>
             <div>
               <h4 className="font-bold text-slate-900 text-[13px]">
@@ -125,8 +127,9 @@ export default function PrepareShipmentModal({ order, isOpen, onClose, onConfirm
           </label>
 
           {isConfirmed && (
-            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 font-semibold text-center text-[12px] animate-in fade-in">
-              ✓ Đã xác nhận chuẩn bị hàng thành công! Đang chờ shipper đến lấy.
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 font-semibold text-center text-[12px] animate-in fade-in flex items-center justify-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" aria-hidden="true" />
+              <span>Đã xác nhận chuẩn bị hàng thành công! Đang chờ shipper đến lấy.</span>
             </div>
           )}
         </div>

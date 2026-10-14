@@ -1,5 +1,6 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { X, PartyPopper, AlertTriangle, ClipboardList } from 'lucide-react';
 import {
   getOnboardingProgress,
   updateOnboardingProfile,
@@ -224,7 +225,7 @@ export default function OnboardingPage() {
     try {
       await updateOnboardingProfile(profileForm);
       setStepStatuses((prev) => ({ ...prev, PROFILE: true }));
-      notifySuccess('✓ Đã cập nhật hồ sơ gian hàng thành công!');
+      notifySuccess('Đã cập nhật hồ sơ gian hàng thành công!');
       setCurrentStep('KYC');
     } catch (err) {
       setErrorMessage(err?.response?.data?.error?.message || 'Lỗi khi lưu hồ sơ.');
@@ -291,7 +292,7 @@ export default function OnboardingPage() {
 
       const docs = await getKycDocuments();
       setKycDocs(docs);
-      notifySuccess('✓ Tải lên tài liệu KYC thành công!');
+      notifySuccess('Tải lên tài liệu KYC thành công!');
     } catch (err) {
       console.error('Lỗi upload KYC:', err);
       const serverMsg =
@@ -316,7 +317,7 @@ export default function OnboardingPage() {
       await deleteKycDocument(docId);
       const docs = await getKycDocuments();
       setKycDocs(docs);
-      notifySuccess('✓ Đã xóa tài liệu thành công!');
+      notifySuccess('Đã xóa tài liệu thành công!');
     } catch (err) {
       setErrorMessage(err?.response?.data?.error?.message || 'Lỗi khi xóa tài liệu.');
     } finally {
@@ -331,7 +332,7 @@ export default function OnboardingPage() {
       return;
     }
     setStepStatuses((prev) => ({ ...prev, KYC: true }));
-    notifySuccess('✓ Đã xác nhận tài liệu KYC hợp lệ!');
+    notifySuccess('Đã xác nhận tài liệu KYC hợp lệ!');
     setCurrentStep('WAREHOUSE');
   };
 
@@ -383,7 +384,7 @@ export default function OnboardingPage() {
         cod_enabled: warehouseForm.cod_enabled,
       });
       setStepStatuses((prev) => ({ ...prev, WAREHOUSE: true }));
-      notifySuccess('✓ Đã cập nhật địa chỉ kho hàng thành công!');
+      notifySuccess('Đã cập nhật địa chỉ kho hàng thành công!');
       setCurrentStep('BANK');
     } catch (err) {
       setErrorMessage(err?.response?.data?.error?.message || err?.message || 'Lỗi khi lưu kho hàng.');
@@ -418,7 +419,7 @@ export default function OnboardingPage() {
         account_number_masked: res.account_number_masked,
         verified: true,
       });
-      notifySuccess('✓ Đã liên kết tài khoản ngân hàng nhận tiền thành công!');
+      notifySuccess('Đã liên kết tài khoản ngân hàng nhận tiền thành công!');
     } catch (err) {
       setErrorMessage(err?.response?.data?.error?.message || 'Lỗi khi liên kết ngân hàng.');
     } finally {
@@ -455,7 +456,7 @@ export default function OnboardingPage() {
       await submitKyc();
       setKycStatus('PENDING');
       setStepStatuses({ PROFILE: true, KYC: true, WAREHOUSE: true, BANK: true });
-      notifySuccess('✓ Toàn bộ hồ sơ gian hàng đã được gửi thành công tới Ban Quản Trị để thẩm định!');
+      notifySuccess('Toàn bộ hồ sơ gian hàng đã được gửi thành công tới Ban Quản Trị để thẩm định!');
     } catch (err) {
       setErrorMessage(err?.response?.data?.error?.message || 'Lỗi khi nộp hồ sơ thẩm định.');
     } finally {
@@ -492,10 +493,16 @@ export default function OnboardingPage() {
               : 'bg-amber-50 border-amber-200 text-amber-900'
           }`}
         >
-          <div className="flex gap-3">
-            <span className="text-xl">
-              {realtimeNotification.type === 'success' ? '🎉' : realtimeNotification.type === 'error' ? '⚠️' : '📋'}
-            </span>
+          <div className="flex gap-3 items-start">
+            <div className="mt-0.5 shrink-0">
+              {realtimeNotification.type === 'success' ? (
+                <PartyPopper className="w-5 h-5 text-emerald-600" aria-hidden="true" />
+              ) : realtimeNotification.type === 'error' ? (
+                <AlertTriangle className="w-5 h-5 text-rose-600" aria-hidden="true" />
+              ) : (
+                <ClipboardList className="w-5 h-5 text-amber-600" aria-hidden="true" />
+              )}
+            </div>
             <div>
               <h4 className="font-bold text-[14px] m-0">{realtimeNotification.title}</h4>
               <p className="text-[13px] mt-0.5 opacity-90">{realtimeNotification.message}</p>
@@ -503,10 +510,10 @@ export default function OnboardingPage() {
           </div>
           <button
             onClick={dismissNotification}
-            className="text-slate-400 hover:text-slate-600 font-bold text-sm cursor-pointer p-1"
+            className="text-slate-400 hover:text-slate-600 cursor-pointer p-1"
             aria-label="Đóng thông báo"
           >
-            ✕
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       )}
@@ -559,7 +566,9 @@ export default function OnboardingPage() {
       {errorMessage && (
         <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-[13px] text-rose-700 flex items-center justify-between">
           <span>{errorMessage}</span>
-          <button type="button" onClick={() => setErrorMessage('')} className="text-rose-500 hover:text-rose-700 text-sm">✕</button>
+          <button type="button" onClick={() => setErrorMessage('')} aria-label="Đóng lỗi" className="text-rose-500 hover:text-rose-700 p-1">
+            <X className="w-4 h-4" aria-hidden="true" />
+          </button>
         </div>
       )}
 

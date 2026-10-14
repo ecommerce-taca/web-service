@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { X, Ticket } from 'lucide-react';
 import MetricCard from '../../../components/common/MetricCard';
 import StatusBadge from '../../../components/common/StatusBadge';
 import CreateVoucherModal from '../components/CreateVoucherModal';
@@ -93,9 +94,10 @@ export default function VouchersPage() {
           <button
             type="button"
             onClick={() => setFeedback(null)}
-            className="text-slate-400 hover:text-slate-600 font-bold ml-3"
+            aria-label="Đóng thông báo"
+            className="text-slate-400 hover:text-slate-600 p-1 ml-3"
           >
-            ✕
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       )}
@@ -167,7 +169,7 @@ export default function VouchersPage() {
           </div>
         ) : (vouchersData.items || []).length === 0 ? (
           <div className="p-12 text-center text-slate-500 text-[13px]">
-            <span className="text-3xl block mb-2">🎟️</span>
+            <Ticket className="w-10 h-10 mx-auto mb-2 text-slate-300" aria-hidden="true" />
             <p className="font-semibold text-slate-700">Chưa có voucher nào</p>
             <p className="text-[12px] text-slate-400 mt-1">Bấm nút Tạo voucher phía trên để thiết lập ưu đãi mới.</p>
           </div>

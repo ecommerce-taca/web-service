@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { AlertTriangle } from 'lucide-react';
 
 export class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -27,8 +28,8 @@ export class ErrorBoundary extends React.Component {
 
       return (
         <div className="p-8 max-w-lg mx-auto my-8 bg-rose-50/80 border border-rose-200 rounded-2xl text-center space-y-4 shadow-xs">
-          <div className="w-12 h-12 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center mx-auto text-xl font-bold">
-            ⚠️
+          <div className="w-12 h-12 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-6 h-6" aria-hidden="true" />
           </div>
           <div>
             <h3 className="text-base font-bold text-slate-900">

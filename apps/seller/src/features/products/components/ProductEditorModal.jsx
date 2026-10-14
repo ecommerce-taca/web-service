@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
+import { X, CheckCircle2 } from 'lucide-react';
 import sellerProductApi, { calculateFileSha256 } from '../services/seller-product.api';
 
 // Subcomponents & Utilities
@@ -106,7 +107,7 @@ function ProductEditorForm({ product, onClose, onSave }) {
   const handleRegenerateSkus = () => {
     const newSkus = generateSkusFromCombos(generatedCombinations, skus, spuCode);
     setSkus(newSkus);
-    setNotification(`✓ Đã sinh lại ${newSkus.length} SKU từ ${generatedCombinations.length} tổ hợp thuộc tính!`);
+    setNotification(`Đã sinh lại ${newSkus.length} SKU từ ${generatedCombinations.length} tổ hợp thuộc tính!`);
     setTimeout(() => setNotification(null), 3000);
   };
 
@@ -116,7 +117,7 @@ function ProductEditorForm({ product, onClose, onSave }) {
     if (!clean) return;
     const formatted = Number(clean).toLocaleString('vi-VN');
     setSkus(skus.map(s => ({ ...s, price: formatted })));
-    setNotification('✓ Đã áp dụng giá bán cho tất cả SKU!');
+    setNotification('Đã áp dụng giá bán cho tất cả SKU!');
     setTimeout(() => setNotification(null), 2500);
   };
 
@@ -124,7 +125,7 @@ function ProductEditorForm({ product, onClose, onSave }) {
     const num = Number(bulkStockInput);
     if (isNaN(num)) return;
     setSkus(skus.map(s => ({ ...s, stock: num })));
-    setNotification('✓ Đã áp dụng số lượng tồn kho cho tất cả SKU!');
+    setNotification('Đã áp dụng số lượng tồn kho cho tất cả SKU!');
     setTimeout(() => setNotification(null), 2500);
   };
 
@@ -443,9 +444,10 @@ function ProductEditorForm({ product, onClose, onSave }) {
         <button
           type="button"
           onClick={onClose}
-          className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors text-xl font-bold cursor-pointer"
+          aria-label="Đóng"
+          className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
         >
-          ×
+          <X className="w-5 h-5" aria-hidden="true" />
         </button>
       </div>
 
@@ -532,8 +534,9 @@ function ProductEditorForm({ product, onClose, onSave }) {
         {step === 4 && <ShippingStep />}
 
         {notification && (
-          <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-[#4F46E5] font-semibold text-center animate-in fade-in">
-            ✓ {notification}
+          <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-[#4F46E5] font-semibold text-center animate-in fade-in flex items-center justify-center gap-2">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-[#4F46E5]" aria-hidden="true" />
+            <span>{notification}</span>
           </div>
         )}
       </div>

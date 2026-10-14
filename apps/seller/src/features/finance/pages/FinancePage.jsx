@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Download, CreditCard, CheckCircle2 } from 'lucide-react';
 import MetricCard from '../../../components/common/MetricCard';
 import StatusBadge from '../../../components/common/StatusBadge';
 import WithdrawModal from '../components/WithdrawModal';
@@ -116,7 +117,7 @@ export default function FinancePage() {
             onClick={handleExport}
             className="px-4 py-2.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 rounded-lg font-bold text-[13px] shadow-2xs transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
           >
-            <span>📥</span>
+            <Download className="w-4 h-4 text-slate-600" aria-hidden="true" />
             <span>{isExporting ? 'Đang xuất...' : 'Xuất báo cáo Excel'}</span>
           </button>
           <button
@@ -124,7 +125,7 @@ export default function FinancePage() {
             onClick={() => setIsWithdrawOpen(true)}
             className="px-5 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg font-bold text-[13px] shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
           >
-            <span>💳</span>
+            <CreditCard className="w-4 h-4 text-white" aria-hidden="true" />
             <span>Yêu cầu rút tiền</span>
           </button>
         </div>
@@ -132,7 +133,7 @@ export default function FinancePage() {
 
       {exportNotice && (
         <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-[12px] font-semibold flex items-center gap-2 animate-in fade-in">
-          <span>✓</span>
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" aria-hidden="true" />
           <span>{exportNotice}</span>
         </div>
       )}

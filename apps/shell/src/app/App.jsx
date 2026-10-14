@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
+import { ShoppingBag, Store, Settings, X, Check, Pin, ChevronUp, ChevronDown } from 'lucide-react';
 import ScrollToTop from '../components/common/ScrollToTop';
 import RemoteErrorBoundary from '../components/common/RemoteErrorBoundary';
 
@@ -35,10 +36,10 @@ function ShellContent() {
   const isSeller = location.pathname.startsWith('/seller');
   const isAdmin = location.pathname.startsWith('/admin');
   const currentApp = isSeller
-    ? { name: 'Seller Dashboard', tag: 'Seller', color: 'bg-indigo-600', icon: '🏪' }
+    ? { name: 'Seller Dashboard', tag: 'Seller', color: 'bg-indigo-600', Icon: Store }
     : isAdmin
-    ? { name: 'Admin Portal', tag: 'Admin', color: 'bg-emerald-600', icon: '⚙' }
-    : { name: 'Buyer Storefront', tag: 'Buyer', color: 'bg-[#0A68FF]', icon: '🛍' };
+    ? { name: 'Admin Portal', tag: 'Admin', color: 'bg-emerald-600', Icon: Settings }
+    : { name: 'Buyer Storefront', tag: 'Buyer', color: 'bg-[#0A68FF]', Icon: ShoppingBag };
 
   return (
     <>
@@ -65,7 +66,7 @@ function ShellContent() {
                 }`
               }
             >
-              <span>🛍</span>
+              <ShoppingBag className="w-3.5 h-3.5" aria-hidden="true" />
               <span className="hidden sm:inline">Buyer Storefront</span>
               <span className="sm:hidden text-[11px]">Buyer</span>
             </NavLink>
@@ -77,7 +78,7 @@ function ShellContent() {
                 }`
               }
             >
-              <span>🏪</span>
+              <Store className="w-3.5 h-3.5" aria-hidden="true" />
               <span className="hidden sm:inline">Seller Dashboard</span>
               <span className="sm:hidden text-[11px]">Seller</span>
             </NavLink>
@@ -89,7 +90,7 @@ function ShellContent() {
                 }`
               }
             >
-              <span>⚙</span>
+              <Settings className="w-3.5 h-3.5" aria-hidden="true" />
               <span className="hidden sm:inline">Admin Portal</span>
               <span className="sm:hidden text-[11px]">Admin</span>
             </NavLink>
@@ -100,7 +101,7 @@ function ShellContent() {
               title="Ẩn thanh Host Nav để xem giao diện thực tế của người dùng"
               className="ml-1 sm:ml-2 px-2 sm:px-2.5 py-1 text-[11px] font-semibold rounded bg-slate-800 hover:bg-rose-950/70 text-slate-300 hover:text-rose-200 transition-colors border border-slate-700 cursor-pointer flex items-center gap-1 shrink-0"
             >
-              <span>✕</span>
+              <X className="w-3.5 h-3.5" aria-hidden="true" />
               <span className="hidden sm:inline">Ẩn thanh Dev</span>
             </button>
           </div>
@@ -128,8 +129,16 @@ function ShellContent() {
                   }`
                 }
               >
-                <span className="flex items-center gap-2"><span>🛍</span> Buyer Storefront</span>
-                {location.pathname === '/' && <span className="text-[10px] text-blue-200 font-bold">✓ Hiện tại</span>}
+                <span className="flex items-center gap-2">
+                  <ShoppingBag className="w-4 h-4" aria-hidden="true" />
+                  <span>Buyer Storefront</span>
+                </span>
+                {location.pathname === '/' && (
+                  <span className="text-[10px] text-blue-200 font-bold flex items-center gap-1">
+                    <Check className="w-3 h-3" aria-hidden="true" />
+                    <span>Hiện tại</span>
+                  </span>
+                )}
               </NavLink>
 
               <NavLink
@@ -141,8 +150,16 @@ function ShellContent() {
                   }`
                 }
               >
-                <span className="flex items-center gap-2"><span>🏪</span> Seller Portal</span>
-                {location.pathname.startsWith('/seller') && <span className="text-[10px] text-indigo-200 font-bold">✓ Hiện tại</span>}
+                <span className="flex items-center gap-2">
+                  <Store className="w-4 h-4" aria-hidden="true" />
+                  <span>Seller Portal</span>
+                </span>
+                {location.pathname.startsWith('/seller') && (
+                  <span className="text-[10px] text-indigo-200 font-bold flex items-center gap-1">
+                    <Check className="w-3 h-3" aria-hidden="true" />
+                    <span>Hiện tại</span>
+                  </span>
+                )}
               </NavLink>
 
               <NavLink
@@ -154,8 +171,16 @@ function ShellContent() {
                   }`
                 }
               >
-                <span className="flex items-center gap-2"><span>⚙</span> Admin Portal</span>
-                {location.pathname.startsWith('/admin') && <span className="text-[10px] text-emerald-200 font-bold">✓ Hiện tại</span>}
+                <span className="flex items-center gap-2">
+                  <Settings className="w-4 h-4" aria-hidden="true" />
+                  <span>Admin Portal</span>
+                </span>
+                {location.pathname.startsWith('/admin') && (
+                  <span className="text-[10px] text-emerald-200 font-bold flex items-center gap-1">
+                    <Check className="w-3 h-3" aria-hidden="true" />
+                    <span>Hiện tại</span>
+                  </span>
+                )}
               </NavLink>
 
               <div className="pt-1.5 mt-1 border-t border-slate-800">
@@ -167,7 +192,7 @@ function ShellContent() {
                   }}
                   className="w-full text-left px-2 py-1.5 rounded text-[11px] text-slate-300 hover:text-amber-300 hover:bg-slate-800/80 transition-colors flex items-center gap-1.5 cursor-pointer font-medium"
                 >
-                  <span>📌</span>
+                  <Pin className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>Hiện thanh Host Nav trên Top</span>
                 </button>
               </div>
@@ -181,11 +206,16 @@ function ShellContent() {
             className="flex items-center gap-2 px-3 py-1.5 bg-slate-900/90 hover:bg-slate-800 text-white text-[11px] font-semibold rounded-full border border-slate-700/80 shadow-lg backdrop-blur-md transition-all hover:scale-105 cursor-pointer group"
           >
             <span className={`w-2 h-2 rounded-full ${currentApp.color} animate-pulse`} />
-            <span className="text-slate-300 group-hover:text-white">
-              {currentApp.icon} <span className="font-bold">{currentApp.tag}</span>
+            <span className="text-slate-300 group-hover:text-white flex items-center gap-1.5">
+              <currentApp.Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              <span className="font-bold">{currentApp.tag}</span>
             </span>
             <span className="text-slate-500 text-[10px] group-hover:text-slate-300">
-              {isQuickMenuOpen ? '▼' : '▲'}
+              {isQuickMenuOpen ? (
+                <ChevronDown className="w-3 h-3" aria-hidden="true" />
+              ) : (
+                <ChevronUp className="w-3 h-3" aria-hidden="true" />
+              )}
             </span>
           </button>
         </aside>

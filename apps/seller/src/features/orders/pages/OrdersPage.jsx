@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Package, X, ClipboardList } from 'lucide-react';
 import MetricCard from '../../../components/common/MetricCard';
 import StatusBadge from '../../../components/common/StatusBadge';
 import OrderDetailModal from '../components/OrderDetailModal';
@@ -106,7 +107,7 @@ export default function OrdersPage() {
           onClick={handleBulkAccept}
           className="px-5 py-2.5 bg-white border border-slate-300 hover:border-slate-400 text-slate-800 rounded-lg font-bold text-[13px] shadow-2xs hover:bg-slate-50 transition-colors flex items-center gap-2 self-start sm:self-auto cursor-pointer"
         >
-          <span>📦</span>
+          <Package className="w-4 h-4 text-slate-700" aria-hidden="true" />
           <span>Xử lý hàng loạt</span>
         </button>
       </div>
@@ -125,9 +126,10 @@ export default function OrdersPage() {
           <button
             type="button"
             onClick={() => setFeedback(null)}
-            className="text-slate-400 hover:text-slate-600 font-bold ml-3"
+            aria-label="Đóng thông báo"
+            className="text-slate-400 hover:text-slate-600 p-1 ml-3"
           >
-            ✕
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       )}
@@ -207,7 +209,7 @@ export default function OrdersPage() {
           </div>
         ) : (ordersData.items || []).length === 0 ? (
           <div className="p-12 text-center text-slate-500 text-[13px]">
-            <span className="text-3xl block mb-2">📋</span>
+            <ClipboardList className="w-10 h-10 mx-auto mb-2 text-slate-300" aria-hidden="true" />
             <p className="font-semibold text-slate-700">Không có đơn hàng nào phù hợp</p>
             <p className="text-[12px] text-slate-400 mt-1">Hãy thử đổi bộ lọc hoặc tìm kiếm mã đơn khác.</p>
           </div>

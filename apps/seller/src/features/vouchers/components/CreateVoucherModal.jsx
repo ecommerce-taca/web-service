@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
+import { X, Lock, CheckCircle2 } from 'lucide-react';
 
 export default function CreateVoucherModal({ isOpen, onClose, onCreate }) {
   const [name, setName] = useState('Ưu đãi khách mới');
@@ -50,9 +51,10 @@ export default function CreateVoucherModal({ isOpen, onClose, onCreate }) {
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors text-lg"
+            aria-label="Đóng"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
           >
-            ×
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -260,14 +262,15 @@ export default function CreateVoucherModal({ isOpen, onClose, onCreate }) {
 
             {/* Privacy notice banner */}
             <div className="mt-3 p-3 bg-amber-50/70 border border-amber-200 rounded-lg text-[12px] text-amber-900 font-medium flex items-center gap-2">
-              <span>🔒</span>
+              <Lock className="w-4 h-4 text-amber-700 shrink-0" aria-hidden="true" />
               <span>Chỉ người dùng được chọn mới nhìn thấy và áp dụng voucher.</span>
             </div>
           </div>
 
           {notification && (
-            <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-lg text-[#4F46E5] font-semibold text-center text-[12px] animate-in fade-in">
-              ✓ {notification}
+            <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-lg text-[#4F46E5] font-semibold text-center text-[12px] animate-in fade-in flex items-center justify-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-[#4F46E5]" aria-hidden="true" />
+              <span>{notification}</span>
             </div>
           )}
 

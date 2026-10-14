@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { Store } from 'lucide-react';
 
 /**
  * Tab 1: Thông tin gian hàng & Pháp lý (GET /seller/shop & PUT /seller/shop)
@@ -33,7 +34,7 @@ export default function ShopInfoTab({
           {logoUrl ? (
             <img src={logoUrl} alt={shopName} className="w-full h-full object-cover" />
           ) : (
-            <span>🍎</span>
+            <Store className="w-8 h-8 text-white" aria-hidden="true" />
           )}
         </div>
         <div className="space-y-1.5 flex-1">

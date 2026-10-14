@@ -1,3 +1,5 @@
+import { Camera, CheckCircle2 } from 'lucide-react';
+
 /**
  * Step 4: Vận chuyển, SLA & Thư viện ảnh sản phẩm
  */
@@ -8,7 +10,7 @@ export default function ShippingStep() {
         VẬN CHUYỂN & HÌNH ẢNH SẢN PHẨM
       </span>
       <div className="p-5 border-2 border-dashed border-slate-200 rounded-xl text-center space-y-2 bg-slate-50/50">
-        <span className="text-3xl block">📷</span>
+        <Camera className="w-10 h-10 mx-auto text-slate-400" aria-hidden="true" />
         <div className="text-[13px] font-semibold text-slate-700">
           Kéo thả hình ảnh bìa và thư viện sản phẩm vào đây
         </div>
@@ -18,7 +20,7 @@ export default function ShippingStep() {
       </div>
 
       <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-xl text-[12px] text-emerald-800 font-medium flex items-center gap-2">
-        <span>✓</span>
+        <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" aria-hidden="true" />
         <span>Không cần duyệt — sản phẩm hiển thị ngay sau khi người bán đăng bán.</span>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
+import { X, Download, FileSpreadsheet, UploadCloud, AlertTriangle } from 'lucide-react';
 import sellerProductApi from '../services/seller-product.api';
 
 export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
@@ -158,9 +159,10 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
           <button
             type="button"
             onClick={resetAll}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors text-xl font-bold cursor-pointer"
+            aria-label="Đóng"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
           >
-            ×
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -176,9 +178,10 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
               type="button"
               onClick={handleDownloadTemplate}
               disabled={downloadingTemplate}
-              className="px-3.5 py-1.5 bg-white border border-[#c7d2fe] hover:bg-[#eef2ff] text-[#4F46E5] font-bold text-[12px] rounded-lg transition-colors whitespace-nowrap cursor-pointer shrink-0 disabled:opacity-50"
+              className="px-3.5 py-1.5 bg-white border border-[#c7d2fe] hover:bg-[#eef2ff] text-[#4F46E5] font-bold text-[12px] rounded-lg transition-colors whitespace-nowrap cursor-pointer shrink-0 disabled:opacity-50 inline-flex items-center gap-1.5"
             >
-              {downloadingTemplate ? 'Đang tải...' : '📥 Tải file mẫu'}
+              <Download className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>{downloadingTemplate ? 'Đang tải...' : 'Tải file mẫu'}</span>
             </button>
           </div>
 
@@ -208,8 +211,8 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
 
                 {file ? (
                   <div className="space-y-2">
-                    <div className="w-12 h-12 mx-auto rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl">
-                      📊
+                    <div className="w-12 h-12 mx-auto rounded-full bg-emerald-100 flex items-center justify-center">
+                      <FileSpreadsheet className="w-6 h-6 text-emerald-600" aria-hidden="true" />
                     </div>
                     <div className="text-[14px] font-bold text-slate-900">{file.name}</div>
                     <div className="text-[12px] text-slate-500 font-mono">
@@ -218,8 +221,8 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <div className="w-12 h-12 mx-auto rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-xl">
-                      📄
+                    <div className="w-12 h-12 mx-auto rounded-full bg-slate-100 flex items-center justify-center">
+                      <UploadCloud className="w-6 h-6 text-slate-400" aria-hidden="true" />
                     </div>
                     <div className="text-[14px] font-bold text-slate-800">
                       Kéo thả tệp Excel vào đây, hoặc <span className="text-[#4F46E5] underline">chọn tệp từ máy tính</span>
@@ -232,8 +235,9 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
               </div>
 
               {error && (
-                <div className="mt-3 p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-[12px]">
-                  ⚠️ {error}
+                <div className="mt-3 p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-[12px] flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span>{error}</span>
                 </div>
               )}
             </div>
@@ -286,9 +290,10 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
                     <button
                       type="button"
                       onClick={handleDownloadResultReport}
-                      className="w-full py-2 bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 font-bold text-[12px] rounded-lg transition-colors cursor-pointer"
+                      className="w-full py-2 bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 font-bold text-[12px] rounded-lg transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
                     >
-                      ⚠️ Tải báo cáo chi tiết các dòng bị lỗi (.xlsx)
+                      <AlertTriangle className="w-4 h-4 text-rose-600" aria-hidden="true" />
+                      <span>Tải báo cáo chi tiết các dòng bị lỗi (.xlsx)</span>
                     </button>
                   )}
                 </div>

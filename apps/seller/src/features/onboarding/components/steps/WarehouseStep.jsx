@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { MapPin } from 'lucide-react';
 import {
   ALL_PROVINCES,
   getWardsByProvince,
@@ -177,7 +178,7 @@ export default function WarehouseStep({
 
       {/* Preview địa chỉ kho hàng */}
       <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-[12px] text-slate-700 flex items-start gap-2.5">
-        <span className="text-base text-[#4F46E5]">📍</span>
+        <MapPin className="w-4 h-4 text-[#4F46E5] shrink-0 mt-0.5" aria-hidden="true" />
         <div>
           <span className="font-bold">Địa chỉ lấy hàng hoàn chỉnh: </span>
           <span className="font-medium text-slate-900">

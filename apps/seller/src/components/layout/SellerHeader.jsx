@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import { Check, ExternalLink } from 'lucide-react';
 import { getSellerUser, signoutSeller } from '../../services/seller-auth.api';
 import SellerLoginModal from '../common/SellerLoginModal';
 
@@ -73,7 +74,7 @@ export default function SellerHeader({ shopName = 'Taca Apple Flagship Store', u
                   className="w-full text-left px-3 py-2 font-semibold text-slate-800 bg-indigo-50/50 flex items-center justify-between"
                 >
                   <span>{shopName}</span>
-                  <span className="text-[#4F46E5]">✓</span>
+                  <Check className="w-4 h-4 text-[#4F46E5]" aria-hidden="true" />
                 </button>
                 <Link
                   to={`${basePath}/onboarding`}
@@ -96,7 +97,7 @@ export default function SellerHeader({ shopName = 'Taca Apple Flagship Store', u
             className="text-[12px] font-medium text-slate-600 hover:text-[#4F46E5] flex items-center gap-1 transition-colors"
           >
             <span className="hidden md:inline">Xem cửa hàng</span>
-            <span className="text-[13px]">↗</span>
+            <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
           </a>
 
           <a

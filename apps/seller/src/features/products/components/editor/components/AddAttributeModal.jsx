@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
+import { X, Check } from 'lucide-react';
 
 /**
  * Overlay / Add SKU attribute Modal (Khớp Penpot)
@@ -42,9 +43,10 @@ export default function AddAttributeModal({ isOpen, onClose, onAddAttribute }) {
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 font-bold text-lg cursor-pointer"
+            aria-label="Đóng"
+            className="text-slate-400 hover:text-slate-700 cursor-pointer p-1"
           >
-            ×
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -125,17 +127,19 @@ export default function AddAttributeModal({ isOpen, onClose, onAddAttribute }) {
                 <button
                   type="button"
                   onClick={() => setNewAttrValues(newAttrValues.filter((_, i) => i !== idx))}
-                  className="text-slate-400 hover:text-rose-500 font-bold cursor-pointer"
+                  aria-label={`Xóa giá trị ${val}`}
+                  className="text-slate-400 hover:text-rose-500 cursor-pointer p-0.5"
                 >
-                  ×
+                  <X className="w-3 h-3" aria-hidden="true" />
                 </button>
               </span>
             ))}
           </div>
         </div>
 
-        <div className="text-[11px] text-slate-500">
-          ✓ SKU matrix sẽ tự tạo lại theo mọi tổ hợp thuộc tính.
+        <div className="text-[11px] text-slate-500 flex items-center gap-1">
+          <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-hidden="true" />
+          <span>SKU matrix sẽ tự tạo lại theo mọi tổ hợp thuộc tính.</span>
         </div>
 
         <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
