@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
-export default function AdminSidebar({ user, onSignOut, onOpen2FA }) {
+export default function AdminSidebar({ user, onSignOut, onOpen2FA, onClose }) {
   const location = useLocation();
 
   const isShell = location.pathname.startsWith('/admin');
@@ -33,13 +33,23 @@ export default function AdminSidebar({ user, onSignOut, onOpen2FA }) {
   return (
     <aside className="w-[260px] bg-[#0F172A] text-slate-300 flex flex-col shrink-0 min-h-screen border-r border-slate-800 select-none">
       {/* Brand Header */}
-      <div className="p-6 border-b border-slate-800/80">
+      <div className="p-6 border-b border-slate-800/80 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-[26px] font-black text-[#0A68FF] tracking-tight">taca</span>
           <span className="text-[10px] font-extrabold tracking-wider uppercase px-2 py-0.5 rounded bg-blue-950 text-[#38BDF8] border border-blue-800/50">
             ADMIN CONSOLE
           </span>
         </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="lg:hidden text-slate-400 hover:text-white p-1 text-xl font-bold cursor-pointer"
+            aria-label="Close Sidebar"
+          >
+            ×
+          </button>
+        )}
       </div>
 
       {/* Nav Section Label */}
@@ -55,6 +65,7 @@ export default function AdminSidebar({ user, onSignOut, onOpen2FA }) {
             <Link
               key={item.label}
               to={item.path}
+              onClick={() => onClose && onClose()}
               className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-150 ${
                 active
                   ? 'bg-[#0A68FF] text-white shadow-md shadow-blue-500/20'

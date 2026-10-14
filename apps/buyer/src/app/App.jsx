@@ -7,6 +7,7 @@ import { CartProvider } from '../features/cart/contexts/CartProvider';
 import { FavoritesProvider } from '../features/products/contexts/FavoritesProvider';
 import AuthModal from '../features/auth/components/AuthModal';
 import ScrollToTop from '../components/common/ScrollToTop';
+import { ErrorBoundary } from '@taca/ui-components';
 
 // Route-level Lazy Loading (AUD-03)
 const HomePage = lazy(() => import('../features/home/pages/HomePage'));
@@ -129,13 +130,15 @@ function App() {
     <AuthProvider>
       <CartProvider>
         <FavoritesProvider>
-          {inRouter ? (
-            <AppContent />
-          ) : (
-            <BrowserRouter>
+          <ErrorBoundary message="Không thể tải trang mua sắm. Vui lòng thử lại hoặc tải lại trang.">
+            {inRouter ? (
               <AppContent />
-            </BrowserRouter>
-          )}
+            ) : (
+              <BrowserRouter>
+                <AppContent />
+              </BrowserRouter>
+            )}
+          </ErrorBoundary>
         </FavoritesProvider>
       </CartProvider>
     </AuthProvider>

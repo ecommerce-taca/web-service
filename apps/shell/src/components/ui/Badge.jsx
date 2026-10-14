@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 
-const Badge = ({ children, variant, className }) => {
+const Badge = ({ children, variant = 'default', className = '' }) => {
   const baseClass = 'inline-flex items-center justify-center text-[10px] font-bold rounded-md border px-2 py-0.5 uppercase tracking-wide';
   
   let variantClass;
@@ -35,11 +35,6 @@ Badge.propTypes = {
   children: PropTypes.node.isRequired,
   variant: PropTypes.oneOf(['sale', 'warning', 'success', 'official', 'default']),
   className: PropTypes.string,
-};
-
-Badge.defaultProps = {
-  variant: 'default',
-  className: '',
 };
 
 export default Badge;

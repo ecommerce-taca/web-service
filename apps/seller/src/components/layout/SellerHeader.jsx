@@ -39,15 +39,15 @@ export default function SellerHeader({ shopName = 'Taca Apple Flagship Store', u
 
   return (
     <>
-      <header className="bg-white border-b border-slate-200 h-[68px] px-6 lg:px-12 flex items-center justify-between">
+      <header className="bg-white border-b border-slate-200 h-[68px] px-4 sm:px-6 lg:px-12 flex items-center justify-between gap-2 sm:gap-4">
         {/* Left branding & store selector */}
-        <div className="flex items-center gap-4">
-          <Link to={`${basePath}/`} className="flex items-center gap-2 group text-decoration-none">
-            <span className="text-[26px] font-extrabold tracking-tight text-[#4F46E5] font-sans">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+          <Link to={`${basePath}/`} className="flex items-center gap-2 group text-decoration-none shrink-0">
+            <span className="text-[22px] sm:text-[26px] font-extrabold tracking-tight text-[#4F46E5] font-sans">
               taca
             </span>
-            <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-indigo-50 text-[#4F46E5] border border-indigo-100">
-              SELLER CENTER
+            <span className="text-[9px] sm:text-[10px] font-bold tracking-wider uppercase px-1.5 sm:px-2 py-0.5 rounded bg-indigo-50 text-[#4F46E5] border border-indigo-100">
+              SELLER
             </span>
           </Link>
 
@@ -88,14 +88,14 @@ export default function SellerHeader({ shopName = 'Taca Apple Flagship Store', u
         </div>
 
         {/* Right navigation links & user info */}
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-2.5 sm:gap-5 shrink-0">
           <a
             href={isShell ? "/shop/shop_apple_001" : "http://localhost:5173/shop/shop_apple_001"}
             target="_blank"
             rel="noreferrer"
             className="text-[12px] font-medium text-slate-600 hover:text-[#4F46E5] flex items-center gap-1 transition-colors"
           >
-            <span>Xem cửa hàng</span>
+            <span className="hidden md:inline">Xem cửa hàng</span>
             <span className="text-[13px]">↗</span>
           </a>
 
@@ -103,7 +103,8 @@ export default function SellerHeader({ shopName = 'Taca Apple Flagship Store', u
             href={isShell ? "/" : "http://localhost:5173/"}
             className="text-[12px] font-medium text-slate-600 hover:text-[#4F46E5] flex items-center gap-1 transition-colors"
           >
-            <span>← Kênh người mua</span>
+            <span className="hidden sm:inline">← Kênh người mua</span>
+            <span className="sm:hidden text-[11px]">← Mua hàng</span>
           </a>
 
           {/* User Auth Info or Login Button */}

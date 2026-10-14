@@ -7,7 +7,7 @@ const BuyerLayout = () => {
     <div className="flex flex-col min-h-screen bg-taca-surface">
       <Header />
       <main className="flex-1 py-7">
-        <div className="max-w-[1440px] mx-auto px-[80px]">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-[80px]">
           <Outlet />
         </div>
       </main>

@@ -54,9 +54,4 @@ SortBar.propTypes = {
   totalCount: PropTypes.number,
 };
 
-SortBar.defaultProps = {
-  currentSort: 'popular',
-  totalCount: 0,
-};
-
 export default SortBar;

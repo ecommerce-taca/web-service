@@ -101,7 +101,7 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
     : [product.image || "https://placehold.co/400"];
 
   return (
-    <div className="bg-white p-6 rounded-[12px] border border-taca-border flex flex-col md:flex-row gap-8">
+    <div className="bg-white p-4 sm:p-6 rounded-[12px] border border-taca-border flex flex-col md:flex-row gap-6 md:gap-8">
       {/* Left: Gallery */}
       <div className="w-full md:w-[400px] flex-shrink-0 flex flex-col gap-4">
         <div className="w-full aspect-square bg-taca-surface rounded-[8px] flex items-center justify-center text-taca-text-muted overflow-hidden relative border border-slate-100">
@@ -145,7 +145,7 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
           <h1 className="text-[20px] md:text-[24px] font-bold text-taca-text-main inline align-middle">
             {product.name || product.title}
           </h1>
-          <div className="flex items-center gap-3 text-[14px] text-taca-text-muted mt-3">
+          <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap text-[13px] sm:text-[14px] text-taca-text-muted mt-3">
             <div className="flex items-center text-amber-500 text-[14px] font-bold gap-1">
               <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
               <span className="text-taca-text-main font-bold">{product.rating || 4.9}</span>
@@ -251,7 +251,7 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
         </div>
 
         {/* Actions */}
-        <div className="flex gap-4 mt-1 relative">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-1 relative">
           <Button 
             variant="outline" 
             className="flex-1 h-[48px] text-[15px] font-semibold rounded-[8px] border-2 border-taca-primary text-taca-primary bg-white hover:bg-indigo-50"
@@ -277,7 +277,7 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
           )}
         </div>
         
-        <div className="text-[12px] text-taca-text-muted flex items-center gap-6 pt-1">
+        <div className="text-[12px] text-taca-text-muted flex items-center gap-x-6 gap-y-2 flex-wrap pt-1">
           <span className="flex items-center gap-1"><Check className="w-3.5 h-3.5 text-emerald-600" /> Thanh toán an toàn</span>
           <span className="flex items-center gap-1"><Check className="w-3.5 h-3.5 text-emerald-600" /> Hoàn tiền nếu hàng giả</span>
           <span className="flex items-center gap-1"><Check className="w-3.5 h-3.5 text-emerald-600" /> Bảo hành 12 tháng</span>

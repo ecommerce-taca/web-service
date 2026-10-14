@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, useInRouterContext, Routes, Route, Navigate } from 'react-router-dom';
 import SellerLayout from '../components/layout/SellerLayout';
+import { ErrorBoundary } from '@taca/ui-components';
 
 // Route-level Lazy Loading (AUD-03)
 const DashboardPage = lazy(() => import('../features/dashboard/pages/DashboardPage'));
@@ -43,14 +44,15 @@ export default function App() {
   // useInRouterContext returns false when outside a Router, true when inside
   const inRouter = useInRouterContext();
 
-  if (inRouter) {
-    return <AppRoutes />;
-  }
-
-  // Standalone mode (direct visit on port 5175)
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+    <ErrorBoundary message="Đã xảy ra sự cố trong Kênh Người Bán. Vui lòng tải lại trang.">
+      {inRouter ? (
+        <AppRoutes />
+      ) : (
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      )}
+    </ErrorBoundary>
   );
 }

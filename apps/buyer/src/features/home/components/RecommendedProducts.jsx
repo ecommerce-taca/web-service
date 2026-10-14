@@ -17,21 +17,22 @@ const RecommendedProducts = () => {
   const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
-    let ignore = false;
-    productApi.getProducts({ size: 15 })
+    const controller = new AbortController();
+    productApi.getProducts({ size: 15 }, { signal: controller.signal })
       .then((res) => {
-        if (!ignore) {
-          const items = res?.data?.items || res?.data || [];
-          setProducts(items);
-        }
+        const items = res?.data?.items || res?.data || [];
+        setProducts(items);
       })
       .catch((err) => {
+        if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') return;
         console.error('Error loading home products:', err);
       })
       .finally(() => {
-        if (!ignore) setLoading(false);
+        setLoading(false);
       });
-    return () => { ignore = true; };
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   const filteredProducts = useMemo(() => {

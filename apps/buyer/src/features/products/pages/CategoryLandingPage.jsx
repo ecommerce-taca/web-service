@@ -13,6 +13,8 @@ import {
   Layers,
   ArrowRight,
   ShieldCheck,
+  SlidersHorizontal,
+  X,
 } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import FilterSidebar from '../../search/components/FilterSidebar';
@@ -127,6 +129,7 @@ const CategoryLandingPage = () => {
     };
   }, [categorySlug, activeChip]);
   
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const { isFavorite, toggleFavorite } = useFavorites();
 
   return (
@@ -155,7 +158,7 @@ const CategoryLandingPage = () => {
         {/* Main Content */}
         <div className="flex-1 flex flex-col gap-6 min-w-0 w-full">
           {/* Category Hero Banner */}
-          <div className={`w-full min-h-[220px] bg-gradient-to-r ${currentTheme.bgGradient} rounded-3xl p-8 flex flex-col sm:flex-row items-center justify-between overflow-hidden relative shadow-sm border border-white/10`}>
+          <div className={`w-full min-h-[220px] bg-gradient-to-r ${currentTheme.bgGradient} rounded-3xl p-5 sm:p-8 flex flex-col sm:flex-row items-center justify-between overflow-hidden relative shadow-sm border border-white/10`}>
             {/* Ambient blur glow */}
             <div className="absolute -top-16 -right-16 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-16 -left-16 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
@@ -238,11 +241,21 @@ const CategoryLandingPage = () => {
 
           {/* Section: Danh sách sản phẩm */}
           <div className="space-y-4">
-            {/* Header: Sắp xếp theo chip */}
+            {/* Header: Sắp xếp theo chip & Nút mở lọc trên mobile */}
             <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <span className="text-[15px] font-extrabold text-slate-900">
-                Sản phẩm trong ngành ({products.length})
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-[15px] font-extrabold text-slate-900">
+                  Sản phẩm trong ngành ({products.length})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileFilterOpen(true)}
+                  className="lg:hidden px-3 py-1.5 text-[12px] rounded-xl font-bold transition-all cursor-pointer flex items-center gap-1.5 bg-indigo-50 text-taca-primary hover:bg-indigo-100 border border-indigo-200"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>Bộ lọc</span>
+                </button>
+              </div>
               <div className="flex items-center gap-1.5 flex-wrap">
                 {CHIPS.map(chip => {
                   const ChipIcon = chip.icon;
@@ -267,7 +280,7 @@ const CategoryLandingPage = () => {
 
             {/* Product Grid */}
             {loading ? (
-              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-pulse">
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 animate-pulse">
                 {[...Array(8)].map((_, i) => (
                   <div key={i} className="bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col gap-3 shadow-2xs">
                     <div className="w-full aspect-square bg-slate-100 rounded-xl"></div>
@@ -367,6 +380,43 @@ const CategoryLandingPage = () => {
           
         </div>
       </div>
+
+      {/* Mobile Filter Drawer */}
+      {isMobileFilterOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          <div 
+            className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"
+            onClick={() => setIsMobileFilterOpen(false)}
+          />
+          <div className="relative ml-auto w-full max-w-xs bg-white h-full shadow-2xl p-5 overflow-y-auto flex flex-col z-10 animate-in slide-in-from-right duration-200">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+              <h3 className="text-[16px] font-bold text-slate-900 m-0 flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-taca-primary" />
+                <span>Bộ lọc tìm kiếm</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsMobileFilterOpen(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1">
+              <FilterSidebar selectedCategory={categorySlug || 'dien-thoai'} />
+            </div>
+            <div className="pt-4 border-t border-slate-100 mt-4">
+              <button
+                type="button"
+                onClick={() => setIsMobileFilterOpen(false)}
+                className="w-full py-2.5 rounded-xl bg-taca-primary text-white font-bold text-[13px] shadow-sm hover:bg-indigo-700 transition-colors cursor-pointer"
+              >
+                Xem kết quả
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

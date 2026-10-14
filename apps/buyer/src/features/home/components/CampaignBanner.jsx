@@ -1,10 +1,18 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
-const CampaignBanner = ({ brand, title, subtitle, ctaText, bgColor, textColor, image }) => {
+const CampaignBanner = ({
+  brand,
+  title,
+  subtitle,
+  ctaText = 'Xem sản phẩm',
+  bgColor,
+  textColor = '#FFFFFF',
+  image = '',
+}) => {
   return (
     <section
-      className="p-5 rounded-2xl flex items-center justify-between gap-4 w-[400px] h-[152px] overflow-hidden relative shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 group"
+      className="p-4 sm:p-5 rounded-2xl flex items-center justify-between gap-4 w-full lg:w-[400px] min-w-0 h-[152px] overflow-hidden relative shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 group"
       style={{ backgroundColor: bgColor, color: textColor }}
     >
       {/* Decorative gradient overlay */}
@@ -53,12 +61,6 @@ CampaignBanner.propTypes = {
   bgColor: PropTypes.string.isRequired,
   textColor: PropTypes.string,
   image: PropTypes.string,
-};
-
-CampaignBanner.defaultProps = {
-  textColor: '#FFFFFF',
-  ctaText: 'Xem sản phẩm',
-  image: '',
 };
 
 export default CampaignBanner;

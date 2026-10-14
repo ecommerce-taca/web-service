@@ -85,7 +85,7 @@ export default function CreateVoucherModal({ isOpen, onClose, onCreate }) {
           </div>
 
           {/* Type & Discount Amount */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
                 Loại giảm giá
@@ -114,7 +114,7 @@ export default function CreateVoucherModal({ isOpen, onClose, onCreate }) {
           </div>
 
           {/* Min order & Budget */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
                 Đơn tối thiểu

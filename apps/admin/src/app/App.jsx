@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, useInRouterContext, Routes, Route, Navigate } from 'react-router-dom';
 import AdminLayout from '../layouts/AdminLayout';
+import { ErrorBoundary } from '@taca/ui-components';
 
 // Route-level Lazy Loading (AUD-03)
 const AdminKycPage = lazy(() => import('../features/kyc/pages/AdminKycPage'));
@@ -36,14 +37,15 @@ function AppRoutes() {
 export default function App() {
   const inRouter = useInRouterContext();
 
-  if (inRouter) {
-    return <AppRoutes />;
-  }
-
-  // Standalone mode on port 5176
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+    <ErrorBoundary message="Đã xảy ra sự cố trong Cổng Quản Trị. Vui lòng thử lại hoặc tải lại trang.">
+      {inRouter ? (
+        <AppRoutes />
+      ) : (
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      )}
+    </ErrorBoundary>
   );
 }

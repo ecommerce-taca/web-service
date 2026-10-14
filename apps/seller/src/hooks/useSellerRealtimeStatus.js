@@ -11,10 +11,7 @@ export function useSellerRealtimeStatus() {
   const [notification, setNotification] = useState(null);
 
   useEffect(() => {
-    // Khởi động kết nối Realtime
-    sellerRealtimeService.connect();
-
-    // Đăng ký nhận thông báo từ Service
+    // Đăng ký nhận thông báo từ Service (tự động kết nối và ngắt kết nối khi unmount)
     const unsubscribe = sellerRealtimeService.subscribe((event) => {
       if (event.type === 'CONNECTION_OPEN') {
         setIsConnected(true);

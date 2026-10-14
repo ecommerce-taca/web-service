@@ -71,27 +71,27 @@ const HeroSection = () => {
       <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
 
       {/* Slide Content */}
-      <div className="relative z-10 h-full flex items-center justify-between px-10">
+      <div className="relative z-10 h-full flex items-center justify-between px-5 sm:px-10">
         {/* Left text column */}
-        <div className="max-w-[480px] space-y-3">
+        <div className="max-w-[480px] space-y-2.5 sm:space-y-3">
           <div className="inline-block">
             <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold tracking-wider uppercase shadow-xs ${slide.badgeBg}`}>
               {slide.tag}
             </span>
           </div>
 
-          <h1 className="text-white text-[30px] font-black leading-tight tracking-tight drop-shadow-sm">
+          <h1 className="text-white text-[22px] sm:text-[30px] font-black leading-tight tracking-tight drop-shadow-sm">
             {slide.title}
           </h1>
 
-          <p className="text-white/85 text-[13px] font-medium leading-relaxed drop-shadow-xs">
+          <p className="text-white/85 text-[12px] sm:text-[13px] font-medium leading-relaxed drop-shadow-xs line-clamp-2 sm:line-clamp-none">
             {slide.subtitle}
           </p>
 
           <div className="pt-2">
             <Link
               to={slide.url}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white text-slate-900 hover:bg-amber-300 font-extrabold text-[12px] shadow-md transition-all hover:scale-105 no-underline cursor-pointer group/btn"
+              className="inline-flex items-center gap-2 px-5 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-white text-slate-900 hover:bg-amber-300 font-extrabold text-[12px] shadow-md transition-all hover:scale-105 no-underline cursor-pointer group/btn"
             >
               <span>{slide.ctaText}</span>
               <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
@@ -130,7 +130,7 @@ const HeroSection = () => {
       </button>
 
       {/* Slide Indicators Dots */}
-      <div className="absolute bottom-4 left-10 flex items-center gap-2 z-20">
+      <div className="absolute bottom-4 left-5 sm:left-10 flex items-center gap-2 z-20">
         {SLIDES.map((s, idx) => (
           <button
             key={s.id}
