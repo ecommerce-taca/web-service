@@ -1,14 +1,32 @@
 import PropTypes from 'prop-types';
 
-const Input = ({ label, type, placeholder, value, onChange, disabled, error, className }) => {
+const Input = ({
+  id,
+  name,
+  label = '',
+  type = 'text',
+  placeholder = '',
+  value = undefined,
+  onChange,
+  disabled = false,
+  error = '',
+  className = '',
+}) => {
+  const inputId = id || name || (label ? `admin-input-${label.toLowerCase().replace(/[^a-z0-9]/g, '-')}` : undefined);
   const baseInputClass = 'text-[14px] bg-white border rounded-lg px-4 min-h-[40px] w-full outline-none transition-colors disabled:bg-surface disabled:text-muted disabled:cursor-not-allowed';
   const borderClass = error ? 'border-sale' : 'border-border focus:border-primary';
-  const inputClass = `${baseInputClass} ${borderClass} ${className || ''}`.trim();
+  const inputClass = `${baseInputClass} ${borderClass} ${className}`.trim();
 
   return (
     <div className="flex flex-col gap-1 w-full">
-      {label && <label className="text-[12px] font-bold text-main">{label}</label>}
+      {label && (
+        <label htmlFor={inputId} className="text-[12px] font-bold text-main">
+          {label}
+        </label>
+      )}
       <input
+        id={inputId}
+        name={name}
         type={type}
         className={inputClass}
         placeholder={placeholder}
@@ -22,6 +40,8 @@ const Input = ({ label, type, placeholder, value, onChange, disabled, error, cla
 };
 
 Input.propTypes = {
+  id: PropTypes.string,
+  name: PropTypes.string,
   label: PropTypes.string,
   type: PropTypes.string,
   placeholder: PropTypes.string,
@@ -30,16 +50,6 @@ Input.propTypes = {
   disabled: PropTypes.bool,
   error: PropTypes.string,
   className: PropTypes.string,
-};
-
-Input.defaultProps = {
-  label: '',
-  type: 'text',
-  placeholder: '',
-  value: undefined,
-  disabled: false,
-  error: '',
-  className: '',
 };
 
 export default Input;

@@ -159,10 +159,13 @@ export default function AdminKycPage() {
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[12px]">⌕</span>
               <input
+                id="admin-kyc-search"
+                name="adminKycSearch"
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Lọc tên shop, MST..."
+                aria-label="Lọc tên shop hoặc mã số thuế"
                 className="pl-7 pr-3 py-1.5 text-[12px] bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-[#0A68FF] w-48"
               />
             </div>

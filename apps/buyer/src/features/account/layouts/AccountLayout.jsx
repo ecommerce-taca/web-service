@@ -18,7 +18,7 @@ const AccountLayout = () => {
   return (
     <div className="bg-taca-surface min-h-screen pb-12">
       {/* Container */}
-      <div className="max-w-[1440px] mx-auto px-[80px]">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-[80px]">
         {/* Breadcrumb */}
         <div className="py-4 text-[13px] text-taca-text-muted">
           <Link to="/" className="hover:text-taca-primary transition-colors">Trang chủ</Link>
@@ -29,10 +29,10 @@ const AccountLayout = () => {
         </div>
 
         {/* Main Content Layout */}
-        <div className="flex gap-6 mt-4 items-start">
+        <div className="flex flex-col lg:flex-row gap-6 mt-4 items-start">
           <AccountSidebar />
           
-          <div className="flex-1 bg-white rounded-xl shadow-sm border border-taca-border min-h-[600px] overflow-hidden">
+          <div className="flex-1 w-full min-w-0 bg-white rounded-xl shadow-sm border border-taca-border min-h-[600px] overflow-hidden">
             <Outlet />
           </div>
         </div>

@@ -131,11 +131,14 @@ export default function AdminLoginModal({ isOpen, onClose, onSuccess }) {
 
               <form onSubmit={handleCredentialsSubmit} className="space-y-4 text-[13px]">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1.5 tracking-wider">
+                  <label htmlFor="admin-login-email" className="block text-[11px] font-bold text-slate-300 uppercase mb-1.5 tracking-wider">
                     Email Quản trị
                   </label>
                   <input
+                    id="admin-login-email"
+                    name="email"
                     type="email"
+                    autoComplete="username"
                     required
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
@@ -145,11 +148,14 @@ export default function AdminLoginModal({ isOpen, onClose, onSuccess }) {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1.5 tracking-wider">
+                  <label htmlFor="admin-login-password" className="block text-[11px] font-bold text-slate-300 uppercase mb-1.5 tracking-wider">
                     Mật khẩu Quản trị
                   </label>
                   <input
+                    id="admin-login-password"
+                    name="password"
                     type="password"
+                    autoComplete="current-password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -220,11 +226,14 @@ export default function AdminLoginModal({ isOpen, onClose, onSuccess }) {
 
               <form onSubmit={handleMfaSubmit} className="space-y-4 text-[13px]">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1.5 tracking-wider">
+                  <label htmlFor="admin-totp-code" className="block text-[11px] font-bold text-slate-300 uppercase mb-1.5 tracking-wider">
                     Mã xác thực 6 số (TOTP)
                   </label>
                   <input
+                    id="admin-totp-code"
+                    name="totpCode"
                     type="text"
+                    autoComplete="one-time-code"
                     maxLength={6}
                     autoFocus
                     required

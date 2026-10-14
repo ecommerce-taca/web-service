@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import PropTypes from 'prop-types';
 import { Modal, Button } from '@taca/ui-components';
 import { Plus, Check, MapPin } from 'lucide-react';
 import { formatPhoneDisplay } from '../../../../../../shared/utils/phone';
-import AddressFormModal from '../../account/components/AddressFormModal';
+
+const AddressFormModal = lazy(() => import('../../account/components/AddressFormModal'));
 
 export default function DeliveryAddressModal({ 
   isOpen, 
@@ -134,11 +135,15 @@ export default function DeliveryAddressModal({
       </Modal>
 
       {/* Modal tạo địa chỉ mới trên màn hình checkout */}
-      <AddressFormModal
-        isOpen={isAddAddressOpen}
-        onClose={() => setIsAddAddressOpen(false)}
-        onSuccess={handleAddressCreated}
-      />
+      {isAddAddressOpen && (
+        <Suspense fallback={null}>
+          <AddressFormModal
+            isOpen={isAddAddressOpen}
+            onClose={() => setIsAddAddressOpen(false)}
+            onSuccess={handleAddressCreated}
+          />
+        </Suspense>
+      )}
     </>
   );
 }

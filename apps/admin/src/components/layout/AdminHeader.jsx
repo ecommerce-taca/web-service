@@ -6,34 +6,50 @@ export default function AdminHeader({
   subtitle = 'Xác minh người bán, hồ sơ pháp lý và tín hiệu rủi ro.',
   onSearch,
   searchValue = '',
+  onToggleSidebar,
 }) {
   const [showNotifications, setShowNotifications] = useState(false);
 
   return (
-    <header className="h-[76px] bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0">
-      {/* Title & Subtitle */}
-      <div>
-        <h1 className="text-[20px] font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-          {title}
-        </h1>
-        <p className="text-[12px] text-slate-500 font-medium">
-          {subtitle}
-        </p>
+    <header className="h-[76px] bg-white border-b border-slate-200 px-4 sm:px-6 lg:px-8 flex items-center justify-between shrink-0 gap-3">
+      {/* Title & Subtitle + Mobile Toggle */}
+      <div className="flex items-center gap-3 min-w-0">
+        {onToggleSidebar && (
+          <button
+            type="button"
+            onClick={onToggleSidebar}
+            className="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer flex items-center justify-center shrink-0"
+            aria-label="Toggle navigation menu"
+          >
+            <span className="text-lg leading-none">☰</span>
+          </button>
+        )}
+        <div className="min-w-0">
+          <h1 className="text-[18px] sm:text-[20px] font-extrabold text-slate-900 tracking-tight flex items-center gap-2 truncate m-0">
+            {title}
+          </h1>
+          <p className="text-[11px] sm:text-[12px] text-slate-500 font-medium line-clamp-1 sm:line-clamp-none m-0">
+            {subtitle}
+          </p>
+        </div>
       </div>
 
       {/* Right Search & Controls */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 shrink-0">
         {/* Search Input */}
-        <div className="relative w-64">
+        <div className="relative w-36 sm:w-64">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[13px]">
             ⌕
           </span>
           <input
+            id="admin-global-search"
+            name="adminGlobalSearch"
             type="text"
             value={searchValue}
             onChange={(e) => onSearch && onSearch(e.target.value)}
-            placeholder="Tìm trong hệ thống"
-            className="w-full pl-8 pr-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[12px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0A68FF] focus:bg-white transition-colors"
+            placeholder="Tìm hệ thống..."
+            aria-label="Tìm kiếm trong hệ thống quản trị"
+            className="w-full pl-8 pr-3.5 py-1.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-[12px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0A68FF] focus:bg-white transition-colors"
           />
         </div>
 
@@ -41,7 +57,7 @@ export default function AdminHeader({
         <button
           type="button"
           onClick={() => alert('Quy tắc rủi ro hệ thống: Tự động gắn nhãn HIGH khi trùng IP, trùng thiết bị hoặc nghi vấn sao kê ngân hàng.')}
-          className="px-3.5 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-[12px] transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+          className="hidden md:flex px-3.5 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-[12px] transition-colors cursor-pointer items-center gap-1.5 shadow-2xs"
         >
           <span className="text-amber-500">⚠</span>
           <span>Quy tắc rủi ro</span>

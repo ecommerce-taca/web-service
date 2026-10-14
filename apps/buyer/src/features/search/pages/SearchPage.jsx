@@ -39,7 +39,7 @@ const SearchPage = () => {
 
   // Fetch products whenever search params change
   useEffect(() => {
-    let isMounted = true;
+    const controller = new AbortController();
     setLoading(true);
 
     const priceBounds = PRICE_MAP[priceRange] || {};
@@ -54,26 +54,25 @@ const SearchPage = () => {
       rating: minRating || undefined,
     };
 
-    productApi.getProducts(params)
+    productApi.getProducts(params, { signal: controller.signal })
       .then(res => {
-        if (isMounted) {
-          const items = res.data?.items || [];
-          setProducts(items);
-          setTotalCount(res.data?.total || items.length);
-          setLoading(false);
-        }
+        const items = res.data?.items || [];
+        setProducts(items);
+        setTotalCount(res.data?.total || items.length);
+        setLoading(false);
       })
       .catch(err => {
-        if (isMounted) {
-          console.error('Failed to search products', err);
-          setProducts([]);
-          setTotalCount(0);
-          setLoading(false);
+        if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') {
+          return; // Request was aborted on purpose, do not clear products or show error
         }
+        console.error('Failed to search products', err);
+        setProducts([]);
+        setTotalCount(0);
+        setLoading(false);
       });
 
     return () => {
-      isMounted = false;
+      controller.abort();
     };
   }, [query, category, brand, priceRange, sort, isOfficial, minRating]);
 

@@ -11,6 +11,7 @@ export default function AdminLayout() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [is2FASetupOpen, setIs2FASetupOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const handleAuthChange = () => {
@@ -37,13 +38,24 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC] text-slate-900 font-sans">
-      {/* Dark Sidebar matching Penpot */}
-      <AdminSidebar
-        user={adminUser}
-        onSignOut={handleSignOut}
-        onOpen2FA={() => setIs2FASetupOpen(true)}
-      />
+    <div className="flex min-h-screen bg-[#F8FAFC] text-slate-900 font-sans relative">
+      {/* Mobile Backdrop */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-xs lg:hidden transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Dark Sidebar matching Penpot (desktop static, mobile off-canvas drawer) */}
+      <div className={`fixed inset-y-0 left-0 z-50 lg:static lg:z-auto transition-transform duration-200 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <AdminSidebar
+          user={adminUser}
+          onSignOut={handleSignOut}
+          onOpen2FA={() => setIs2FASetupOpen(true)}
+          onClose={() => setIsSidebarOpen(false)}
+        />
+      </div>
 
       {/* Main Content Viewport */}
       <div className="flex-1 flex flex-col min-w-0">
@@ -52,9 +64,10 @@ export default function AdminLayout() {
           subtitle="Quản trị sàn, hồ sơ KYC, phân quyền tài khoản & kiểm toán an ninh."
           searchValue={searchValue}
           onSearch={setSearchValue}
+          onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
         />
 
-        <main className="flex-1 p-8 overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           <Outlet />
         </main>
       </div>

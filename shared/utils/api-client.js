@@ -73,8 +73,8 @@ apiClient.interceptors.response.use(
       const refreshToken = localStorage.getItem('taca_refresh_token');
       if (!refreshToken) {
         isRefreshing = false;
-        // Broadcast logout event so Context can pick it up
-        window.dispatchEvent(new Event('auth:logout'));
+        // Broadcast logout event so Context and other tabs can pick it up
+        broadcastAuthLogout();
         return Promise.reject(error);
       }
 
@@ -108,7 +108,7 @@ apiClient.interceptors.response.use(
           localStorage.removeItem('taca_access_token');
           localStorage.removeItem('taca_refresh_token');
           localStorage.removeItem('taca_user');
-          window.dispatchEvent(new Event('auth:logout'));
+          broadcastAuthLogout();
           reject(err);
         })
         .finally(() => {
@@ -120,6 +120,46 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+/**
+ * Phát tín hiệu đăng xuất đồng bộ trên cả cửa sổ hiện tại và toàn bộ các tab khác
+ */
+export const broadcastAuthLogout = () => {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event('auth:logout'));
+  if (typeof BroadcastChannel !== 'undefined') {
+    try {
+      const channel = new BroadcastChannel('taca_auth_channel');
+      channel.postMessage({ type: 'AUTH_LOGOUT' });
+      channel.close();
+    } catch {
+      // Fallback nếu trình duyệt chặn
+    }
+  }
+};
+
+// Lắng nghe sự kiện đăng xuất từ các tab khác (Cross-Tab Synchronization)
+if (typeof window !== 'undefined') {
+  if (typeof BroadcastChannel !== 'undefined') {
+    try {
+      const authChannel = new BroadcastChannel('taca_auth_channel');
+      authChannel.onmessage = (event) => {
+        if (event.data?.type === 'AUTH_LOGOUT') {
+          window.dispatchEvent(new Event('auth:logout'));
+        }
+      };
+    } catch {
+      // Ignore
+    }
+  }
+
+  // Fallback qua storage event khi token bị xóa từ tab khác
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'taca_access_token' && !e.newValue) {
+      window.dispatchEvent(new Event('auth:logout'));
+    }
+  });
+}
 
 export const isMockMode = () => {
   const flag = import.meta.env.VITE_USE_MOCK;

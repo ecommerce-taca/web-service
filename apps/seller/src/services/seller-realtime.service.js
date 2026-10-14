@@ -215,8 +215,16 @@ class SellerRealtimeService {
    */
   subscribe(listener) {
     this.listeners.add(listener);
+    // Tự động kết nối khi có listener đầu tiên
+    if (this.listeners.size === 1) {
+      this.connect();
+    }
     return () => {
       this.listeners.delete(listener);
+      // Dừng polling và ngắt kết nối sạch sẽ khi không còn component nào lắng nghe
+      if (this.listeners.size === 0) {
+        this.disconnect();
+      }
     };
   }
 

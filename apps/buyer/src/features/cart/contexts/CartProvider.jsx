@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { CartContext } from './CartContext';
+import { cartApi } from '../services/cart.api';
 
 const STORAGE_KEY = 'taca_cart_items';
 
@@ -47,6 +48,18 @@ const getInitialCart = () => {
 export const CartProvider = ({ children }) => {
   const [items, setItems] = useState(getInitialCart);
   const [selectedIds, setSelectedIds] = useState(() => items.map(i => i.id));
+
+  // Đồng bộ giỏ hàng từ Backend Redis khi khởi động (nếu đã đăng nhập)
+  useEffect(() => {
+    cartApi.getCart().then((res) => {
+      const remoteItems = res?.data?.items;
+      if (Array.isArray(remoteItems) && remoteItems.length > 0) {
+        setItems(remoteItems);
+      }
+    }).catch(() => {
+      // Giữ giỏ hàng local nếu có lỗi mạng
+    });
+  }, []);
 
   // Sync to localStorage whenever items change
   useEffect(() => {
@@ -97,24 +110,36 @@ export const CartProvider = ({ children }) => {
 
     // Auto select newly added item
     setSelectedIds(prev => (prev.includes(itemId) ? prev : [...prev, itemId]));
+
+    // Đồng bộ lên Redis Backend
+    cartApi.addItem({
+      productId: product.id,
+      sku_id: sku,
+      quantity,
+    }).catch(() => {});
+
     return true;
   }, []);
 
   const updateQuantity = useCallback((itemId, newQuantity) => {
     if (newQuantity < 1) {
       setItems(prev => prev.filter(i => i.id !== itemId));
+      cartApi.removeItem(itemId).catch(() => {});
     } else {
       setItems(prev => prev.map(i => i.id === itemId ? { ...i, quantity: newQuantity } : i));
+      cartApi.updateItemQuantity(itemId, newQuantity).catch(() => {});
     }
   }, []);
 
   const removeFromCart = useCallback((itemId) => {
     setItems(prev => prev.filter(i => i.id !== itemId));
+    cartApi.removeItem(itemId).catch(() => {});
   }, []);
 
   const clearCart = useCallback(() => {
     setItems([]);
     setSelectedIds([]);
+    cartApi.clearCart().catch(() => {});
   }, []);
 
   const toggleSelectItem = useCallback((itemId) => {

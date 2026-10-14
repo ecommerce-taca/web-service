@@ -1,16 +1,31 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Button, Input } from '@taca/ui-components';
 import AddressCard from '../components/AddressCard';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { authApi } from '../../auth/services/auth.api';
 import PhoneVerificationModal from '../../auth/components/PhoneVerificationModal';
 import { addressApi } from '../services/address.api';
-import AddressFormModal from '../components/AddressFormModal';
-import ChangePasswordModal from '../components/ChangePasswordModal';
 import { getAuthErrorMessage } from '../../auth/utils/authError';
 import { formatPhoneDisplay, toBackendPhone, isValidVietnamesePhone } from '../../../../../../shared/utils/phone';
-import { formatAddressSummary } from '../services/location.api';
 import PropTypes from 'prop-types';
+
+const AddressFormModal = lazy(() => import('../components/AddressFormModal'));
+const ChangePasswordModal = lazy(() => import('../components/ChangePasswordModal'));
+
+const formatAddressSummary = (address) => {
+  if (!address) return '';
+  if (address.detail_address) return address.detail_address;
+  return [
+    address.line1,
+    address.line2,
+    address.ward,
+    address.district,
+    address.province,
+    address.country_code === 'VN' ? 'Việt Nam' : (address.country || 'Việt Nam'),
+  ]
+    .filter(Boolean)
+    .join(', ');
+};
 
 const DateInput = ({ value, onChange }) => {
   const [day, setDay] = useState('');
@@ -383,12 +398,12 @@ const ProfilePage = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-6 md:p-8 flex-1">
-        <h1 className="text-[20px] font-bold text-taca-text-main mb-6">Hồ sơ & địa chỉ</h1>
+      <div className="p-4 sm:p-6 md:p-8 flex-1">
+        <h1 className="text-[18px] sm:text-[20px] font-bold text-taca-text-main mb-6">Hồ sơ & địa chỉ</h1>
         
         {/* Profile Info Section */}
         <section className="mb-10">
-          <h2 className="text-[16px] font-bold text-taca-text-main mb-6">Thông tin tài khoản</h2>
+          <h2 className="text-[15px] sm:text-[16px] font-bold text-taca-text-main mb-6">Thông tin tài khoản</h2>
           
           {message && (
             <div className="bg-green-50 text-green-600 p-3 text-[14px] rounded-lg font-medium border border-green-200 mb-6 max-w-[500px]">
@@ -402,9 +417,9 @@ const ProfilePage = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5 max-w-[500px]">
-            <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-              <label className="text-[14px] text-taca-text-muted">Họ và tên</label>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 sm:gap-5 max-w-[500px]">
+            <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] items-start sm:items-center gap-1.5 sm:gap-4">
+              <label className="text-[14px] text-taca-text-muted font-medium sm:font-normal">Họ và tên</label>
               <Input 
                 name="full_name"
                 value={formData.full_name}
@@ -414,8 +429,8 @@ const ProfilePage = () => {
               />
             </div>
             
-            <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-              <label className="text-[14px] text-taca-text-muted">Email</label>
+            <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] items-start sm:items-center gap-1.5 sm:gap-4">
+              <label className="text-[14px] text-taca-text-muted font-medium sm:font-normal">Email</label>
               <Input 
                 name="email"
                 type="email"
@@ -426,23 +441,23 @@ const ProfilePage = () => {
               />
             </div>
             
-            <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-              <label className="text-[14px] text-taca-text-muted">Số điện thoại</label>
-              <div className="flex items-center gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] items-start sm:items-center gap-1.5 sm:gap-4">
+              <label className="text-[14px] text-taca-text-muted font-medium sm:font-normal">Số điện thoại</label>
+              <div className="flex items-center gap-2 sm:gap-3 w-full">
                 <Input 
                   name="phone"
                   type="tel"
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="Nhập số điện thoại"
-                  className="!rounded-lg flex-1"
+                  className="!rounded-lg flex-1 min-w-0"
                 />
                 {needsPhoneVerification && (
                   <Button 
                     type="button" 
                     variant="secondary"
                     onClick={() => setPhoneModalOpen(true)}
-                    className="whitespace-nowrap !py-2 !px-3 text-[13px] !rounded-lg text-taca-primary border-taca-primary"
+                    className="whitespace-nowrap !py-2 !px-3 text-[12px] sm:text-[13px] !rounded-lg text-taca-primary border-taca-primary shrink-0"
                   >
                     Xác thực ngay
                   </Button>
@@ -450,16 +465,16 @@ const ProfilePage = () => {
               </div>
             </div>
             
-            <div className="grid grid-cols-[120px_1fr] items-start gap-4">
-              <label className="text-[14px] text-taca-text-muted mt-2.5">Ngày sinh</label>
+            <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] items-start gap-1.5 sm:gap-4">
+              <label className="text-[14px] text-taca-text-muted font-medium sm:font-normal mt-0 sm:mt-2.5">Ngày sinh</label>
               <DateInput 
                 value={formData.date_of_birth}
                 onChange={(val) => setFormData(prev => ({...prev, date_of_birth: val}))}
               />
             </div>
 
-            <div className="grid grid-cols-[120px_1fr] items-center gap-4 mt-2">
-              <div className="col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] items-center gap-4 mt-2">
+              <div className="sm:col-span-2">
                 {needsPhoneVerification && (
                   <p className="text-taca-sale text-[13px] mb-3">
                     * Vui lòng nhấn "Xác thực ngay" số điện thoại mới trước khi lưu thay đổi.
@@ -468,7 +483,7 @@ const ProfilePage = () => {
                 <Button 
                   type="submit" 
                   disabled={loading || needsVerification} 
-                  className={`w-full md:w-auto px-8 !rounded-lg h-11 text-[15px] ${needsVerification ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full sm:w-auto px-8 !rounded-lg h-11 text-[15px] ${needsVerification ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
                 </Button>
@@ -542,20 +557,28 @@ const ProfilePage = () => {
         phone={toBackendPhone(formData.phone)}
         onVerificationSuccess={handlePhoneVerificationSuccess}
       />
-      <AddressFormModal 
-        isOpen={isAddressModalOpen}
-        onClose={() => setIsAddressModalOpen(false)}
-        addressData={selectedAddress}
-        onSuccess={fetchAddresses}
-      />
-      <ChangePasswordModal
-        isOpen={isPasswordModalOpen}
-        onClose={() => setIsPasswordModalOpen(false)}
-        onSuccess={() => {
-          setMessage('Đổi mật khẩu tài khoản thành công!');
-          setTimeout(() => setMessage(''), 4000);
-        }}
-      />
+      {isAddressModalOpen && (
+        <Suspense fallback={null}>
+          <AddressFormModal 
+            isOpen={isAddressModalOpen}
+            onClose={() => setIsAddressModalOpen(false)}
+            addressData={selectedAddress}
+            onSuccess={fetchAddresses}
+          />
+        </Suspense>
+      )}
+      {isPasswordModalOpen && (
+        <Suspense fallback={null}>
+          <ChangePasswordModal
+            isOpen={isPasswordModalOpen}
+            onClose={() => setIsPasswordModalOpen(false)}
+            onSuccess={() => {
+              setMessage('Đổi mật khẩu tài khoản thành công!');
+              setTimeout(() => setMessage(''), 4000);
+            }}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };

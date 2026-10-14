@@ -29,7 +29,7 @@ const BENEFITS = [
 
 const BenefitsBar = () => {
   return (
-    <div className="bg-white rounded-2xl py-4 px-6 border border-slate-200/80 shadow-xs grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="bg-white rounded-2xl py-3.5 sm:py-4 px-4 sm:px-6 border border-slate-200/80 shadow-xs grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
       {BENEFITS.map((b, i) => {
         const IconComponent = b.icon;
         return (

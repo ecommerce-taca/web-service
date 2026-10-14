@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   getOnboardingProgress,
@@ -15,19 +15,16 @@ import {
   VIETNAM_BANK_CATALOG,
 } from '../../../services/seller-shop.api';
 import { formatPhoneDisplay, isValidVietnamesePhone } from '../../../../../../shared/utils/phone';
-import {
-  getWardsByProvince,
-  findProvinceByName,
-  findWardByName,
-} from '../../../../../../shared/utils/location';
 
 // Subcomponents
 import OnboardingStepper from '../components/OnboardingStepper';
 import OnboardingAlerts from '../components/OnboardingAlerts';
-import ProfileStep from '../components/steps/ProfileStep';
-import KycStep from '../components/steps/KycStep';
-import WarehouseStep from '../components/steps/WarehouseStep';
-import BankStep from '../components/steps/BankStep';
+
+// Lazy-loaded step components to optimize chunk size and isolate address data
+const ProfileStep = lazy(() => import('../components/steps/ProfileStep'));
+const KycStep = lazy(() => import('../components/steps/KycStep'));
+const WarehouseStep = lazy(() => import('../components/steps/WarehouseStep'));
+const BankStep = lazy(() => import('../components/steps/BankStep'));
 import { useSellerRealtimeStatus } from '../../../hooks/useSellerRealtimeStatus';
 
 export default function OnboardingPage() {
@@ -146,26 +143,9 @@ export default function OnboardingPage() {
           cod_enabled: ws.cod_enabled !== false,
         });
 
-        // Đồng bộ mã Tỉnh / Thành phố
-        let pCode = ws.province_code || '';
-        if (!pCode && ws.province) {
-          const matchedP = findProvinceByName(ws.province);
-          if (matchedP) pCode = matchedP.code;
-        }
-        setSelectedProvinceCode(pCode);
-
-        // Nạp danh sách Phường / Xã tương ứng
-        if (pCode) {
-          const wList = getWardsByProvince(pCode);
-          setWards(wList);
-
-          let wCode = ws.ward_code || '';
-          if (!wCode && ws.ward) {
-            const matchedW = findWardByName(pCode, ws.ward);
-            if (matchedW) wCode = matchedW.code;
-          }
-          setSelectedWardCode(wCode);
-        }
+        // Đồng bộ mã Tỉnh / Phường (nếu backend trả về trực tiếp; WarehouseStep sẽ tự động phân giải nếu chỉ có tên)
+        setSelectedProvinceCode(ws.province_code || '');
+        setSelectedWardCode(ws.ward_code || '');
       }
 
       if (shop.bank_summary) {
@@ -600,65 +580,67 @@ export default function OnboardingPage() {
 
       {/* STEP CONTENT PANELS */}
       <div className="bg-white rounded-xl border border-slate-200 p-8 shadow-xs">
-        {currentStep === 'PROFILE' && (
-          <ProfileStep
-            profileForm={profileForm}
-            setProfileForm={setProfileForm}
-            onSaveProfile={handleSaveProfile}
-            saving={saving}
-          />
-        )}
+        <Suspense fallback={<div className="py-12 text-center text-slate-400 text-sm">Đang tải biểu mẫu...</div>}>
+          {currentStep === 'PROFILE' && (
+            <ProfileStep
+              profileForm={profileForm}
+              setProfileForm={setProfileForm}
+              onSaveProfile={handleSaveProfile}
+              saving={saving}
+            />
+          )}
 
-        {currentStep === 'KYC' && (
-          <KycStep
-            kycStatus={kycStatus}
-            kycDocs={kycDocs}
-            newDocType={newDocType}
-            setNewDocType={setNewDocType}
-            uploadingDoc={uploadingDoc}
-            saving={saving}
-            hasBusinessReg={hasBusinessReg}
-            hasIdFront={hasIdFront}
-            hasIdBack={hasIdBack}
-            isKycComplete={isKycComplete}
-            onUploadKycDoc={handleUploadKycDoc}
-            onDeleteKycDoc={handleDeleteKycDoc}
-            onBackToProfile={() => setCurrentStep('PROFILE')}
-            onContinueToWarehouse={handleContinueToWarehouse}
-          />
-        )}
+          {currentStep === 'KYC' && (
+            <KycStep
+              kycStatus={kycStatus}
+              kycDocs={kycDocs}
+              newDocType={newDocType}
+              setNewDocType={setNewDocType}
+              uploadingDoc={uploadingDoc}
+              saving={saving}
+              hasBusinessReg={hasBusinessReg}
+              hasIdFront={hasIdFront}
+              hasIdBack={hasIdBack}
+              isKycComplete={isKycComplete}
+              onUploadKycDoc={handleUploadKycDoc}
+              onDeleteKycDoc={handleDeleteKycDoc}
+              onBackToProfile={() => setCurrentStep('PROFILE')}
+              onContinueToWarehouse={handleContinueToWarehouse}
+            />
+          )}
 
-        {currentStep === 'WAREHOUSE' && (
-          <WarehouseStep
-            warehouseForm={warehouseForm}
-            setWarehouseForm={setWarehouseForm}
-            selectedProvinceCode={selectedProvinceCode}
-            setSelectedProvinceCode={setSelectedProvinceCode}
-            selectedWardCode={selectedWardCode}
-            setSelectedWardCode={setSelectedWardCode}
-            wards={wards}
-            setWards={setWards}
-            saving={saving}
-            onSaveWarehouse={handleSaveWarehouse}
-            onBackToKyc={() => setCurrentStep('KYC')}
-          />
-        )}
+          {currentStep === 'WAREHOUSE' && (
+            <WarehouseStep
+              warehouseForm={warehouseForm}
+              setWarehouseForm={setWarehouseForm}
+              selectedProvinceCode={selectedProvinceCode}
+              setSelectedProvinceCode={setSelectedProvinceCode}
+              selectedWardCode={selectedWardCode}
+              setSelectedWardCode={setSelectedWardCode}
+              wards={wards}
+              setWards={setWards}
+              saving={saving}
+              onSaveWarehouse={handleSaveWarehouse}
+              onBackToKyc={() => setCurrentStep('KYC')}
+            />
+          )}
 
-        {currentStep === 'BANK' && (
-          <BankStep
-            bankForm={bankForm}
-            setBankForm={setBankForm}
-            bankSummary={bankSummary}
-            saving={saving}
-            kycStatus={kycStatus}
-            profileForm={profileForm}
-            isKycComplete={isKycComplete}
-            warehouseForm={warehouseForm}
-            onSaveBank={handleSaveBank}
-            onBackToWarehouse={() => setCurrentStep('WAREHOUSE')}
-            onSubmitKyc={handleSubmitKyc}
-          />
-        )}
+          {currentStep === 'BANK' && (
+            <BankStep
+              bankForm={bankForm}
+              setBankForm={setBankForm}
+              bankSummary={bankSummary}
+              saving={saving}
+              kycStatus={kycStatus}
+              profileForm={profileForm}
+              isKycComplete={isKycComplete}
+              warehouseForm={warehouseForm}
+              onSaveBank={handleSaveBank}
+              onBackToWarehouse={() => setCurrentStep('WAREHOUSE')}
+              onSubmitKyc={handleSubmitKyc}
+            />
+          )}
+        </Suspense>
       </div>
     </div>
   );

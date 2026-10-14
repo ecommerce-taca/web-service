@@ -1,9 +1,12 @@
+import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
   ALL_PROVINCES,
   getWardsByProvince,
   findProvinceByCode,
   findWardByCode,
+  findProvinceByName,
+  findWardByName,
 } from '../../../../../../../shared/utils/location';
 
 /**
@@ -22,6 +25,24 @@ export default function WarehouseStep({
   onSaveWarehouse,
   onBackToKyc
 }) {
+  // Tự động phân giải mã Tỉnh/Xã theo tên nếu chưa có mã
+  useEffect(() => {
+    if (!selectedProvinceCode && warehouseForm.province) {
+      const matchedP = findProvinceByName(warehouseForm.province);
+      if (matchedP) {
+        setSelectedProvinceCode(matchedP.code);
+        const wList = getWardsByProvince(matchedP.code);
+        setWards(wList);
+
+        if (!selectedWardCode && warehouseForm.ward) {
+          const matchedW = findWardByName(matchedP.code, warehouseForm.ward);
+          if (matchedW) {
+            setSelectedWardCode(matchedW.code);
+          }
+        }
+      }
+    }
+  }, [warehouseForm.province, warehouseForm.ward, selectedProvinceCode, selectedWardCode, setSelectedProvinceCode, setSelectedWardCode, setWards]);
   return (
     <form onSubmit={onSaveWarehouse} className="space-y-6 text-[13px] max-w-3xl">
       <div>

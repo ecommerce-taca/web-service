@@ -2,7 +2,14 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Package, Flame } from 'lucide-react';
 
-const FlashProductCard = ({ id, name, price, discount, image, soldPercentage }) => {
+const FlashProductCard = ({
+  id = 1,
+  name,
+  price,
+  discount,
+  image = '',
+  soldPercentage = 0,
+}) => {
   const originalPrice = Math.round(price / (1 - discount / 100));
 
   return (
@@ -76,12 +83,6 @@ FlashProductCard.propTypes = {
   discount: PropTypes.number.isRequired,
   image: PropTypes.string,
   soldPercentage: PropTypes.number,
-};
-
-FlashProductCard.defaultProps = {
-  id: 1,
-  image: '',
-  soldPercentage: 0,
 };
 
 export default FlashProductCard;

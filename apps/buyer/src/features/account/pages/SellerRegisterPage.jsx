@@ -187,7 +187,7 @@ export default function SellerRegisterPage() {
   if (registrationStatus.hasShop && registrationStatus.kycStatus === 'DRAFT') {
     const shop = registrationStatus.shop;
     return (
-      <div className="p-8 space-y-6">
+      <div className="p-4 sm:p-6 md:p-8 space-y-6">
         <div className="p-6 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-4 text-center sm:text-left">
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-white border border-indigo-200 flex items-center justify-center text-indigo-600 shadow-xs shrink-0">
@@ -242,7 +242,7 @@ export default function SellerRegisterPage() {
   if (registrationStatus.hasShop && registrationStatus.kycStatus === 'PENDING') {
     const shop = registrationStatus.shop;
     return (
-      <div className="p-8 space-y-6">
+      <div className="p-4 sm:p-6 md:p-8 space-y-6">
         <div className="p-6 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-4 text-center sm:text-left">
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-white border border-amber-200 flex items-center justify-center text-2xl shadow-xs shrink-0">
@@ -283,7 +283,7 @@ export default function SellerRegisterPage() {
     const shop = registrationStatus.shop;
     const isNeedsInfo = registrationStatus.kycStatus === 'NEEDS_INFO';
     return (
-      <div className="p-8 space-y-6">
+      <div className="p-4 sm:p-6 md:p-8 space-y-6">
         <div className={`p-6 rounded-2xl border space-y-4 text-center sm:text-left ${
           isNeedsInfo ? 'bg-amber-50/70 border-amber-200' : 'bg-rose-50/70 border-rose-200'
         }`}>
@@ -375,7 +375,7 @@ export default function SellerRegisterPage() {
 
   // 5. Form đăng ký mới (chưa có shop hoặc nộp lại)
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6">
       <div className="border-b border-slate-100 pb-4">
         <h2 className="text-[20px] font-extrabold text-slate-900 tracking-tight">
           Đăng ký trở thành Người Bán (Kênh Người Bán)

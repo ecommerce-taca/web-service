@@ -1,5 +1,4 @@
 import apiClient from '../../../../../../shared/utils/api-client';
-import { ALL_PROVINCES, getLocalWardsByProvince } from './location.api';
 
 const isMockMode = () => {
   if (typeof window !== 'undefined') {
@@ -10,17 +9,26 @@ const isMockMode = () => {
   return import.meta.env.VITE_USE_MOCK === 'true';
 };
 
-const resolveMockLocationNames = (provinceCode, wardCode) => {
-  const normProv = String(provinceCode || '').padStart(2, '0');
-  const normWard = String(wardCode || '').padStart(5, '0');
-  const prov = ALL_PROVINCES.find((p) => p.code === normProv);
-  const wards = getLocalWardsByProvince(normProv);
-  const ward = wards.find((w) => w.code === normWard);
-  return {
-    province: prov?.name || 'Việt Nam',
-    district: null,
-    ward: ward?.name || ''
-  };
+const resolveMockLocationNames = async (provinceCode, wardCode) => {
+  try {
+    const { ALL_PROVINCES, getLocalWardsByProvince } = await import('./location.api');
+    const normProv = String(provinceCode || '').padStart(2, '0');
+    const normWard = String(wardCode || '').padStart(5, '0');
+    const prov = ALL_PROVINCES.find((p) => p.code === normProv);
+    const wards = getLocalWardsByProvince(normProv);
+    const ward = wards.find((w) => w.code === normWard);
+    return {
+      province: prov?.name || 'Việt Nam',
+      district: null,
+      ward: ward?.name || ''
+    };
+  } catch {
+    return {
+      province: 'Việt Nam',
+      district: null,
+      ward: ''
+    };
+  }
 };
 
 const getStoredMockAddresses = () => {
@@ -106,7 +114,7 @@ export const addressApi = {
       if (data.is_default) {
         addresses.forEach(a => { a.is_default = false; });
       }
-      const names = resolveMockLocationNames(data.province_code, data.ward_code);
+      const names = await resolveMockLocationNames(data.province_code, data.ward_code);
       const newAddress = {
         id: 'addr_' + Date.now(),
         recipient: data.recipient,
@@ -144,7 +152,7 @@ export const addressApi = {
         if (data.is_default) {
           addresses.forEach(a => { a.is_default = false; });
         }
-        const names = resolveMockLocationNames(data.province_code, data.ward_code);
+        const names = await resolveMockLocationNames(data.province_code, data.ward_code);
         addresses[idx] = {
           ...addresses[idx],
           recipient: data.recipient,

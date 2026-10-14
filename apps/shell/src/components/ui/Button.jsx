@@ -1,6 +1,13 @@
 import PropTypes from 'prop-types';
 
-const Button = ({ children, variant, type, onClick, disabled, className }) => {
+const Button = ({
+  children,
+  variant = 'primary',
+  type = 'button',
+  onClick = undefined,
+  disabled = false,
+  className = '',
+}) => {
   const baseClass = 'inline-flex items-center justify-center text-[12px] font-bold rounded-lg border px-4 min-h-[40px] transition-all duration-200';
   const disabledClass = 'disabled:opacity-50 disabled:cursor-not-allowed';
   
@@ -40,14 +47,6 @@ Button.propTypes = {
   onClick: PropTypes.func,
   disabled: PropTypes.bool,
   className: PropTypes.string,
-};
-
-Button.defaultProps = {
-  variant: 'primary',
-  type: 'button',
-  onClick: undefined,
-  disabled: false,
-  className: '',
 };
 
 export default Button;

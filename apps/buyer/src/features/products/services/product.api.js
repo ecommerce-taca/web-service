@@ -587,10 +587,14 @@ export const productApi = {
    * Lấy danh sách sản phẩm có bộ lọc, sắp xếp, phân trang và batch hydration
    * @param {Object} params - { q, category_id, category, shop_id, min_price, max_price, rating, sort, page, size, product_ids }
    */
-  getProducts: async (params = {}) => {
+  getProducts: async (params = {}, options = {}) => {
+    const signal = options.signal || params.signal;
+
     // 1. Chế độ LIVE Backend (dành cho Tester)
     if (!isMockMode()) {
       const normalizedParams = { ...params };
+      delete normalizedParams.signal;
+
       if (Array.isArray(params.product_ids)) {
         normalizedParams.product_ids = params.product_ids.join(',');
       } else if (Array.isArray(params.productIds)) {
@@ -612,11 +616,19 @@ export const productApi = {
         normalizedParams.max_price = params.maxPrice;
         delete normalizedParams.maxPrice;
       }
-      return apiClient.get('/products', { params: normalizedParams });
+      return apiClient.get('/products', { params: normalizedParams, signal });
     }
 
     // 2. Chế độ Mock Catalog (giả lập delay nhẹ 150ms để kiểm tra loading state)
-    await new Promise(res => setTimeout(res, 150));
+    await new Promise((res, rej) => {
+      const timer = setTimeout(res, 150);
+      if (signal) {
+        signal.addEventListener('abort', () => {
+          clearTimeout(timer);
+          rej(new DOMException('Aborted', 'AbortError'));
+        });
+      }
+    });
 
     let result = [...PRODUCTS_CATALOG];
 
