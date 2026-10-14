@@ -156,6 +156,37 @@ export const orderApi = {
   },
 
   /**
+   * Tính toán trước đơn hàng và kiểm tra cảnh báo tồn kho/giá: POST /checkout/preview
+   * Hợp đồng order-commerce-service spec §3.4
+   * @param {Object} previewPayload - { cart_id, selected_item_ids, address_id, voucher_codes }
+   */
+  previewCheckout: async (previewPayload) => {
+    if (!isMockMode()) {
+      try {
+        const response = await apiClient.post('/checkout/preview', previewPayload);
+        const data = response?.data?.data || response?.data;
+        if (data) {
+          return { data: { data } };
+        }
+      } catch (err) {
+        console.warn('API Gateway POST /checkout/preview failed, using local preview calculation', err);
+      }
+    }
+
+    return {
+      data: {
+        data: {
+          subtotal: previewPayload.subtotal || 0,
+          shipping_fee: previewPayload.shipping_fee || 0,
+          discount: previewPayload.discount || 0,
+          grand_total: previewPayload.total || 0,
+          warnings: []
+        }
+      }
+    };
+  },
+
+  /**
    * Checkout chuẩn Backend: POST /checkout kèm Idempotency-Key bắt buộc
    * @param {Object} checkoutPayload - { cart_id, selected_item_ids, address_id, payment_method, voucher_codes }
    */
@@ -282,6 +313,29 @@ export const orderApi = {
 
     const stored = getStoredOrders();
     const updated = stored.map(o => (o.id === orderId || o.order_number === orderId) ? { ...o, status: 'CANCELLED' } : o);
+    saveStoredOrders(updated);
+    return { data: { success: true } };
+  },
+
+  /**
+   * Cập nhật trạng thái đơn hàng khi thanh toán thành công được xác nhận từ backend Payment
+   * @param {string} orderId
+   * @param {string} paymentId
+   */
+  markOrderPaid: async (orderId, paymentId) => {
+    const stored = getStoredOrders();
+    const updated = stored.map(o => {
+      if (o.id === orderId || o.order_number === orderId) {
+        return {
+          ...o,
+          status: 'CONFIRMED',
+          payment_status: 'SUCCESS',
+          payment_id: paymentId,
+          paid_at: new Date().toISOString()
+        };
+      }
+      return o;
+    });
     saveStoredOrders(updated);
     return { data: { success: true } };
   }

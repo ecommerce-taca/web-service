@@ -1,18 +1,40 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
+import { sellerFinanceApi } from '../services/seller-finance.api';
 
 export default function WithdrawModal({ isOpen, onClose, onConfirm, balance = '42.800.000 ₫' }) {
   const [amount, setAmount] = useState('20.000.000');
   const [notification, setNotification] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleConfirm = () => {
-    setNotification(`Yêu cầu rút ${amount} ₫ đã được tạo thành công! Tiền sẽ về tài khoản sau T+2 ngày làm việc.`);
-    setTimeout(() => {
-      if (onConfirm) onConfirm(amount);
-      onClose();
-    }, 1800);
+  const handleConfirm = async () => {
+    if (isSubmitting) return;
+
+    try {
+      setIsSubmitting(true);
+      const numericAmount = Number(String(amount).replace(/[^0-9]/g, '')) || 20000000;
+      await sellerFinanceApi.requestPayout({
+        amount: numericAmount,
+        bank_account: {
+          bank_code: 'VCB',
+          account_number: '•••• 4838',
+          account_holder: 'NGUYEN MINH ANH'
+        }
+      });
+
+      setNotification(`Yêu cầu rút ${amount} ₫ đã được tạo thành công! Tiền sẽ về tài khoản sau T+2 ngày làm việc.`);
+      setTimeout(() => {
+        if (onConfirm) onConfirm(amount);
+        onClose();
+      }, 1500);
+    } catch (err) {
+      console.error('Lỗi khi gửi yêu cầu rút tiền:', err);
+      setNotification('Không thể gửi yêu cầu rút tiền, vui lòng thử lại.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -120,10 +142,11 @@ export default function WithdrawModal({ isOpen, onClose, onConfirm, balance = '4
           </button>
           <button
             type="button"
+            disabled={isSubmitting}
             onClick={handleConfirm}
-            className="px-6 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg font-bold text-[13px] shadow-sm transition-colors"
+            className="px-6 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-bold text-[13px] shadow-sm transition-colors flex items-center gap-1.5"
           >
-            Xác nhận rút tiền
+            {isSubmitting ? 'Đang xử lý...' : 'Xác nhận rút tiền'}
           </button>
         </div>
       </div>

@@ -21,6 +21,7 @@ import { Button } from '@taca/ui-components';
 import { formatPhoneDisplay } from '../../../../../../shared/utils/phone';
 import { getOrderStatusInfo } from '../utils/orderStatus';
 import { useCart } from '../../cart/hooks/useCart';
+import VnpayQrModal from '../../checkout/components/VnpayQrModal';
 
 const OrderDetailPage = () => {
   const { id } = useParams();
@@ -30,6 +31,7 @@ const OrderDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [reordering, setReordering] = useState(false);
+  const [isVnpayModalOpen, setIsVnpayModalOpen] = useState(false);
 
   const fetchOrderDetail = useCallback(async () => {
     setLoading(true);
@@ -343,13 +345,44 @@ const OrderDetailPage = () => {
                 </span>
               </div>
 
-              <div className="p-3 bg-slate-50 rounded-xl text-[12px] text-slate-600 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                <span>Phương thức: <strong>Thanh toán khi nhận hàng (COD)</strong></span>
+              <div className="p-3 bg-slate-50 rounded-xl text-[12px] text-slate-600 flex flex-col gap-1.5 border border-slate-100">
+                <div className="flex items-center justify-between">
+                  <span>Phương thức:</span>
+                  <strong className="text-slate-900">
+                    {order.payment_method === 'VNPAY' || order.payment_method === 'VNPAY QR' ? 'VNPAY QR' : 'Thanh toán khi nhận hàng (COD)'}
+                  </strong>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Trạng thái:</span>
+                  {order.payment_status === 'SUCCESS' ? (
+                    <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded text-[11px]">
+                      Đã thanh toán
+                    </span>
+                  ) : order.status === 'PENDING_PAYMENT' || order.payment_status === 'PENDING' ? (
+                    <span className="font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded text-[11px]">
+                      Chờ thanh toán
+                    </span>
+                  ) : (
+                    <span className="font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded text-[11px]">
+                      {order.payment_status || 'Chưa thanh toán'}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Actions */}
               <div className="pt-2 space-y-2.5">
+                {(order.status === 'PENDING_PAYMENT' || (order.payment_status === 'PENDING' && order.status !== 'CANCELLED')) && (
+                  <Button 
+                    variant="primary" 
+                    className="w-full !py-2.5 font-bold text-[13px] rounded-xl cursor-pointer bg-[#4F46E5] hover:bg-[#4338CA] flex items-center justify-center gap-2 shadow-xs"
+                    onClick={() => setIsVnpayModalOpen(true)}
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    <span>Thanh toán ngay bằng VNPAY QR</span>
+                  </Button>
+                )}
+
                 {order.status === 'COMPLETED' && (
                   <Button 
                     variant="primary" 
@@ -376,6 +409,21 @@ const OrderDetailPage = () => {
         </div>
 
       </div>
+
+      {/* Modal thanh toán lại VNPAY QR */}
+      <VnpayQrModal
+        isOpen={isVnpayModalOpen}
+        onClose={() => setIsVnpayModalOpen(false)}
+        paymentId={order.payment_id || `pay-${order.id}`}
+        orderId={order.id}
+        amount={finalTotal}
+        expiresAt={order.expires_at || order.reservation_expires_at}
+        onPaymentSuccess={async () => {
+          await orderApi.markOrderPaid(order.id, order.payment_id || `pay-${order.id}`);
+          setIsVnpayModalOpen(false);
+          fetchOrderDetail();
+        }}
+      />
     </div>
   );
 };

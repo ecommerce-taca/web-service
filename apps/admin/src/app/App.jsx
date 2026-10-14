@@ -7,6 +7,8 @@ import { ErrorBoundary } from '@taca/ui-components';
 const AdminKycPage = lazy(() => import('../features/kyc/pages/AdminKycPage'));
 const AdminUsersRolesPage = lazy(() => import('../features/users/pages/AdminUsersRolesPage'));
 const AdminAuditLogsPage = lazy(() => import('../features/audit/pages/AdminAuditLogsPage'));
+const AdminFinancePage = lazy(() => import('../features/finance/pages/AdminFinancePage'));
+const AdminFeesTaxesPage = lazy(() => import('../features/finance/pages/AdminFeesTaxesPage'));
 
 function PageLoadingFallback() {
   return (
@@ -26,6 +28,8 @@ function AppRoutes() {
           <Route path="shops/kyc" element={<AdminKycPage />} />
           <Route path="users/roles" element={<AdminUsersRolesPage />} />
           <Route path="audit-logs" element={<AdminAuditLogsPage />} />
+          <Route path="finance" element={<AdminFinancePage />} />
+          <Route path="fees" element={<AdminFeesTaxesPage />} />
           <Route path="dashboard" element={<AdminKycPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
