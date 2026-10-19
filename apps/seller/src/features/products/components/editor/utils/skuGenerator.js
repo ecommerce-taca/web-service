@@ -26,22 +26,91 @@ export function generateCartesianCombinations(attributes = []) {
 }
 
 /**
+ * Tạo mã SKU gợi ý từ tiền tố SPU và các giá trị của tổ hợp thuộc tính
+ * @param {string} spuCode 
+ * @param {Record<string, string>} combo 
+ * @param {number} idx 
+ * @returns {string}
+ */
+export function generateSkuCode(spuCode = 'SPU', combo = {}, idx = 0) {
+  const cleanPrefix = (spuCode || 'SKU')
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toUpperCase();
+
+  const cleanParts = Object.values(combo).map(val =>
+    String(val)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toUpperCase()
+  ).filter(Boolean);
+
+  if (cleanParts.length === 0) {
+    return cleanPrefix ? `${cleanPrefix}-STANDARD` : `SKU-${idx + 1}`;
+  }
+
+  return [cleanPrefix || 'SKU', ...cleanParts].join('-');
+}
+
+/**
+ * So sánh xem tổ hợp thuộc tính mới có thay đổi so với các SKU hiện có hay không
+ * @param {Array<Record<string, string>>} combos 
+ * @param {Array} existingSkus 
+ * @returns {boolean}
+ */
+export function hasCombinationsChanged(combos = [], existingSkus = []) {
+  if (combos.length === 0) {
+    // Nếu không có tổ hợp, chỉ không đổi nếu existingSkus đúng 1 SKU đơn
+    return !(existingSkus.length === 1 && Object.keys(existingSkus[0]?.attributes || {}).length === 0);
+  }
+
+  if (combos.length !== existingSkus.length) return true;
+
+  // Kiểm tra từng combo xem có tìm thấy SKU cũ tương ứng không
+  return combos.some(combo => {
+    return !existingSkus.some(old => {
+      const oldAttrs = old.attributes || {};
+      const comboKeys = Object.keys(combo);
+      const oldKeys = Object.keys(oldAttrs);
+      if (comboKeys.length !== oldKeys.length) return false;
+      return comboKeys.every(k => oldAttrs[k] === combo[k]);
+    });
+  });
+}
+
+/**
  * Hàm sinh danh sách SKU từ các tổ hợp thuộc tính Cartesian Product
  * @param {Array<Record<string, string>>} combos 
  * @param {Array} existingSkus 
  * @param {string} currentSpuCode 
+ * @param {string} fallbackPrice
+ * @param {number} fallbackStock
  * @returns {Array}
  */
-export function generateSkusFromCombos(combos = [], existingSkus = [], currentSpuCode = 'SPU') {
+export function generateSkusFromCombos(
+  combos = [],
+  existingSkus = [],
+  currentSpuCode = 'SPU',
+  fallbackPrice = '29.490.000',
+  fallbackStock = 50
+) {
+  const basePrice = existingSkus[0]?.price || fallbackPrice;
+  const baseStock = existingSkus[0]?.stock ?? fallbackStock;
+
   if (!combos || combos.length === 0) {
+    // Trường hợp sản phẩm đơn không có biến thể
+    const existingSingle = existingSkus.find(s => Object.keys(s.attributes || {}).length === 0);
     return [
       {
-        id: 'sku-default',
-        code: `${currentSpuCode || 'SPU'}-DEFAULT`,
+        id: existingSingle?.id || 'sku-single',
+        code: existingSingle?.code || `${(currentSpuCode || 'SKU').replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}-DEFAULT`,
         name: 'Tiêu chuẩn',
-        price: '29.490.000',
-        stock: 50,
-        enabled: true,
+        price: existingSingle?.price || basePrice,
+        stock: existingSingle?.stock ?? baseStock,
+        enabled: existingSingle?.enabled ?? true,
         attributes: {}
       }
     ];
@@ -58,32 +127,26 @@ export function generateSkusFromCombos(combos = [], existingSkus = [], currentSp
     });
 
     if (matchOld) {
-      return matchOld;
+      return {
+        ...matchOld,
+        // Nếu SKU cũ chưa có code hoặc rỗng thì gợi ý code
+        code: matchOld.code || generateSkuCode(currentSpuCode, combo, idx)
+      };
     }
 
-    // Tạo mã SKU gợi ý từ spuCode + combo values
-    const cleanParts = Object.values(combo).map(val =>
-      String(val)
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-zA-Z0-9]/g, '')
-        .toUpperCase()
-    ).filter(Boolean);
-
-    const prefix = (currentSpuCode || 'SKU').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-    const code = [prefix, ...cleanParts].join('-') || `SKU-${idx + 1}`;
+    // Tạo SKU mới từ tổ hợp
+    const code = generateSkuCode(currentSpuCode, combo, idx);
     const name = Object.values(combo).join(' / ');
-    const defaultPrice = existingSkus[0]?.price || '29.490.000';
-    const defaultStock = existingSkus[0]?.stock ?? 20;
 
     return {
-      id: `sku-gen-${idx + 1}-${Date.now().toString(36)}`,
+      id: `sku-gen-${idx + 1}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
       code,
       name,
-      price: defaultPrice,
-      stock: defaultStock,
+      price: basePrice,
+      stock: baseStock,
       enabled: true,
       attributes: { ...combo }
     };
   });
 }
+

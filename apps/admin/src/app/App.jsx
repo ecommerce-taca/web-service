@@ -9,6 +9,8 @@ const AdminUsersRolesPage = lazy(() => import('../features/users/pages/AdminUser
 const AdminAuditLogsPage = lazy(() => import('../features/audit/pages/AdminAuditLogsPage'));
 const AdminFinancePage = lazy(() => import('../features/finance/pages/AdminFinancePage'));
 const AdminFeesTaxesPage = lazy(() => import('../features/finance/pages/AdminFeesTaxesPage'));
+const AdminProductsPage = lazy(() => import('../features/products/pages/AdminProductsPage'));
+const AdminCategoriesPage = lazy(() => import('../features/categories/pages/AdminCategoriesPage'));
 
 function PageLoadingFallback() {
   return (
@@ -26,6 +28,8 @@ function AppRoutes() {
         <Route element={<AdminLayout />}>
           <Route index element={<AdminKycPage />} />
           <Route path="shops/kyc" element={<AdminKycPage />} />
+          <Route path="products" element={<AdminProductsPage />} />
+          <Route path="categories" element={<AdminCategoriesPage />} />
           <Route path="users/roles" element={<AdminUsersRolesPage />} />
           <Route path="audit-logs" element={<AdminAuditLogsPage />} />
           <Route path="finance" element={<AdminFinancePage />} />

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Store, Mail, FileText, AlertTriangle, XCircle, CheckCircle2, Rocket, Clock } from 'lucide-react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { registerSeller, getSellerRegistrationStatus, fetchSellerRegistrationStatus } from '../services/seller-register.api';
+import SellerPolicyModal from '../components/SellerPolicyModal';
 
 const getSellerUrl = (path = '/seller') => {
   if (typeof window !== 'undefined' && window.location.port === '5174') {
@@ -22,6 +23,7 @@ export default function SellerRegisterPage() {
     description: '',
   });
   const [agreed, setAgreed] = useState(false);
+  const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -470,19 +472,30 @@ export default function SellerRegisterPage() {
           />
         </div>
 
-        {/* Checkbox điều khoản */}
-        <label className="flex items-start gap-2.5 cursor-pointer text-[12px] text-slate-600">
+        {/* Checkbox điều khoản & Quy chế */}
+        <div className="flex items-start gap-2.5 text-[12px] text-slate-600">
           <input
+            id="seller-policy-agree-checkbox"
             type="checkbox"
             checked={agreed}
             onChange={(e) => setAgreed(e.target.checked)}
-            className="mt-0.5 rounded text-blue-600 focus:ring-blue-500"
+            className="mt-0.5 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
           />
-          <span>
+          <label htmlFor="seller-policy-agree-checkbox" className="cursor-pointer">
             Tôi cam kết các thông tin khai báo trên là chính xác và đồng ý tuân thủ{' '}
-            <span className="text-blue-600 font-semibold underline">Quy chế hoạt động Người Bán Taca</span>.
-          </span>
-        </label>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsPolicyModalOpen(true);
+              }}
+              className="text-[#0A68FF] font-semibold underline hover:text-blue-800 transition-colors inline cursor-pointer"
+            >
+              Quy chế hoạt động Người Bán Taca
+            </button>.
+          </label>
+        </div>
 
         {/* Submit Button */}
         <div>
@@ -527,6 +540,13 @@ export default function SellerRegisterPage() {
           </div>
         </div>
       )}
+
+      {/* Modal Toàn văn Quy chế hoạt động Người Bán */}
+      <SellerPolicyModal
+        isOpen={isPolicyModalOpen}
+        onClose={() => setIsPolicyModalOpen(false)}
+        onAccept={() => setAgreed(true)}
+      />
     </div>
   );
 }

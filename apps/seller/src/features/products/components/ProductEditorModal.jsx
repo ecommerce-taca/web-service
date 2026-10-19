@@ -5,7 +5,7 @@ import { X, CheckCircle2 } from 'lucide-react';
 import sellerProductApi, { calculateFileSha256 } from '../services/seller-product.api';
 
 // Subcomponents & Utilities
-import { generateCartesianCombinations, generateSkusFromCombos } from './editor/utils/skuGenerator';
+import { generateCartesianCombinations, generateSkusFromCombos, generateSkuCode, hasCombinationsChanged } from './editor/utils/skuGenerator';
 import BasicInfoStep from './editor/steps/BasicInfoStep';
 import AttributesStep from './editor/steps/AttributesStep';
 import SkuMatrixStep from './editor/steps/SkuMatrixStep';
@@ -24,6 +24,23 @@ function ProductEditorForm({ product, onClose, onSave }) {
   );
   const [brand, setBrand] = useState(product ? (product.brand || '') : '');
   const [spuCode, setSpuCode] = useState(product ? (product.spu_code || product.code || '') : 'SPU-NEW');
+  const [skuPrefix, setSkuPrefix] = useState(product ? (product.spu_code || product.code || 'SPU') : 'SPU');
+  const [isMultiVariant, setIsMultiVariant] = useState(() => {
+    if (product?.attribute_definitions && product.attribute_definitions.length > 0) return true;
+    if (product?.skus && product.skus.length > 1) return true;
+    return true;
+  });
+  const [singleSkuCode, setSingleSkuCode] = useState(
+    product?.skus?.[0]?.sku_code || (product?.spu_code ? `${product.spu_code}-DEFAULT` : 'SPU-DEFAULT')
+  );
+  const [singleSkuPrice, setSingleSkuPrice] = useState(
+    product?.skus?.[0]?.price?.sale_price
+      ? Number(product.skus[0].price.sale_price).toLocaleString('vi-VN')
+      : '29.490.000'
+  );
+  const [singleSkuStock, setSingleSkuStock] = useState(
+    product?.skus?.[0]?.stock_display ?? 50
+  );
   const [description, setDescription] = useState(product ? (product.description || '') : '');
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
@@ -62,7 +79,7 @@ function ProductEditorForm({ product, onClose, onSave }) {
     return generateCartesianCombinations(attributes);
   }, [attributes]);
 
-  // Khởi tạo danh sách SKU
+  // Khởi tạo danh sách SKU trực tiếp từ tổ hợp hoặc sản phẩm
   const [skus, setSkus] = useState(() => {
     if (product?.skus && product.skus.length > 0) {
       return product.skus.map((s, idx) => ({
@@ -75,12 +92,13 @@ function ProductEditorForm({ product, onClose, onSave }) {
         attributes: s.attributes || {}
       }));
     }
-    return [
-      { id: 'sku-1', code: 'IP16-256-NAT-WF', name: '256GB / Titan tự nhiên / Wi-Fi', price: '29.490.000', stock: 38, enabled: true, attributes: { 'Dung lượng': '256GB', 'Màu sắc': 'Titan tự nhiên', 'Kết nối': 'Wi-Fi' } },
-      { id: 'sku-2', code: 'IP16-256-NAT-5G', name: '256GB / Titan tự nhiên / 5G', price: '31.490.000', stock: 24, enabled: true, attributes: { 'Dung lượng': '256GB', 'Màu sắc': 'Titan tự nhiên', 'Kết nối': '5G' } },
-      { id: 'sku-3', code: 'IP16-512-BLK-WF', name: '512GB / Titan đen / Wi-Fi', price: '35.990.000', stock: 18, enabled: true, attributes: { 'Dung lượng': '512GB', 'Màu sắc': 'Titan đen', 'Kết nối': 'Wi-Fi' } },
-      { id: 'sku-4', code: 'IP16-512-BLK-5G', name: '512GB / Titan đen / 5G', price: '37.990.000', stock: 12, enabled: true, attributes: { 'Dung lượng': '512GB', 'Màu sắc': 'Titan đen', 'Kết nối': '5G' } },
-    ];
+    // Khởi tạo trực tiếp từ Cartesian Product ban đầu thay vì hardcode 4 dòng
+    const initialCombos = generateCartesianCombinations([
+      { id: 1, name: 'Dung lượng', display_as: 'PLAIN', values: ['256GB', '512GB', '1TB'] },
+      { id: 2, name: 'Màu sắc', display_as: 'COLOR_SWATCH', values: ['Titan tự nhiên', 'Titan đen'] },
+      { id: 3, name: 'Kết nối', display_as: 'PLAIN', values: ['Wi-Fi', '5G'] }
+    ]);
+    return generateSkusFromCombos(initialCombos, [], product?.spu_code || 'SPU', '29.490.000', 30);
   });
 
   // State hỗ trợ cập nhật hàng loạt cho SKU
@@ -105,10 +123,36 @@ function ProductEditorForm({ product, onClose, onSave }) {
   }, []);
 
   const handleRegenerateSkus = () => {
-    const newSkus = generateSkusFromCombos(generatedCombinations, skus, spuCode);
-    setSkus(newSkus);
-    setNotification(`Đã sinh lại ${newSkus.length} SKU từ ${generatedCombinations.length} tổ hợp thuộc tính!`);
+    if (!isMultiVariant) {
+      const single = [
+        {
+          id: 'sku-single',
+          code: singleSkuCode || `${spuCode}-DEFAULT`,
+          name: 'Tiêu chuẩn',
+          price: singleSkuPrice,
+          stock: Number(singleSkuStock) || 0,
+          enabled: true,
+          attributes: {}
+        }
+      ];
+      setSkus(single);
+      setNotification('Đã đồng bộ sản phẩm đơn tiêu chuẩn (1 SKU)!');
+    } else {
+      const newSkus = generateSkusFromCombos(generatedCombinations, skus, skuPrefix || spuCode);
+      setSkus(newSkus);
+      setNotification(`Đã sinh lại ${newSkus.length} SKU từ ${generatedCombinations.length} tổ hợp thuộc tính!`);
+    }
     setTimeout(() => setNotification(null), 3000);
+  };
+
+  const handleFormatAllSkuCodes = () => {
+    const formatted = skus.map((s, idx) => ({
+      ...s,
+      code: generateSkuCode(skuPrefix || spuCode, s.attributes, idx)
+    }));
+    setSkus(formatted);
+    setNotification('Đã tự động chuẩn hóa toàn bộ mã SKU theo tiền tố!');
+    setTimeout(() => setNotification(null), 2500);
   };
 
   const handleApplyBulkPrice = () => {
@@ -133,37 +177,68 @@ function ProductEditorForm({ product, onClose, onSave }) {
     setSkus(skus.map(s => ({ ...s, enabled: enable })));
   };
 
-  const handleNextStep = () => {
-    if (step === 2) {
-      // Khi từ bước 2 sang bước 3: tự động sinh lại bảng SKU nếu chưa có hoặc tổ hợp thay đổi
-      if (generatedCombinations.length > 0 && skus.length !== generatedCombinations.length) {
-        const synched = generateSkusFromCombos(generatedCombinations, skus, spuCode);
+  const handleGoToStep = (targetStep) => {
+    if (targetStep === 3) {
+      if (!isMultiVariant) {
+        setSkus([
+          {
+            id: 'sku-single',
+            code: singleSkuCode || `${spuCode}-DEFAULT`,
+            name: 'Tiêu chuẩn',
+            price: singleSkuPrice,
+            stock: Number(singleSkuStock) || 0,
+            enabled: true,
+            attributes: {}
+          }
+        ]);
+      } else if (hasCombinationsChanged(generatedCombinations, skus)) {
+        const synched = generateSkusFromCombos(generatedCombinations, skus, skuPrefix || spuCode);
         setSkus(synched);
       }
     }
-    setStep(step + 1);
+    setStep(targetStep);
+  };
+
+  const handleNextStep = () => {
+    handleGoToStep(step + 1);
   };
 
   const handleAddValue = (attrId) => {
     const val = (newValueInputs[attrId] || '').trim();
     if (!val) return;
-    setAttributes(attributes.map(a => 
+    const updatedAttrs = attributes.map(a => 
       a.id === attrId && !a.values.includes(val)
         ? { ...a, values: [...a.values, val] }
         : a
-    ));
+    );
+    setAttributes(updatedAttrs);
     setNewValueInputs({ ...newValueInputs, [attrId]: '' });
+
+    // Reactive: Tự động cập nhật ma trận SKU ngay lập tức
+    if (isMultiVariant) {
+      const newCombos = generateCartesianCombinations(updatedAttrs);
+      const synched = generateSkusFromCombos(newCombos, skus, skuPrefix || spuCode);
+      setSkus(synched);
+    }
   };
 
   const handleRemoveValue = (attrId, valToRemove) => {
-    setAttributes(attributes.map(a => 
+    const updatedAttrs = attributes.map(a => 
       a.id === attrId ? { ...a, values: a.values.filter(v => v !== valToRemove) } : a
-    ));
+    );
+    setAttributes(updatedAttrs);
+
+    // Reactive: Tự động cập nhật ma trận SKU ngay lập tức
+    if (isMultiVariant) {
+      const newCombos = generateCartesianCombinations(updatedAttrs);
+      const synched = generateSkusFromCombos(newCombos, skus, skuPrefix || spuCode);
+      setSkus(synched);
+    }
   };
 
   const handleAddNewAttribute = ({ name, display_as, values }) => {
     const newId = attributes.length + 1;
-    setAttributes([
+    const updatedAttrs = [
       ...attributes,
       {
         id: newId,
@@ -171,9 +246,18 @@ function ProductEditorForm({ product, onClose, onSave }) {
         display_as,
         values
       }
-    ]);
+    ];
+    setAttributes(updatedAttrs);
     setIsAddAttrModalOpen(false);
+
+    // Reactive: Tự động cập nhật ma trận SKU ngay lập tức
+    if (isMultiVariant) {
+      const newCombos = generateCartesianCombinations(updatedAttrs);
+      const synched = generateSkusFromCombos(newCombos, skus, skuPrefix || spuCode);
+      setSkus(synched);
+    }
   };
+
 
   const handleUploadImage = async (e) => {
     const file = e.target.files?.[0];
@@ -229,6 +313,7 @@ function ProductEditorForm({ product, onClose, onSave }) {
 
       const formattedSkus = skus.map(s => ({
         sku_code: s.code?.trim() || `SKU-${s.id}`,
+        seller_sku: s.code?.trim() || `SKU-${s.id}`,
         name: s.name,
         attributes: s.attributes || {},
         price: {
@@ -333,6 +418,7 @@ function ProductEditorForm({ product, onClose, onSave }) {
 
       const formattedSkus = skus.map(s => ({
         sku_code: s.code?.trim() || `SKU-${s.id}`,
+        seller_sku: s.code?.trim() || `SKU-${s.id}`,
         name: s.name,
         attributes: s.attributes || {},
         price: {
@@ -462,7 +548,7 @@ function ProductEditorForm({ product, onClose, onSave }) {
           <button
             key={s.num}
             type="button"
-            onClick={() => setStep(s.num)}
+            onClick={() => handleGoToStep(s.num)}
             className={`pb-1 flex items-center gap-1.5 cursor-pointer ${
               step === s.num ? 'text-[#4F46E5] border-b-2 border-[#4F46E5]' : 'hover:text-slate-700'
             }`}
@@ -496,6 +582,34 @@ function ProductEditorForm({ product, onClose, onSave }) {
             imageInputRef={imageInputRef}
             onUploadImage={handleUploadImage}
             onRemoveImage={handleRemoveImage}
+            isMultiVariant={isMultiVariant}
+            setIsMultiVariant={(multi) => {
+              setIsMultiVariant(multi);
+              if (!multi) {
+                setSkus([
+                  {
+                    id: 'sku-single',
+                    code: singleSkuCode || `${spuCode}-DEFAULT`,
+                    name: 'Tiêu chuẩn',
+                    price: singleSkuPrice,
+                    stock: Number(singleSkuStock) || 0,
+                    enabled: true,
+                    attributes: {}
+                  }
+                ]);
+              } else {
+                const synched = generateSkusFromCombos(generatedCombinations, skus, skuPrefix || spuCode);
+                setSkus(synched);
+              }
+            }}
+            skuPrefix={skuPrefix}
+            setSkuPrefix={setSkuPrefix}
+            singleSkuCode={singleSkuCode}
+            setSingleSkuCode={setSingleSkuCode}
+            singleSkuPrice={singleSkuPrice}
+            setSingleSkuPrice={setSingleSkuPrice}
+            singleSkuStock={singleSkuStock}
+            setSingleSkuStock={setSingleSkuStock}
           />
         )}
 
@@ -515,6 +629,7 @@ function ProductEditorForm({ product, onClose, onSave }) {
         {step === 3 && (
           <SkuMatrixStep
             skus={skus}
+            skuPrefix={skuPrefix}
             bulkPriceInput={bulkPriceInput}
             setBulkPriceInput={setBulkPriceInput}
             bulkStockInput={bulkStockInput}
@@ -523,6 +638,7 @@ function ProductEditorForm({ product, onClose, onSave }) {
             onApplyBulkStock={handleApplyBulkStock}
             onToggleAllSkus={handleToggleAllSkus}
             onRegenerateSkus={handleRegenerateSkus}
+            onFormatAllSkuCodes={handleFormatAllSkuCodes}
             combosCount={generatedCombinations.length}
             onUpdateSkuCode={handleUpdateSkuCode}
             onUpdateSkuPrice={handleUpdateSkuPrice}

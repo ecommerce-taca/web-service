@@ -88,8 +88,12 @@ export const paymentApi = {
 
     payment.status = 'SUCCESS';
     payment.paid_at = new Date().toISOString();
+    payment.bankCode = 'NCB';
+    payment.bank_code = 'NCB';
+    payment.transactionNo = `VNP${Date.now().toString().slice(-8)}`;
+    payment.provider_ref_masked = `VNP****${Date.now().toString().slice(-4)}`;
     saveStoredMockPayment(paymentId, payment);
-    return { data: { success: true, status: 'SUCCESS' } };
+    return { data: { success: true, status: 'SUCCESS', bankCode: 'NCB' } };
   }
 };
 

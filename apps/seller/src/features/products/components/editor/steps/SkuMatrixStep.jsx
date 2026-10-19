@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { RefreshCw, AlertTriangle } from 'lucide-react';
+import { RefreshCw, AlertTriangle, Sparkles, Barcode } from 'lucide-react';
 import SkuMatrixRow from '../components/SkuMatrixRow';
 
 /**
@@ -7,6 +7,7 @@ import SkuMatrixRow from '../components/SkuMatrixRow';
  */
 export default function SkuMatrixStep({
   skus,
+  skuPrefix,
   bulkPriceInput,
   setBulkPriceInput,
   bulkStockInput,
@@ -15,6 +16,7 @@ export default function SkuMatrixStep({
   onApplyBulkStock,
   onToggleAllSkus,
   onRegenerateSkus,
+  onFormatAllSkuCodes,
   combosCount,
   onUpdateSkuCode,
   onUpdateSkuPrice,
@@ -29,17 +31,29 @@ export default function SkuMatrixStep({
             BIẾN THỂ ĐA THUỘC TÍNH (SKU MATRIX)
           </span>
           <p className="text-[12px] text-slate-500">
-            Thiết lập mã SKU, giá bán, tồn kho cho từng biến thể tổ hợp thuộc tính.
+            Thiết lập mã SKU, giá bán, tồn kho cho từng biến thể tổ hợp thuộc tính. Tiền tố SKU: <span className="font-mono font-bold text-[#4F46E5]">{skuPrefix || 'SKU'}</span>
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onRegenerateSkus}
-          className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-[#4F46E5] border border-indigo-200 rounded-lg font-bold text-xs transition-colors cursor-pointer self-start sm:self-auto flex items-center gap-1.5"
-        >
-          <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
-          <span>Sinh lại bảng ({combosCount} tổ hợp)</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {onFormatAllSkuCodes && (
+            <button
+              type="button"
+              onClick={onFormatAllSkuCodes}
+              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" aria-hidden="true" />
+              <span>Chuẩn hóa mã SKU</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onRegenerateSkus}
+            className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-[#4F46E5] border border-indigo-200 rounded-lg font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Sinh lại bảng ({combosCount} tổ hợp)</span>
+          </button>
+        </div>
       </div>
 
       {/* Bulk update toolbar */}
@@ -121,7 +135,12 @@ export default function SkuMatrixStep({
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
               <th className="py-2.5 px-4">BIẾN THỂ ĐA THUỘC TÍNH</th>
-              <th className="py-2.5 px-4">MÃ SKU *</th>
+              <th className="py-2.5 px-4">
+                <span className="inline-flex items-center gap-1 text-slate-700">
+                  <Barcode className="w-3.5 h-3.5 text-[#4F46E5]" aria-hidden="true" />
+                  <span>MÃ SKU *</span>
+                </span>
+              </th>
               <th className="py-2.5 px-4">GIÁ BÁN (₫)</th>
               <th className="py-2.5 px-4">TỒN KHO</th>
               <th className="py-2.5 px-4 text-center">HIỂN THỊ</th>
@@ -150,6 +169,7 @@ export default function SkuMatrixStep({
 
 SkuMatrixStep.propTypes = {
   skus: PropTypes.arrayOf(PropTypes.object).isRequired,
+  skuPrefix: PropTypes.string,
   bulkPriceInput: PropTypes.string.isRequired,
   setBulkPriceInput: PropTypes.func.isRequired,
   bulkStockInput: PropTypes.string.isRequired,
@@ -158,9 +178,11 @@ SkuMatrixStep.propTypes = {
   onApplyBulkStock: PropTypes.func.isRequired,
   onToggleAllSkus: PropTypes.func.isRequired,
   onRegenerateSkus: PropTypes.func.isRequired,
+  onFormatAllSkuCodes: PropTypes.func,
   combosCount: PropTypes.number.isRequired,
   onUpdateSkuCode: PropTypes.func.isRequired,
   onUpdateSkuPrice: PropTypes.func.isRequired,
   onUpdateSkuStock: PropTypes.func.isRequired,
   onToggleSku: PropTypes.func.isRequired,
 };
+

@@ -36,10 +36,10 @@ const DEFAULT_SHOP_DATA = {
     cod_enabled: true,
   },
   bank_summary: {
-    bank_code: 'VCB',
-    bank_name: 'Ngân hàng Ngoại Thương Việt Nam (Vietcombank)',
-    account_name: 'NGUYEN MINH ANH',
-    account_number_masked: '********6868',
+    bank_code: 'NCB',
+    bank_name: 'Ngân hàng Quốc Dân (NCB - VNPAY Sandbox)',
+    account_name: 'NGUYEN VAN A',
+    account_number_masked: '********2198',
     verified: true,
   },
   created_at: '2026-08-01T09:00:00Z',
@@ -282,7 +282,37 @@ export const registerSeller = async ({ name, business_name, tax_code, slug, desc
     slug,
     description,
   });
-  return res?.data ?? res;
+
+  const payload = res?.data || res;
+  const shopData = payload?.shop || payload;
+  const cleanTax = String(tax_code || '').replace(/\D/g, '');
+  const currentUser = getCurrentUser();
+  const currentUserId = currentUser?.id || shopData?.owner_user_id;
+
+  if (cleanTax) {
+    try {
+      if (currentUserId) {
+        localStorage.setItem(`taca_seller_tax_code_${currentUserId}`, cleanTax);
+      }
+      localStorage.setItem('taca_seller_tax_code', cleanTax);
+    } catch {
+      // storage quota fallback
+    }
+  }
+
+  if (shopData?.id) {
+    const enrichedShop = {
+      ...shopData,
+      tax_code: cleanTax || shopData.tax_code,
+      tax_code_masked: cleanTax ? `${cleanTax.slice(0, 3)}*****${cleanTax.slice(-2)}` : (shopData.tax_code_masked || ''),
+    };
+    if (currentUserId) {
+      localStorage.setItem(`${STORAGE_KEY_SHOP}_${currentUserId}`, JSON.stringify(enrichedShop));
+    }
+    localStorage.setItem(STORAGE_KEY_SHOP, JSON.stringify(enrichedShop));
+  }
+
+  return payload;
 };
 
 // ==========================================
@@ -335,10 +365,25 @@ export const updateOnboardingProfile = async ({ name, business_name, tax_code, d
     };
   }
 
+  const cleanTax = String(tax_code || '').replace(/\D/g, '');
+  const currentUser = getCurrentUser();
+  const currentUserId = currentUser?.id;
+
+  if (cleanTax && cleanTax.length >= 10 && cleanTax.length <= 14) {
+    try {
+      if (currentUserId) {
+        localStorage.setItem(`taca_seller_tax_code_${currentUserId}`, cleanTax);
+      }
+      localStorage.setItem('taca_seller_tax_code', cleanTax);
+    } catch {
+      // storage quota fallback
+    }
+  }
+
   const res = await apiClient.put('/seller/onboarding/profile', {
     name,
     business_name,
-    tax_code,
+    tax_code: cleanTax || tax_code,
     description,
     logo_object_key,
   });
@@ -715,7 +760,25 @@ export const getShopProfile = async () => {
   }
 
   const res = await apiClient.get('/seller/shop');
-  return res?.data ?? res;
+  const shopData = res?.data ?? res;
+
+  if (shopData) {
+    const currentUser = getCurrentUser();
+    const currentUserId = currentUser?.id || shopData.owner_user_id;
+    const cachedTax = (currentUserId && localStorage.getItem(`taca_seller_tax_code_${currentUserId}`)) ||
+                      localStorage.getItem('taca_seller_tax_code') || '';
+
+    // Khôi phục tax_code nếu BE chỉ trả tax_code_masked
+    if (!shopData.tax_code && cachedTax) {
+      shopData.tax_code = cachedTax;
+    }
+
+    if (!shopData.tax_code_masked && cachedTax) {
+      shopData.tax_code_masked = `${cachedTax.slice(0, 3)}*****${cachedTax.slice(-2)}`;
+    }
+  }
+
+  return shopData;
 };
 
 // ==========================================
@@ -786,19 +849,20 @@ export const getPublicShopProfile = async (shopIdOrSlug) => {
 };
 
 /**
- * Danh sách Ngân hàng thương mại chuẩn tại Việt Nam phục vụ thanh toán / rút tiền
+ * Danh sách Ngân hàng chuẩn phục vụ thanh toán / rút tiền (Tối ưu cho VNPAY Sandbox & VietQR)
  */
 export const VIETNAM_BANK_CATALOG = [
-  { code: 'VCB', name: 'Ngân hàng Ngoại Thương Việt Nam (Vietcombank)' },
-  { code: 'TCB', name: 'Ngân hàng Kỹ Thương Việt Nam (Techcombank)' },
-  { code: 'MB', name: 'Ngân hàng Quân Đội (MBBank)' },
-  { code: 'CTG', name: 'Ngân hàng Công Thương Việt Nam (VietinBank)' },
-  { code: 'BIDV', name: 'Ngân hàng Đầu tư và Phát triển Việt Nam (BIDV)' },
-  { code: 'ACB', name: 'Ngân hàng Á Châu (ACB)' },
-  { code: 'VPB', name: 'Ngân hàng Việt Nam Thịnh Vượng (VPBank)' },
-  { code: 'TPB', name: 'Ngân hàng Tiên Phong (TPBank)' },
-  { code: 'HDB', name: 'Ngân hàng Phát triển TP.HCM (HDBank)' },
-  { code: 'STB', name: 'Ngân hàng Sài Gòn Thương Tín (Sacombank)' },
-  { code: 'MSB', name: 'Ngân hàng Hàng Hải (MSB)' },
-  { code: 'VIB', name: 'Ngân hàng Quốc Tế (VIB)' },
+  { code: 'NCB', name: 'Ngân hàng Quốc Dân (NCB - VNPAY Sandbox)', isSandbox: true },
 ];
+
+/**
+ * Thông tin tài khoản & thẻ kiểm thử chuẩn cổng thanh toán VNPAY Sandbox
+ */
+export const VNPAY_SANDBOX_TEST_ACCOUNT = {
+  bank_code: 'NCB',
+  bank_name: 'Ngân hàng Quốc Dân (NCB - VNPAY Sandbox)',
+  account_number: '9704198526191432198',
+  account_name: 'NGUYEN VAN A',
+  otp: '123456',
+  release_date: '07/15',
+};

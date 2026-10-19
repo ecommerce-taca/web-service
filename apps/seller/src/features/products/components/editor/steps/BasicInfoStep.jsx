@@ -19,7 +19,17 @@ export default function BasicInfoStep({
   uploadingImage,
   imageInputRef,
   onUploadImage,
-  onRemoveImage
+  onRemoveImage,
+  isMultiVariant,
+  setIsMultiVariant,
+  skuPrefix,
+  setSkuPrefix,
+  singleSkuCode,
+  setSingleSkuCode,
+  singleSkuPrice,
+  setSingleSkuPrice,
+  singleSkuStock,
+  setSingleSkuStock
 }) {
   return (
     <div className="space-y-6">
@@ -72,15 +82,118 @@ export default function BasicInfoStep({
         </div>
         <div>
           <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-            Mã SPU
+            Mã SPU (Product Code)
           </label>
           <input
             type="text"
             value={spuCode}
             onChange={(e) => setSpuCode(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5] font-mono"
+            placeholder="Ví dụ: SPU-IP16PRO"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5] font-mono text-xs uppercase"
           />
         </div>
+      </div>
+
+      {/* Phân loại cấu hình SKU & Biến thể */}
+      <div className="p-4 bg-slate-50/90 border border-slate-200 rounded-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
+          <div>
+            <span className="text-[12px] font-bold uppercase tracking-wider text-slate-800 block">
+              CẤU HÌNH BIẾN THỂ & MÃ SKU
+            </span>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Chọn hình thức bán hàng: Sản phẩm đơn (1 SKU) hoặc Sản phẩm đa biến thể (phân loại thuộc tính).
+            </p>
+          </div>
+          <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-2xs self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setIsMultiVariant(true)}
+              className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                isMultiVariant
+                  ? 'bg-[#4F46E5] text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              Đa biến thể (Nhiều SKU)
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsMultiVariant(false)}
+              className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                !isMultiVariant
+                  ? 'bg-[#4F46E5] text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              Sản phẩm đơn (1 SKU)
+            </button>
+          </div>
+        </div>
+
+        {isMultiVariant ? (
+          <div>
+            <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+              Tiền tố mã SKU (SKU Prefix) *
+            </label>
+            <input
+              type="text"
+              value={skuPrefix}
+              placeholder="Ví dụ: IP16-PRO hoặc AO-POLO"
+              onChange={(e) => setSkuPrefix(e.target.value.toUpperCase())}
+              className="w-full sm:w-1/2 px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5] font-mono text-xs uppercase"
+            />
+            <p className="text-[11px] text-slate-500 mt-1">
+              Tiền tố này sẽ được dùng để tự động tạo mã SKU ở Bước 3 (Ví dụ: <code className="text-[#4F46E5] font-semibold">{skuPrefix || 'SKU'}-TITAN-256GB</code>).
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                Mã SKU sản phẩm *
+              </label>
+              <input
+                type="text"
+                required
+                value={singleSkuCode}
+                placeholder="Ví dụ: IP16-STANDARD"
+                onChange={(e) => setSingleSkuCode(e.target.value.toUpperCase())}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5] font-mono text-xs uppercase font-semibold"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                Giá bán niêm yết (₫) *
+              </label>
+              <input
+                type="text"
+                value={singleSkuPrice}
+                placeholder="29.490.000"
+                onChange={(e) => setSingleSkuPrice(e.target.value)}
+                onBlur={() => {
+                  const clean = String(singleSkuPrice).replace(/\D/g, '');
+                  if (clean) {
+                    setSingleSkuPrice(Number(clean).toLocaleString('vi-VN'));
+                  }
+                }}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5] font-semibold text-xs"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                Số lượng tồn kho *
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={singleSkuStock}
+                onChange={(e) => setSingleSkuStock(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5] font-semibold text-xs"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <div>
@@ -175,4 +288,15 @@ BasicInfoStep.propTypes = {
   imageInputRef: PropTypes.object.isRequired,
   onUploadImage: PropTypes.func.isRequired,
   onRemoveImage: PropTypes.func.isRequired,
+  isMultiVariant: PropTypes.bool.isRequired,
+  setIsMultiVariant: PropTypes.func.isRequired,
+  skuPrefix: PropTypes.string.isRequired,
+  setSkuPrefix: PropTypes.func.isRequired,
+  singleSkuCode: PropTypes.string.isRequired,
+  setSingleSkuCode: PropTypes.func.isRequired,
+  singleSkuPrice: PropTypes.string.isRequired,
+  setSingleSkuPrice: PropTypes.func.isRequired,
+  singleSkuStock: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  setSingleSkuStock: PropTypes.func.isRequired,
 };
+

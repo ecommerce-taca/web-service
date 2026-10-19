@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { Check, Clock, Lock, RefreshCw, AlertTriangle, XCircle, FileEdit, Store, ExternalLink } from 'lucide-react';
 import SellerHeader from './SellerHeader';
 import SellerNav from './SellerNav';
+import SellerPolicyModal from '../common/SellerPolicyModal';
 import { getShopProfile } from '../../services/seller-shop.api';
 
 export default function SellerLayout() {
@@ -13,6 +14,7 @@ export default function SellerLayout() {
 
   const [shop, setShop] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
 
   const fetchShopData = useCallback(async () => {
     try {
@@ -353,12 +355,30 @@ export default function SellerLayout() {
         <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>© 2026 Taca Ecommerce System. Kênh Người Bán & Quản lý vận hành đa dịch vụ.</p>
           <div className="flex items-center gap-6">
-            <span className="hover:text-slate-700 cursor-pointer">Chính sách người bán</span>
-            <span className="hover:text-slate-700 cursor-pointer">Quy chế hoạt động</span>
-            <span className="hover:text-slate-700 cursor-pointer">Hỗ trợ: 1900 6688</span>
+            <button
+              type="button"
+              onClick={() => setIsPolicyModalOpen(true)}
+              className="hover:text-slate-700 cursor-pointer text-[12px] text-slate-500 hover:underline"
+            >
+              Chính sách người bán
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsPolicyModalOpen(true)}
+              className="hover:text-slate-700 cursor-pointer text-[12px] text-slate-500 hover:underline"
+            >
+              Quy chế hoạt động
+            </button>
+            <span className="text-slate-500">Hỗ trợ: 1900 6688</span>
           </div>
         </div>
       </footer>
+
+      {/* Modal Quy chế hoạt động người bán */}
+      <SellerPolicyModal
+        isOpen={isPolicyModalOpen}
+        onClose={() => setIsPolicyModalOpen(false)}
+      />
     </div>
   );
 }
