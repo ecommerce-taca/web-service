@@ -54,7 +54,7 @@ const SearchPage = () => {
       rating: minRating || undefined,
     };
 
-    productApi.getProducts(params, { signal: controller.signal })
+    productApi.searchProducts(params, { signal: controller.signal })
       .then(res => {
         const items = res.data?.items || [];
         setProducts(items);

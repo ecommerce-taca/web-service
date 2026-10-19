@@ -582,7 +582,48 @@ export const PRODUCTS_CATALOG = [
   }
 ];
 
+// Sort của SortBar → sort của Search Service (docs search §3.1: relevance|newest|price_asc|price_desc|rating_desc)
+const SEARCH_SORT_MAP = {
+  'price-asc': 'price_asc',
+  'price-desc': 'price_desc',
+  newest: 'newest',
+};
+
 export const productApi = {
+  /**
+   * Tìm kiếm sản phẩm qua Search Service: GET /products/search
+   * @param {Object} params - { q, category, brand, minPrice, maxPrice, sort, page, size }
+   * @returns {Promise<{data: {items: Array, total: number}}>} cùng shape với getProducts ở mock mode
+   */
+  searchProducts: async (params = {}, options = {}) => {
+    if (isMockMode()) {
+      return productApi.getProducts(params, options);
+    }
+    const q = (params.q || '').trim();
+    const query = {
+      q: q || undefined,
+      category_id: params.category && params.category !== 'all' ? params.category : undefined,
+      brand: params.brand || undefined,
+      min_price: params.minPrice,
+      max_price: params.maxPrice,
+      // 'popular'/'sales' không có ở Search → relevance khi có từ khoá, newest khi chỉ duyệt
+      sort: SEARCH_SORT_MAP[params.sort] || (q ? 'relevance' : 'newest'),
+      page: params.page,
+      size: params.size,
+    };
+    const res = await apiClient.get('/products/search', { params: query, signal: options.signal });
+    const items = (Array.isArray(res?.data) ? res.data : []).map((p) => ({
+      id: p.product_id,
+      name: p.title,
+      slug: p.slug,
+      price: p.price?.amount ?? 0,
+      image: p.cover_url || '',
+      rating: p.rating_avg ?? 0,
+      shop: p.shop,
+    }));
+    return { data: { items, total: res?.meta?.total ?? items.length }, meta: res?.meta };
+  },
+
   /**
    * Lấy danh sách sản phẩm có bộ lọc, sắp xếp, phân trang và batch hydration
    * @param {Object} params - { q, category_id, category, shop_id, min_price, max_price, rating, sort, page, size, product_ids }
