@@ -31,7 +31,7 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 20
           resources:
-            requests: { cpu: 10m, memory: 16Mi }
+            requests: { cpu: 20m, memory: 32Mi }
             limits: { cpu: 200m, memory: 64Mi }
           securityContext:
             allowPrivilegeEscalation: false
