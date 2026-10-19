@@ -1,11 +1,13 @@
 # Manifest môi trường K8S dev. Job deploy-dev trong ci.yml thay __IMAGE__ bằng image develop-<sha> rồi kubectl apply.
+# Image là bản build tĩnh (nginx :8080). Truy cập công khai chỉ qua API Gateway (Kong) tại
+# https://taca.thanhtanengineer.id.vn — Service để ClusterIP, không mở NodePort.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: web-service
   labels: { app: web-service, part-of: taca }
 spec:
-  replicas: 1
+  replicas: 2
   revisionHistoryLimit: 3
   selector:
     matchLabels: { app: web-service }
@@ -13,37 +15,27 @@ spec:
     metadata:
       labels: { app: web-service, part-of: taca }
     spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
       containers:
         - name: web
           image: __IMAGE__
-          command: ["sh", "-c"]
-          args:
-            - |
-              npm run build:remotes && (npm run preview -w @taca/buyer -- --host 0.0.0.0 &
-               npm run preview -w @taca/seller -- --host 0.0.0.0 &
-               npm run preview -w @taca/admin -- --host 0.0.0.0 &) &&
-              npm run dev -w @taca/shell -- --host 0.0.0.0
           ports:
-            - { name: shell, containerPort: 5173 }
-            - { name: buyer, containerPort: 5174 }
-            - { name: seller, containerPort: 5175 }
-            - { name: admin, containerPort: 5176 }
-          env:
-            - { name: VITE_API_URL, value: /api/v1 }
-            - { name: VITE_USE_MOCK, value: "false" }
-            - { name: VITE_GATEWAY_TARGET, value: "http://kong-proxy.dev.svc:80" }
-            - { name: VITE_REMOTE_BUYER_URL, value: "http://192.168.100.23:30174/assets/remoteEntry.js" }
-            - { name: VITE_REMOTE_SELLER_URL, value: "http://192.168.100.23:30175/assets/remoteEntry.js" }
-            - { name: VITE_REMOTE_ADMIN_URL, value: "http://192.168.100.23:30176/assets/remoteEntry.js" }
-            - { name: NODE_OPTIONS, value: "--max-old-space-size=1536" }
+            - { name: http, containerPort: 8080 }
           readinessProbe:
-            tcpSocket: { port: 5173 }
-            initialDelaySeconds: 60
-            periodSeconds: 15
-            failureThreshold: 40
+            httpGet: { path: /healthz, port: 8080 }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8080 }
+            initialDelaySeconds: 10
+            periodSeconds: 20
           resources:
-            requests: { cpu: 200m, memory: 320Mi }
-            limits: { cpu: "2", memory: 2Gi }
+            requests: { cpu: 10m, memory: 16Mi }
+            limits: { cpu: 200m, memory: 64Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
 ---
 apiVersion: v1
 kind: Service
@@ -51,10 +43,7 @@ metadata:
   name: web-service
   labels: { app: web-service, part-of: taca }
 spec:
-  type: NodePort
+  type: ClusterIP
   selector: { app: web-service }
   ports:
-    - { name: shell, port: 5173, targetPort: 5173, nodePort: 30173 }
-    - { name: buyer, port: 5174, targetPort: 5174, nodePort: 30174 }
-    - { name: seller, port: 5175, targetPort: 5175, nodePort: 30175 }
-    - { name: admin, port: 5176, targetPort: 5176, nodePort: 30176 }
+    - { name: http, port: 80, targetPort: 8080 }
