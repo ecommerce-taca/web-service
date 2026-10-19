@@ -617,7 +617,10 @@ export const productApi = {
       name: p.title,
       slug: p.slug,
       price: p.price?.amount ?? 0,
-      image: p.cover_url || '',
+      // Search có thể lưu object_key tương đối (vd. dữ liệu seed) → ảnh public nằm dưới /media/ của gateway
+      image: !p.cover_url || /^(https?:)?\/\//.test(p.cover_url) || p.cover_url.startsWith('/')
+        ? (p.cover_url || '')
+        : `/media/${p.cover_url}`,
       rating: p.rating_avg ?? 0,
       shop: p.shop,
     }));
