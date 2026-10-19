@@ -60,7 +60,9 @@ export const FavoritesProvider = ({ children }) => {
   const useServer = isAuthenticated && !isMockMode();
   const [favorites, setFavorites] = useState(readLocalFavorites);
   const favoritesRef = useRef(favorites);
-  favoritesRef.current = favorites;
+  useEffect(() => {
+    favoritesRef.current = favorites;
+  }, [favorites]);
 
   // Lưu bản sao vào localStorage: phục vụ khách chưa đăng nhập và đồng bộ giữa các tab
   useEffect(() => {

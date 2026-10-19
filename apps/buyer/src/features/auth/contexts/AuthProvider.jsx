@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const handleStorage = (e) => {
       if (e.key !== 'taca_user' && e.key !== null) return; // null = localStorage.clear()
-      let nextUser = null;
+      let nextUser;
       try {
         nextUser = e.key === null ? null : (e.newValue ? JSON.parse(e.newValue) : null);
       } catch {
