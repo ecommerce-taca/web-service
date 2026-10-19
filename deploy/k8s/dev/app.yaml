@@ -1,0 +1,60 @@
+# Manifest môi trường K8S dev. Job deploy-dev trong ci.yml thay __IMAGE__ bằng image develop-<sha> rồi kubectl apply.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-service
+  labels: { app: web-service, part-of: taca }
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels: { app: web-service }
+  template:
+    metadata:
+      labels: { app: web-service, part-of: taca }
+    spec:
+      containers:
+        - name: web
+          image: __IMAGE__
+          command: ["sh", "-c"]
+          args:
+            - |
+              npm run build:remotes && (npm run preview -w @taca/buyer -- --host 0.0.0.0 &
+               npm run preview -w @taca/seller -- --host 0.0.0.0 &
+               npm run preview -w @taca/admin -- --host 0.0.0.0 &) &&
+              npm run dev -w @taca/shell -- --host 0.0.0.0
+          ports:
+            - { name: shell, containerPort: 5173 }
+            - { name: buyer, containerPort: 5174 }
+            - { name: seller, containerPort: 5175 }
+            - { name: admin, containerPort: 5176 }
+          env:
+            - { name: VITE_API_URL, value: /api/v1 }
+            - { name: VITE_USE_MOCK, value: "false" }
+            - { name: VITE_GATEWAY_TARGET, value: "http://kong-proxy.dev.svc:80" }
+            - { name: VITE_REMOTE_BUYER_URL, value: "http://192.168.100.23:30174/assets/remoteEntry.js" }
+            - { name: VITE_REMOTE_SELLER_URL, value: "http://192.168.100.23:30175/assets/remoteEntry.js" }
+            - { name: VITE_REMOTE_ADMIN_URL, value: "http://192.168.100.23:30176/assets/remoteEntry.js" }
+            - { name: NODE_OPTIONS, value: "--max-old-space-size=1536" }
+          readinessProbe:
+            tcpSocket: { port: 5173 }
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 40
+          resources:
+            requests: { cpu: 200m, memory: 320Mi }
+            limits: { cpu: "2", memory: 2Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+  labels: { app: web-service, part-of: taca }
+spec:
+  type: NodePort
+  selector: { app: web-service }
+  ports:
+    - { name: shell, port: 5173, targetPort: 5173, nodePort: 30173 }
+    - { name: buyer, port: 5174, targetPort: 5174, nodePort: 30174 }
+    - { name: seller, port: 5175, targetPort: 5175, nodePort: 30175 }
+    - { name: admin, port: 5176, targetPort: 5176, nodePort: 30176 }
