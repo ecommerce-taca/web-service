@@ -88,7 +88,7 @@ export default function CreateCategoryModal({ isOpen, onClose, categories, onSuc
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-900">Thêm danh mục mới</h3>
-              <p className="text-xs text-slate-500 font-medium">Khởi tạo Taxonomy ngành hàng (STT 22: POST /admin/catalog/categories)</p>
+              <p className="text-xs text-slate-500 font-medium">Khởi tạo taxonomy ngành hàng mới</p>
             </div>
           </div>
           <button
@@ -104,7 +104,7 @@ export default function CreateCategoryModal({ isOpen, onClose, categories, onSuc
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-              Danh mục cha (Parent Category)
+              Danh mục cha
             </label>
             <select
               value={parentId}
@@ -119,17 +119,17 @@ export default function CreateCategoryModal({ isOpen, onClose, categories, onSuc
               }}
               className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 bg-white focus:outline-hidden focus:ring-2 focus:ring-[#0A68FF]/20 focus:border-[#0A68FF]"
             >
-              <option value="">-- Danh mục gốc (Cấp 1 - Root) --</option>
+              <option value="">-- Danh mục gốc - Cấp 1 --</option>
               {categories
                 .filter((c) => c.status !== 'ARCHIVED' && (c.depth || 1) < 5)
                 .map((c) => (
                   <option key={c.category_id} value={c.category_id}>
-                    {'-'.repeat((c.depth || 1) - 1)} {c.name} (Cấp {c.depth || 1})
+                    {'-'.repeat((c.depth || 1) - 1)} {c.name} · Cấp {c.depth || 1}
                   </option>
                 ))}
             </select>
             <p className="text-[11px] text-slate-500">
-              Độ sâu danh mục tối đa theo đặc tả là 5 cấp (<code>depth ≤ 5</code>).
+              Độ sâu danh mục tối đa theo đặc tả là 5 cấp.
             </p>
           </div>
 
@@ -148,7 +148,7 @@ export default function CreateCategoryModal({ isOpen, onClose, categories, onSuc
 
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-              Đường dẫn tĩnh (Slug URL) <span className="text-rose-500">*</span>
+              Đường dẫn tĩnh <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
@@ -159,12 +159,12 @@ export default function CreateCategoryModal({ isOpen, onClose, categories, onSuc
             />
           </div>
 
-          {/* Thuế suất VAT (tax_rate_bps) */}
+          {/* Thuế suất VAT */}
           <div className="p-3.5 bg-blue-50/60 rounded-xl border border-blue-200/80 space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
                 <Percent className="w-3.5 h-3.5 text-[#0A68FF]" />
-                Thuế suất VAT (tax_rate_bps)
+                Thuế suất VAT
               </label>
               {!isRoot && (
                 <label className="flex items-center gap-1.5 text-xs text-blue-800 cursor-pointer select-none">
@@ -197,20 +197,20 @@ export default function CreateCategoryModal({ isOpen, onClose, categories, onSuc
                 />
                 <span className="text-xs font-bold text-blue-900">%</span>
                 <span className="text-xs text-blue-700">
-                  (= {taxPercent ? Math.round(Number(taxPercent) * 100) : 0} bps)
+                  = {taxPercent ? Math.round(Number(taxPercent) * 100) : 0} bps
                 </span>
               </div>
             )}
             <p className="text-[11px] text-blue-800 leading-relaxed">
               {isRoot
                 ? '⭐ Danh mục gốc bắt buộc phải có thuế suất VAT theo quy định sàn.'
-                : 'Đơn vị lưu trữ cơ sở dữ liệu là Basis Points (10% = 1000 bps).'}
+                : 'Đơn vị lưu trữ cơ sở dữ liệu là Basis Points, 10% tương đương 1000 bps.'}
             </p>
           </div>
 
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-              Thứ tự hiển thị (sort_order)
+              Thứ tự hiển thị
             </label>
             <input
               type="number"

@@ -16,11 +16,13 @@ export default function FinancePage() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportNotice, setExportNotice] = useState('');
 
-  const fetchFinanceData = useCallback(async () => {
+  const [granularity, setGranularity] = useState('MONTH'); // 'MONTH' | 'WEEK' | 'DAY'
+
+  const fetchFinanceData = useCallback(async (selectedGranularity = granularity) => {
     try {
       const [walletRes, revenueRes, ledgerRes] = await Promise.allSettled([
         sellerFinanceApi.getWallet(),
-        sellerFinanceApi.getRevenue(),
+        sellerFinanceApi.getRevenue({ granularity: selectedGranularity }),
         sellerFinanceApi.getLedger()
       ]);
 
@@ -36,31 +38,14 @@ export default function FinancePage() {
     } catch (err) {
       console.warn('Lỗi khi tải thông tin tài chính người bán:', err);
     }
-  }, []);
+  }, [granularity]);
 
   useEffect(() => {
-    let isMounted = true;
-    Promise.allSettled([
-      sellerFinanceApi.getWallet(),
-      sellerFinanceApi.getRevenue(),
-      sellerFinanceApi.getLedger()
-    ]).then(([walletRes, revenueRes, ledgerRes]) => {
-      if (!isMounted) return;
-      if (walletRes.status === 'fulfilled' && walletRes.value?.data?.data) {
-        setWallet(walletRes.value.data.data);
-      }
-      if (revenueRes.status === 'fulfilled' && revenueRes.value?.data?.data) {
-        setRevenue(revenueRes.value.data.data);
-      }
-      if (ledgerRes.status === 'fulfilled' && ledgerRes.value?.data?.data) {
-        setLedger(ledgerRes.value.data.data);
-      }
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    const timer = setTimeout(() => {
+      fetchFinanceData(granularity);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchFinanceData, granularity]);
 
   const handleExport = async () => {
     try {
@@ -118,7 +103,7 @@ export default function FinancePage() {
             className="px-4 py-2.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 rounded-lg font-bold text-[13px] shadow-2xs transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
           >
             <Download className="w-4 h-4 text-slate-600" aria-hidden="true" />
-            <span>{isExporting ? 'Đang xuất...' : 'Xuất báo cáo Excel'}</span>
+            <span>{isExporting ? 'Đang xuất...' : 'Tải báo cáo'}</span>
           </button>
           <button
             type="button"
@@ -248,9 +233,29 @@ export default function FinancePage() {
             </h3>
             <p className="text-[12px] text-slate-500 mt-0.5">So sánh doanh thu gộp và doanh thu thực nhận sau phí sàn</p>
           </div>
-          <span className="text-[11px] font-bold text-[#4F46E5] bg-indigo-50 px-2.5 py-1 rounded self-start sm:self-auto border border-indigo-100">
-            30 ngày gần nhất
-          </span>
+          <div className="flex items-center gap-1.5 self-start sm:self-auto bg-slate-100 p-1 rounded-lg">
+            <button
+              type="button"
+              onClick={() => setGranularity('DAY')}
+              className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-colors ${granularity === 'DAY' ? 'bg-white text-[#4F46E5] shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              Hôm nay
+            </button>
+            <button
+              type="button"
+              onClick={() => setGranularity('WEEK')}
+              className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-colors ${granularity === 'WEEK' ? 'bg-white text-[#4F46E5] shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              7 ngày qua
+            </button>
+            <button
+              type="button"
+              onClick={() => setGranularity('MONTH')}
+              className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-colors ${granularity === 'MONTH' ? 'bg-white text-[#4F46E5] shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              Theo tháng
+            </button>
+          </div>
         </div>
 
         {/* Bar chart bars */}

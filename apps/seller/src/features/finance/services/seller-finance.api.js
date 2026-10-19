@@ -50,7 +50,7 @@ export const sellerFinanceApi = {
 
   /**
    * Lấy báo cáo doanh thu: GET /seller/revenue
-   * Hợp đồng payment-wallet-service §3.6
+   * Hợp đồng payment-wallet-service §3.5 (endpoint 7)
    * @param {Object} params - { from, to, granularity: 'DAY' | 'WEEK' | 'MONTH' }
    */
   getRevenue: async (params = { granularity: 'MONTH' }) => {
@@ -70,6 +70,12 @@ export const sellerFinanceApi = {
     return {
       data: {
         data: {
+          range: {
+            from: params.from || '2026-08-01',
+            to: params.to || '2026-08-31',
+            granularity: params.granularity || 'MONTH'
+          },
+          currency: 'VND',
           total_gmv: 128500000,
           monthly_revenue: finance.monthlyRevenue,
           monthly_growth: finance.monthlyGrowth,
@@ -78,7 +84,20 @@ export const sellerFinanceApi = {
           voucher_cost: 2100000,
           net_revenue: finance.settlement.net,
           settlement_status: 'Đã chốt',
-          settlement_cycle: 'Hàng ngày (T+2)'
+          settlement_cycle: 'Hàng ngày (T+2)',
+          summary: {
+            gross: 2982000000,
+            commission: 142000000,
+            tax: 29820000,
+            net: 2826400000,
+            refunded: 38200000,
+            shipping_subsidy: 24600000,
+            order_count: 340
+          },
+          buckets: [
+            { period: '2026-08-01', gross: 4200000, commission: 294000, tax: 42000, net: 3864000, order_count: 12 },
+            { period: '2026-08-02', gross: 3850000, commission: 269500, tax: 38500, net: 3542000, order_count: 10 }
+          ]
         }
       }
     };
@@ -86,34 +105,40 @@ export const sellerFinanceApi = {
 
   /**
    * Tạo yêu cầu rút tiền: POST /seller/payouts
-   * Hợp đồng payment-wallet-service §3.8
-   * @param {Object} payoutData - { amount, bank_account }
+   * Hợp đồng payment-wallet-service §3.6 (endpoint 8)
+   * Yêu cầu Idempotency-Key và step-up 2FA (header X-MFA-Step-Up)
+   * @param {Object} payoutData - { amount, bank_account_id, reason }
+   * @param {string} [stepUpToken] - Mã xác thực 2FA/OTP (X-MFA-Step-Up)
    */
-  requestPayout: async (payoutData) => {
+  requestPayout: async (payoutData, stepUpToken = '') => {
     const idempotencyKey = generateIdempotencyKey();
+    const headers = {
+      'Idempotency-Key': idempotencyKey
+    };
+    if (stepUpToken) {
+      headers['X-MFA-Step-Up'] = stepUpToken;
+    }
 
     if (!isMockMode()) {
       try {
-        const response = await apiClient.post('/seller/payouts', payoutData, {
-          headers: {
-            'Idempotency-Key': idempotencyKey
-          }
-        });
+        const response = await apiClient.post('/seller/payouts', payoutData, { headers });
         return response?.data;
       } catch (err) {
         console.warn('API Gateway POST /seller/payouts failed, falling back to mock', err);
       }
     }
 
-    // Mock payout response chuẩn spec
+    // Mock payout response chuẩn spec §3.6
     return {
       data: {
         payout_id: `payout-${Date.now()}`,
+        shop_id: 'shop-01912f31',
         amount: payoutData.amount,
-        status: 'PROCESSING',
-        fee: 0,
-        estimated_arrival: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-        created_at: new Date().toISOString()
+        currency: 'VND',
+        status: 'REQUESTED',
+        bank_account_masked: 'Vietcombank •••• 4838',
+        requested_at: new Date().toISOString(),
+        estimated_arrival: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
       },
       meta: { request_id: `req-${Date.now()}` }
     };

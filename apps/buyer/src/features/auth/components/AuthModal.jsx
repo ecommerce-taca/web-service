@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Modal, Input, Button } from '@taca/ui-components';
-import { ExternalLink } from 'lucide-react';
-import { authApi, isMockMode } from '../services/auth.api';
+import { authApi } from '../services/auth.api';
 import { useAuth } from '../hooks/useAuth';
 import { getAuthErrorMessage } from '../utils/authError';
 
@@ -20,7 +19,6 @@ const AuthModal = () => {
   
   // Email verification link state
   const [pendingEmail, setPendingEmail] = useState('');
-  const [mockVerifyToken, setMockVerifyToken] = useState('');
   const [countdown, setCountdown] = useState(60);
   const [resendInfo, setResendInfo] = useState('');
 
@@ -53,7 +51,6 @@ const AuthModal = () => {
     setName('');
     setConfirmPassword('');
     setPendingEmail('');
-    setMockVerifyToken('');
     setCountdown(60);
     setResendInfo('');
     setError('');
@@ -259,11 +256,10 @@ const AuthModal = () => {
         ...(finalPhone && { phone: finalPhone })
       };
       
-      const response = await authApi.register(payload);
+      await authApi.register(payload);
       
       // Chuyển sang màn hình yêu cầu click link trong email để kích hoạt, CHƯA đăng nhập người dùng
       setPendingEmail(email);
-      setMockVerifyToken(response.data?.verification?.token || '');
       setCountdown(60);
       setResendInfo('');
       setError('');
@@ -385,35 +381,6 @@ const AuthModal = () => {
               </div>
             )}
 
-            {/* Hỗ trợ hiển thị linh hoạt giữa chế độ Mock và Backend thật */}
-            {isMockMode() ? (
-              mockVerifyToken && (
-                <div className="my-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-left">
-                  <div className="text-[12px] font-semibold text-blue-800 mb-1">
-                    Môi trường thử nghiệm Mock (VITE_USE_MOCK=true):
-                  </div>
-                  <a 
-                    href={`/verify-email?t=${mockVerifyToken}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-[13px] font-bold text-taca-primary hover:underline"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    <span>Bấm vào đây để mở link xác nhận email thử nghiệm &rarr;</span>
-                  </a>
-                </div>
-              )
-            ) : (
-              <div className="my-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-left">
-                <div className="flex items-center gap-1.5 text-[12px] font-semibold text-emerald-800 mb-1">
-                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Đang kết nối Backend thật (VITE_USE_MOCK=false)
-                </div>
-                <p className="text-[13px] text-emerald-700">
-                  Hệ thống đã gửi link kích hoạt đến email của bạn. Vui lòng mở hộp thư để bấm xác nhận.
-                </p>
-              </div>
-            )}
 
             <div className="mt-6 flex flex-col items-center gap-3 text-[14px]">
               <div className="text-taca-text-muted">

@@ -297,16 +297,11 @@ export default function AdminCategoriesPage() {
       )}
 
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
-            <Layers className="w-4 h-4 text-[#0A68FF]" />
-            <span>Taxonomy & Hierarchy</span>
-          </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Categories</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Quản trị taxonomy, cấu hình thuế VAT (tax_rate_bps), thuộc tính chuẩn ngành hàng và kiểm soát phả hệ danh mục.
-          </p>
+      {/* Page Actions Bar (Giữ 1 tiêu đề chính trên AdminHeader, hiển thị thanh công cụ thao tác nhanh) */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-600 uppercase tracking-wider">
+          <Layers className="w-4 h-4 text-[#0A68FF]" />
+          <span>Sơ đồ danh mục sàn</span>
         </div>
 
         <div className="flex items-center gap-2.5">
@@ -329,16 +324,19 @@ export default function AdminCategoriesPage() {
         </div>
       </div>
 
-      {/* Main Two-Column Layout (Matching Penpot Taca Admin / Categories) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Category Tree (5 cols) */}
-        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col h-[750px]">
+      {/* Main Two-Column Layout (Matching Penpot Taca Admin / Categories: 330px tree : 718px detail) */}
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        {/* Left Column: Category Tree (320px - 360px) */}
+        <div className="w-full lg:w-[320px] xl:w-[360px] shrink-0 bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col h-[750px]">
           {/* Tree Header & Search */}
           <div className="p-4 border-b border-slate-100 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
                 <FolderTree className="w-4 h-4 text-[#0A68FF]" />
-                Cây danh mục sàn ({categories.length})
+                <span>Cây danh mục sàn</span>
+                <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold">
+                  {categories.length}
+                </span>
               </span>
               <span className="text-[11px] text-slate-400">Tối đa 5 cấp</span>
             </div>
@@ -356,7 +354,7 @@ export default function AdminCategoriesPage() {
           </div>
 
           {/* Tree Body */}
-          <div className="p-3 overflow-y-auto flex-1 space-y-1">
+          <div className="p-3 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex-1 space-y-1">
             {loading ? (
               <div className="p-8 text-center space-y-2">
                 <div className="w-6 h-6 border-2 border-[#0A68FF] border-t-transparent rounded-full animate-spin mx-auto" />
@@ -394,8 +392,8 @@ export default function AdminCategoriesPage() {
           </div>
         </div>
 
-        {/* Right Column: Category Detail & Taxonomy Rules (7 cols) */}
-        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col">
+        {/* Right Column: Category Detail & Taxonomy Rules (Fills remaining width) */}
+        <div className="flex-1 min-w-0 w-full bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col">
           {selectedCategory ? (
             <form onSubmit={handleSaveCategory} className="divide-y divide-slate-100">
               {/* Detail Header */}
@@ -446,7 +444,7 @@ export default function AdminCategoriesPage() {
 
                   <div className="space-y-1.5">
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Đường dẫn tĩnh (Slug) <span className="text-rose-500">*</span>
+                      Đường dẫn tĩnh <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -459,7 +457,7 @@ export default function AdminCategoriesPage() {
 
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Danh mục cha (Parent)
+                    Danh mục cha
                   </label>
                   <select
                     value={formData.parent_id}
@@ -473,23 +471,23 @@ export default function AdminCategoriesPage() {
                     }}
                     className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 bg-white focus:outline-hidden"
                   >
-                    <option value="">-- Là danh mục gốc (Root / Không cha) --</option>
+                    <option value="">-- Là danh mục gốc --</option>
                     {categories
                       .filter((c) => c.category_id !== selectedCategory.category_id && c.status !== 'ARCHIVED')
                       .map((c) => (
                         <option key={c.category_id} value={c.category_id}>
-                          {c.name} ({c.path})
+                          {c.name} · {c.path}
                         </option>
                       ))}
                   </select>
                 </div>
 
-                {/* Thuế suất VAT (tax_rate_bps) */}
+                {/* Thuế suất VAT */}
                 <div className="p-4 bg-blue-50/70 rounded-xl border border-blue-200 space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
                       <Percent className="w-3.5 h-3.5 text-[#0A68FF]" />
-                      Thuế suất VAT (tax_rate_bps)
+                      Thuế suất VAT
                     </label>
                     {formData.parent_id && (
                       <label className="flex items-center gap-1.5 text-xs text-blue-800 cursor-pointer select-none">
@@ -521,12 +519,12 @@ export default function AdminCategoriesPage() {
                       />
                       <span className="text-xs font-bold text-blue-900">%</span>
                       <span className="text-xs text-blue-700">
-                        (= {Math.round(Number(formData.tax_percent || 0) * 100)} bps)
+                        = {Math.round(Number(formData.tax_percent || 0) * 100)} bps
                       </span>
                     </div>
                   )}
                   <p className="text-[11px] text-blue-800 leading-relaxed">
-                    Theo đặc tả Product Catalog §3.4: Thuế suất VAT lưu dạng basis point (10% = 1000). Danh mục gốc bắt buộc phải có thuế suất.
+                    Theo đặc tả Product Catalog §3.4: Thuế suất VAT lưu dạng basis point, 10% tương đương 1000 bps. Danh mục gốc bắt buộc phải có thuế suất.
                   </p>
                 </div>
 
@@ -539,9 +537,9 @@ export default function AdminCategoriesPage() {
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                     className="w-48 px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:outline-hidden"
                   >
-                    <option value="ACTIVE">Hoạt động (ACTIVE)</option>
-                    <option value="INACTIVE">Tạm dừng (INACTIVE)</option>
-                    <option value="ARCHIVED">Lưu trữ (ARCHIVED)</option>
+                    <option value="ACTIVE">Hoạt động</option>
+                    <option value="INACTIVE">Tạm dừng</option>
+                    <option value="ARCHIVED">Lưu trữ</option>
                   </select>
                 </div>
 
@@ -549,7 +547,7 @@ export default function AdminCategoriesPage() {
                 <div className="space-y-2 pt-2 border-t border-slate-100">
                   <div className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
                     <Tag className="w-3.5 h-3.5 text-slate-400" />
-                    Thuộc tính bắt buộc ngành hàng (Penpot Spec)
+                    Thuộc tính bắt buộc ngành hàng
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {['Thương hiệu', 'Dòng sản phẩm', 'Dung lượng', 'Màu sắc', 'Xuất xứ', 'Bảo hành'].map((attr) => (
@@ -569,7 +567,7 @@ export default function AdminCategoriesPage() {
                   <div className="p-4 rounded-xl border border-rose-200 bg-rose-50/80 space-y-3">
                     <div className="text-xs font-bold text-rose-900 flex items-center gap-2">
                       <Archive className="w-4 h-4 text-rose-600" />
-                      Xác nhận lưu trữ mềm danh mục (STT 24: POST /archive)
+                      Xác nhận lưu trữ mềm danh mục
                     </div>
                     <p className="text-xs text-rose-800">
                       Danh mục sau khi lưu trữ sẽ chuyển sang <code>ARCHIVED</code>, không nhận thêm sản phẩm mới.
@@ -578,7 +576,7 @@ export default function AdminCategoriesPage() {
                       type="text"
                       value={archiveReason}
                       onChange={(e) => setArchiveReason(e.target.value)}
-                      placeholder="Lý do lưu trữ (ví dụ: Quy hoạch lại ngành hàng mới)..."
+                      placeholder="Lý do lưu trữ..."
                       className="w-full px-3 py-2 text-xs bg-white border border-rose-300 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-rose-500"
                     />
                     <div className="flex justify-end gap-2">
@@ -632,7 +630,7 @@ export default function AdminCategoriesPage() {
                     ) : (
                       <>
                         <Save className="w-3.5 h-3.5" />
-                        <span>Lưu thay đổi (PATCH)</span>
+                        <span>Lưu thay đổi</span>
                       </>
                     )}
                   </button>
