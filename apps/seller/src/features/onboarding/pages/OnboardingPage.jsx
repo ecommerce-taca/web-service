@@ -59,6 +59,7 @@ export default function OnboardingPage() {
     name: '',
     business_name: '',
     tax_code: '',
+    tax_code_masked: '',
     description: '',
   });
 
@@ -91,10 +92,10 @@ export default function OnboardingPage() {
   const [selectedWardCode, setSelectedWardCode] = useState('');
   const [wards, setWards] = useState([]);
 
-  // Step 4: Bank State
+  // Step 4: Bank State (Mặc định NCB - Chuẩn kiểm thử VNPAY Sandbox)
   const [bankForm, setBankForm] = useState({
-    bank_code: 'VCB',
-    bank_name: 'Ngân hàng Ngoại Thương Việt Nam (Vietcombank)',
+    bank_code: 'NCB',
+    bank_name: 'Ngân hàng Quốc Dân (NCB - VNPAY Sandbox)',
     account_name: '',
     account_number: '',
     confirm_account_name: true,
@@ -121,10 +122,24 @@ export default function OnboardingPage() {
 
     if (shop) {
       if (shop.reject_reason) setRejectReason(shop.reject_reason);
+      const userRaw = localStorage.getItem('taca_user');
+      let userId = null;
+      try {
+        userId = userRaw ? JSON.parse(userRaw)?.id : null;
+      } catch {
+        // ignore
+      }
+
+      const cachedTax = (userId && localStorage.getItem(`taca_seller_tax_code_${userId}`)) ||
+                        localStorage.getItem('taca_seller_tax_code') || '';
+      const resolvedTaxCode = shop.tax_code || cachedTax || '';
+      const resolvedTaxMasked = shop.tax_code_masked || (resolvedTaxCode ? `${resolvedTaxCode.slice(0, 3)}*****${resolvedTaxCode.slice(-2)}` : '');
+
       setProfileForm({
         name: shop.name || '',
         business_name: shop.business_name || '',
-        tax_code: shop.tax_code || '',
+        tax_code: resolvedTaxCode,
+        tax_code_masked: resolvedTaxMasked,
         description: shop.description || '',
       });
 
@@ -153,8 +168,8 @@ export default function OnboardingPage() {
         setBankSummary(shop.bank_summary);
         setBankForm((prev) => ({
           ...prev,
-          bank_code: shop.bank_summary.bank_code || 'VCB',
-          bank_name: shop.bank_summary.bank_name || 'Vietcombank',
+          bank_code: shop.bank_summary.bank_code || 'NCB',
+          bank_name: shop.bank_summary.bank_name || 'Ngân hàng Quốc Dân (NCB - VNPAY Sandbox)',
           account_name: shop.bank_summary.account_name || '',
         }));
       }
@@ -223,7 +238,26 @@ export default function OnboardingPage() {
     setSaving(true);
     setErrorMessage('');
     try {
-      await updateOnboardingProfile(profileForm);
+      const cleanTax = String(profileForm.tax_code || '').replace(/\D/g, '');
+      const userRaw = localStorage.getItem('taca_user');
+      let userId = null;
+      try {
+        userId = userRaw ? JSON.parse(userRaw)?.id : null;
+      } catch {
+        // ignore
+      }
+
+      if (cleanTax && cleanTax.length >= 10 && cleanTax.length <= 14) {
+        if (userId) localStorage.setItem(`taca_seller_tax_code_${userId}`, cleanTax);
+        localStorage.setItem('taca_seller_tax_code', cleanTax);
+      }
+
+      await updateOnboardingProfile({
+        name: profileForm.name,
+        business_name: profileForm.business_name,
+        tax_code: cleanTax || profileForm.tax_code,
+        description: profileForm.description,
+      });
       setStepStatuses((prev) => ({ ...prev, PROFILE: true }));
       notifySuccess('Đã cập nhật hồ sơ gian hàng thành công!');
       setCurrentStep('KYC');

@@ -230,7 +230,7 @@ export default function AdminKycPage() {
 
                     {/* Tax Code */}
                     <td className="py-4 px-4 font-mono text-slate-800 font-semibold">
-                      {item.tax_code_masked}
+                      {item.tax_code_masked || item.tax_code || '---'}
                     </td>
 
                     {/* Risk Badge */}
@@ -277,12 +277,14 @@ export default function AdminKycPage() {
       </div>
 
       {/* Review Modal */}
-      <KycReviewModal
-        isOpen={isReviewOpen}
-        onClose={() => setIsReviewOpen(false)}
-        item={selectedItem}
-        onDecisionSuccess={handleDecisionSuccess}
-      />
+      {isReviewOpen && (
+        <KycReviewModal
+          isOpen={isReviewOpen}
+          onClose={() => setIsReviewOpen(false)}
+          item={selectedItem}
+          onDecisionSuccess={handleDecisionSuccess}
+        />
+      )}
     </div>
   );
 }

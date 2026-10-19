@@ -178,13 +178,31 @@ export const registerSeller = async ({ name, business_name, tax_code, slug, desc
 
   const payload = res?.data || res;
   const shopData = payload?.shop || payload;
-  if (shopData?.id) {
-    const currentUser = getCurrentUser();
-    const currentUserId = currentUser?.id || shopData.owner_user_id;
-    if (currentUserId) {
-      localStorage.setItem(`${STORAGE_KEY_SHOP}_${currentUserId}`, JSON.stringify(shopData));
+  const cleanTax = String(tax_code || '').replace(/\D/g, '');
+  const currentUser = getCurrentUser();
+  const currentUserId = currentUser?.id || shopData?.owner_user_id;
+
+  if (cleanTax) {
+    try {
+      if (currentUserId) {
+        localStorage.setItem(`taca_seller_tax_code_${currentUserId}`, cleanTax);
+      }
+      localStorage.setItem('taca_seller_tax_code', cleanTax);
+    } catch {
+      // storage quota fallback
     }
-    localStorage.setItem(STORAGE_KEY_SHOP, JSON.stringify(shopData));
+  }
+
+  if (shopData?.id) {
+    const enrichedShop = {
+      ...shopData,
+      tax_code: cleanTax || shopData.tax_code,
+      tax_code_masked: cleanTax ? `${cleanTax.slice(0, 3)}*****${cleanTax.slice(-2)}` : (shopData.tax_code_masked || ''),
+    };
+    if (currentUserId) {
+      localStorage.setItem(`${STORAGE_KEY_SHOP}_${currentUserId}`, JSON.stringify(enrichedShop));
+    }
+    localStorage.setItem(STORAGE_KEY_SHOP, JSON.stringify(enrichedShop));
   }
 
   return payload;

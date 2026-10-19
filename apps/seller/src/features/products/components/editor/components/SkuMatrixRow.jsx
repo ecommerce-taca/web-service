@@ -19,10 +19,10 @@ function SkuMatrixRow({ sku, onUpdateCode, onUpdatePrice, onUpdateStock, onToggl
         <input
           type="text"
           required
-          value={sku.code}
-          onChange={(e) => onUpdateCode(sku.id, e.target.value)}
+          value={sku.code || ''}
+          onChange={(e) => onUpdateCode(sku.id, e.target.value.toUpperCase())}
           placeholder="Mã SKU (VD: IP16-256-NAT)"
-          className="w-full min-w-[140px] px-2.5 py-1.5 font-mono text-[11px] border border-slate-300 rounded-lg text-slate-900 font-semibold focus:outline-none focus:border-[#4F46E5] bg-white"
+          className="w-full min-w-[140px] px-2.5 py-1.5 font-mono text-[11px] border border-slate-300 rounded-lg text-slate-900 font-semibold focus:outline-none focus:border-[#4F46E5] bg-white uppercase"
         />
       </td>
       <td className="py-3 px-4">

@@ -55,11 +55,11 @@ export default function SettingsPage() {
   const [carrierPreferences, setCarrierPreferences] = useState(['GHTK', 'GHN', 'SPX']);
   const [codEnabled, setCodEnabled] = useState(true);
 
-  // Bank State (§2.26)
+  // Bank State (§2.26 - Mặc định NCB cho VNPAY Sandbox)
   const [bankSummary, setBankSummary] = useState(null);
   const [bankForm, setBankForm] = useState({
-    bank_code: 'VCB',
-    bank_name: 'Ngân hàng Ngoại Thương Việt Nam (Vietcombank)',
+    bank_code: 'NCB',
+    bank_name: 'Ngân hàng Quốc Dân (NCB - VNPAY Sandbox)',
     account_name: '',
     account_number: '',
   });

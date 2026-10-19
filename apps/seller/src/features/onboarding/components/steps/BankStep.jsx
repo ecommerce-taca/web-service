@@ -49,6 +49,34 @@ export default function BankStep({
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {/* Hướng dẫn kiểm thử VNPAY Sandbox */}
+          <div className="sm:col-span-2 p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl text-[12px] text-blue-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+            <div className="space-y-0.5 text-[11px]">
+              <div className="flex items-center gap-1.5 font-bold text-blue-800 uppercase text-[10px]">
+                <span className="px-1.5 py-0.5 bg-blue-100 rounded border border-blue-200">VNPAY Sandbox</span>
+                <span>Ngân hàng kiểm thử chuẩn: NCB (Ngân hàng Quốc Dân)</span>
+              </div>
+              <p className="text-blue-700 font-mono">
+                Số thẻ/TK test: <b>9704198526191432198</b> · Chủ TK: <b>NGUYEN VAN A</b>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setBankForm({
+                  ...bankForm,
+                  bank_code: 'NCB',
+                  bank_name: 'Ngân hàng Quốc Dân (NCB - VNPAY Sandbox)',
+                  account_number: '9704198526191432198',
+                  account_name: 'NGUYEN VAN A',
+                });
+              }}
+              className="text-[11px] font-bold text-blue-700 hover:text-blue-900 bg-white hover:bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-300 shadow-2xs transition-colors cursor-pointer shrink-0"
+            >
+              Điền nhanh thẻ test VNPAY
+            </button>
+          </div>
+
           <div className="sm:col-span-2">
             <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
               Ngân hàng thụ hưởng * (bank_code / bank_name)
@@ -139,7 +167,7 @@ export default function BankStep({
           <div className="bg-white p-3.5 rounded-xl border border-indigo-100">
             <span className="font-bold text-slate-500 uppercase text-[10px] block mb-1">1. Hồ sơ gian hàng</span>
             <p className="font-bold text-slate-900">{profileForm.name || '---'}</p>
-            <p className="text-slate-500">MST: {profileForm.tax_code || '---'}</p>
+            <p className="text-slate-500">MST: {profileForm.tax_code || profileForm.tax_code_masked || '---'}</p>
           </div>
 
           <div className="bg-white p-3.5 rounded-xl border border-indigo-100">
@@ -225,6 +253,7 @@ BankStep.propTypes = {
   profileForm: PropTypes.shape({
     name: PropTypes.string,
     tax_code: PropTypes.string,
+    tax_code_masked: PropTypes.string,
   }).isRequired,
   isKycComplete: PropTypes.bool.isRequired,
   warehouseForm: PropTypes.shape({

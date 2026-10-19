@@ -19,9 +19,9 @@ export default function WithdrawModal({ isOpen, onClose, onConfirm, balance = '4
       await sellerFinanceApi.requestPayout({
         amount: numericAmount,
         bank_account: {
-          bank_code: 'VCB',
-          account_number: '•••• 4838',
-          account_holder: 'NGUYEN MINH ANH'
+          bank_code: 'NCB',
+          account_number: '•••• 2198',
+          account_holder: 'NGUYEN VAN A'
         }
       });
 
@@ -108,10 +108,10 @@ export default function WithdrawModal({ isOpen, onClose, onConfirm, balance = '4
             <div className="p-4 rounded-xl border-2 border-indigo-100 bg-indigo-50/40 flex items-center justify-between">
               <div>
                 <div className="font-bold text-slate-900 text-[14px]">
-                  Vietcombank · •••• 4838
+                  Ngân hàng Quốc Dân (NCB - VNPAY Sandbox) · •••• 2198
                 </div>
                 <div className="text-[12px] font-semibold text-slate-500 mt-0.5">
-                  NGUYEN MINH ANH
+                  NGUYEN VAN A
                 </div>
               </div>
               <span className="text-[11px] font-bold text-[#4F46E5] bg-white px-2 py-0.5 rounded border border-indigo-200">
