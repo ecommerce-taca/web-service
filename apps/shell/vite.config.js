@@ -4,6 +4,10 @@ import federation from '@originjs/vite-plugin-federation'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '../../', '')
+  // Hostname được phép truy cập dev/preview server ngoài localhost (vd. domain public qua Cloudflare Tunnel)
+  const allowedHosts = env.VITE_ALLOWED_HOSTS
+    ? env.VITE_ALLOWED_HOSTS.split(',').map((h) => h.trim()).filter(Boolean)
+    : undefined
 
   return {
     envDir: '../../',
@@ -22,6 +26,7 @@ export default defineConfig(({ mode }) => {
     server: { 
       port: 5173, 
       cors: true,
+      allowedHosts,
       proxy: {
         '/api': {
           target: env.VITE_GATEWAY_TARGET || 'http://localhost:8081',
@@ -29,7 +34,7 @@ export default defineConfig(({ mode }) => {
         }
       }
     },
-    preview: { port: 5173, strictPort: true, cors: true },
+    preview: { port: 5173, strictPort: true, cors: true, allowedHosts },
     build: { target: 'esnext', minify: true, cssCodeSplit: false }
   }
 })

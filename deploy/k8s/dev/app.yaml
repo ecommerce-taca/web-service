@@ -32,9 +32,11 @@ spec:
             - { name: VITE_API_URL, value: /api/v1 }
             - { name: VITE_USE_MOCK, value: "false" }
             - { name: VITE_GATEWAY_TARGET, value: "http://kong-proxy.dev.svc:80" }
-            - { name: VITE_REMOTE_BUYER_URL, value: "http://192.168.100.23:30174/assets/remoteEntry.js" }
-            - { name: VITE_REMOTE_SELLER_URL, value: "http://192.168.100.23:30175/assets/remoteEntry.js" }
-            - { name: VITE_REMOTE_ADMIN_URL, value: "http://192.168.100.23:30176/assets/remoteEntry.js" }
+            - { name: VITE_REMOTE_BUYER_URL, value: "https://taca-buyer.thantancloud.id.vn/assets/remoteEntry.js" }
+            - { name: VITE_REMOTE_SELLER_URL, value: "https://taca-seller.thantancloud.id.vn/assets/remoteEntry.js" }
+            - { name: VITE_REMOTE_ADMIN_URL, value: "https://taca-admin.thantancloud.id.vn/assets/remoteEntry.js" }
+            # Public qua Cloudflare Tunnel taca-dev; remote entry phải là URL trình duyệt truy cập được
+            - { name: VITE_ALLOWED_HOSTS, value: "taca.thantancloud.id.vn,taca-buyer.thantancloud.id.vn,taca-seller.thantancloud.id.vn,taca-admin.thantancloud.id.vn" }
             - { name: NODE_OPTIONS, value: "--max-old-space-size=1536" }
           readinessProbe:
             tcpSocket: { port: 5173 }
