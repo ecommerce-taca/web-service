@@ -6,6 +6,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '../../', '')
 
   return {
+    // Build production phục vụ dưới /remotes/<app>/ (Dockerfile đặt VITE_BASE); dev/preview giữ '/'
+    base: env.VITE_BASE || '/',
     envDir: '../../',
     plugins: [
       react(),
