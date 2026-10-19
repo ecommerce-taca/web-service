@@ -120,15 +120,14 @@ export default function AdminProductsPage() {
         </div>
       )}
 
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Page Scope & Actions Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
             <Package className="w-4 h-4 text-[#0A68FF]" />
-            <span>Product Moderation & Safety</span>
+            <span>Kiểm duyệt & An toàn sản phẩm sàn</span>
           </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Products / SKU</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 m-0">
             Giám sát chất lượng hàng hóa, tín hiệu rủi ro nội dung và thực thi khóa/mở khóa sản phẩm theo quy chế sàn.
           </p>
         </div>
@@ -136,7 +135,7 @@ export default function AdminProductsPage() {
         <button
           type="button"
           onClick={handleRefresh}
-          className="self-start md:self-auto px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer"
+          className="self-start sm:self-auto px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer shrink-0"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#0A68FF]' : ''}`} />
           <span>Làm mới dữ liệu</span>

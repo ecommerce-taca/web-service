@@ -9,3 +9,14 @@
     @apply font-sans bg-surface text-main antialiased;
   }
 }
+
+/* Ẩn hoàn toàn thanh cuộn trình duyệt xấu, giữ nguyên khả năng cuộn mượt bằng chuột/trackpad */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

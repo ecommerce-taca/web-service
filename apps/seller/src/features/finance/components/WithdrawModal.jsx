@@ -5,27 +5,30 @@ import { sellerFinanceApi } from '../services/seller-finance.api';
 
 export default function WithdrawModal({ isOpen, onClose, onConfirm, balance = '42.800.000 ₫' }) {
   const [amount, setAmount] = useState('20.000.000');
+  const [stepUpToken, setStepUpToken] = useState('123456');
   const [notification, setNotification] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
+
+  const numericAmount = Number(String(amount).replace(/[^0-9]/g, '')) || 20000000;
+  const formattedDisplayAmount = new Intl.NumberFormat('vi-VN').format(numericAmount);
 
   const handleConfirm = async () => {
     if (isSubmitting) return;
 
     try {
       setIsSubmitting(true);
-      const numericAmount = Number(String(amount).replace(/[^0-9]/g, '')) || 20000000;
-      await sellerFinanceApi.requestPayout({
-        amount: numericAmount,
-        bank_account: {
-          bank_code: 'NCB',
-          account_number: '•••• 2198',
-          account_holder: 'NGUYEN VAN A'
-        }
-      });
+      await sellerFinanceApi.requestPayout(
+        {
+          amount: numericAmount,
+          bank_account_id: 'bank_account-01912fc0',
+          reason: 'Rút doanh thu bán hàng về tài khoản ngân hàng'
+        },
+        stepUpToken
+      );
 
-      setNotification(`Yêu cầu rút ${amount} ₫ đã được tạo thành công! Tiền sẽ về tài khoản sau T+2 ngày làm việc.`);
+      setNotification(`Yêu cầu rút ${formattedDisplayAmount} ₫ đã được tạo thành công! Tiền sẽ về tài khoản sau T+2 ngày làm việc.`);
       setTimeout(() => {
         if (onConfirm) onConfirm(amount);
         onClose();
@@ -41,7 +44,7 @@ export default function WithdrawModal({ isOpen, onClose, onConfirm, balance = '4
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[540px] overflow-hidden">
-        {/* Header */}
+        {/* Header - Khớp Penpot Overlay / Withdraw funds */}
         <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
           <div>
             <h2 className="text-[18px] font-bold text-slate-900 tracking-tight uppercase">
@@ -100,7 +103,7 @@ export default function WithdrawModal({ isOpen, onClose, onConfirm, balance = '4
             </div>
           </div>
 
-          {/* Bank account selection */}
+          {/* Bank account selection - Khớp Penpot */}
           <div>
             <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
               Tài khoản nhận
@@ -108,10 +111,10 @@ export default function WithdrawModal({ isOpen, onClose, onConfirm, balance = '4
             <div className="p-4 rounded-xl border-2 border-indigo-100 bg-indigo-50/40 flex items-center justify-between">
               <div>
                 <div className="font-bold text-slate-900 text-[14px]">
-                  Ngân hàng Quốc Dân (NCB - VNPAY Sandbox) · •••• 2198
+                  Vietcombank · •••• 4838
                 </div>
                 <div className="text-[12px] font-semibold text-slate-500 mt-0.5">
-                  NGUYEN VAN A
+                  NGUYEN MINH ANH
                 </div>
               </div>
               <span className="text-[11px] font-bold text-[#4F46E5] bg-white px-2 py-0.5 rounded border border-indigo-200">
@@ -120,10 +123,28 @@ export default function WithdrawModal({ isOpen, onClose, onConfirm, balance = '4
             </div>
           </div>
 
-          {/* Fee & SLA info */}
+          {/* 2FA Step-up verification - Bắt buộc theo API contract §3.6 */}
+          <div>
+            <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
+              Xác thực 2FA / OTP (X-MFA-Step-Up)
+            </label>
+            <input
+              type="text"
+              maxLength={6}
+              value={stepUpToken}
+              onChange={(e) => setStepUpToken(e.target.value)}
+              placeholder="Nhập mã xác thực 6 chữ số"
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-[13px] font-semibold tracking-widest text-slate-900 focus:outline-none focus:border-[#4F46E5]"
+            />
+            <p className="text-[11px] text-slate-500 mt-1">
+              Bắt buộc theo chuẩn bảo mật tài chính thanh toán
+            </p>
+          </div>
+
+          {/* Fee & SLA info - Khớp Penpot */}
           <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-[12px] text-slate-600 flex items-center justify-between">
             <span>Phí rút: <strong className="text-emerald-600">0 ₫</strong></span>
-            <span>Dự kiến: <strong>T+2 ngày làm việc</strong></span>
+            <span>Dự kiến nhận trong: <strong>T+2 ngày làm việc</strong></span>
           </div>
 
           {notification && (
@@ -134,7 +155,7 @@ export default function WithdrawModal({ isOpen, onClose, onConfirm, balance = '4
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer - Nút bấm khớp chuẩn Penpot */}
         <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-3">
           <button
             type="button"
@@ -145,11 +166,11 @@ export default function WithdrawModal({ isOpen, onClose, onConfirm, balance = '4
           </button>
           <button
             type="button"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !numericAmount}
             onClick={handleConfirm}
-            className="px-6 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-bold text-[13px] shadow-sm transition-colors flex items-center gap-1.5"
+            className="px-6 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-bold text-[13px] shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            {isSubmitting ? 'Đang xử lý...' : 'Xác nhận rút tiền'}
+            {isSubmitting ? 'Đang xử lý...' : `Xác nhận rút ${formattedDisplayAmount} ₫`}
           </button>
         </div>
       </div>

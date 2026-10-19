@@ -49,7 +49,7 @@ export default function AdminSidebar({ user, onSignOut, onOpen2FA, onClose }) {
   };
 
   return (
-    <aside className="w-[260px] bg-[#0F172A] text-slate-300 flex flex-col shrink-0 min-h-screen border-r border-slate-800 select-none">
+    <aside className="w-[260px] bg-[#0F172A] text-slate-300 flex flex-col shrink-0 h-full min-h-full select-none overflow-hidden no-scrollbar">
       {/* Brand Header */}
       <div className="p-6 border-b border-slate-800/80 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -76,7 +76,7 @@ export default function AdminSidebar({ user, onSignOut, onOpen2FA, onClose }) {
       </div>
 
       {/* Nav Links */}
-      <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 space-y-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {navItems.map((item) => {
           const active = isItemActive(item.path);
           const IconComponent = item.icon;
@@ -143,9 +143,9 @@ export default function AdminSidebar({ user, onSignOut, onOpen2FA, onClose }) {
           >
             <span className="flex items-center gap-1.5">
               <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Cài đặt 2FA (TOTP)</span>
+              <span>Cài đặt 2FA</span>
             </span>
-            <span className="text-[10px] bg-blue-500/20 px-1 rounded">#11, #12</span>
+            <span className="text-[10px] bg-blue-500/20 px-1 rounded text-blue-300">Bảo mật</span>
           </button>
         )}
 
