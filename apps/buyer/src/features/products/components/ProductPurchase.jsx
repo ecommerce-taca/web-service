@@ -6,6 +6,17 @@ import { Button } from '@taca/ui-components';
 import { useCart } from '../../cart/hooks/useCart';
 import FavoriteButton from './FavoriteButton';
 
+// Chuẩn hoá stock_display (số từ mock hoặc object từ Product Catalog API) về { status, qty }
+const toStockInfo = (stock) => {
+  if (typeof stock === 'number') {
+    return { status: stock <= 0 ? 'OUT_OF_STOCK' : stock <= 5 ? 'LOW_STOCK' : 'IN_STOCK', qty: stock };
+  }
+  if (stock && typeof stock === 'object') {
+    return { status: stock.status || 'UNKNOWN', qty: stock.available_qty_snapshot ?? null };
+  }
+  return { status: 'UNKNOWN', qty: null };
+};
+
 const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
@@ -54,7 +65,10 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
   // 4. Tính toán giá và tồn kho hiển thị
   const currentPrice = activeSku?.price?.sale_price || activeSku?.price?.base_price || product.price;
   const currentOriginalPrice = activeSku?.price?.base_price || product.originalPrice;
-  const currentStock = activeSku?.stock_display ?? product.stock_display ?? 38;
+  // stock_display: API thật trả { status, available_qty_snapshot?, as_of } (docs product-catalog §ProductDetail),
+  // mock trả số lượng. UNKNOWN = chưa có dữ liệu tồn kho → không chặn mua, service kiểm tra lại khi đặt hàng.
+  const stockInfo = toStockInfo(activeSku?.stock_display ?? product.stock_display ?? 38);
+  const isOutOfStock = stockInfo.status === 'OUT_OF_STOCK';
   const currentSkuCode = activeSku?.sku_code || product.sku || 'SPU-DEFAULT';
 
   // Tính % giảm giá nếu có
@@ -240,12 +254,18 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
           <span>SKU đã chọn: <strong className="text-slate-900">{currentSkuCode}</strong></span>
           <span className="text-slate-300">·</span>
           <span>
-            {currentStock <= 0 ? (
+            {isOutOfStock ? (
               <strong className="text-rose-600">Tạm hết hàng</strong>
-            ) : currentStock <= 5 ? (
-              <span className="text-amber-700 font-bold">Chỉ còn {currentStock} sản phẩm</span>
+            ) : stockInfo.status === 'LOW_STOCK' ? (
+              <span className="text-amber-700 font-bold">
+                {stockInfo.qty ? `Chỉ còn ${stockInfo.qty} sản phẩm` : 'Sắp hết hàng'}
+              </span>
+            ) : stockInfo.status === 'UNKNOWN' ? (
+              <span>Đang cập nhật tồn kho</span>
+            ) : stockInfo.qty != null ? (
+              <span>Còn <strong className="text-slate-900">{stockInfo.qty}</strong> sản phẩm</span>
             ) : (
-              <span>Còn <strong className="text-slate-900">{currentStock}</strong> sản phẩm</span>
+              <span>Còn hàng</span>
             )}
           </span>
         </div>
@@ -256,17 +276,17 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
             variant="outline" 
             className="flex-1 h-[48px] text-[15px] font-semibold rounded-[8px] border-2 border-taca-primary text-taca-primary bg-white hover:bg-indigo-50"
             onClick={handleAddToCart}
-            disabled={currentStock <= 0}
+            disabled={isOutOfStock}
           >
-            {currentStock <= 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
+            {isOutOfStock ? 'Hết hàng' : 'Thêm vào giỏ'}
           </Button>
           <Button 
             variant="primary" 
             className="flex-[2] h-[48px] text-[15px] font-semibold rounded-[8px]"
             onClick={handleBuyNow}
-            disabled={currentStock <= 0}
+            disabled={isOutOfStock}
           >
-            {currentStock <= 0 ? 'Tạm hết hàng' : 'Mua ngay'}
+            {isOutOfStock ? 'Tạm hết hàng' : 'Mua ngay'}
           </Button>
 
           {addedToast && (
@@ -302,7 +322,10 @@ ProductPurchase.propTypes = {
     isFlashSale: PropTypes.bool,
     sku: PropTypes.string,
     brand: PropTypes.string,
-    stock_display: PropTypes.number,
+    stock_display: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.shape({ status: PropTypes.string, available_qty_snapshot: PropTypes.number, as_of: PropTypes.string })
+    ]),
     image: PropTypes.string,
     images: PropTypes.arrayOf(PropTypes.string),
     rating_summary: PropTypes.shape({
@@ -324,7 +347,10 @@ ProductPurchase.propTypes = {
         base_price: PropTypes.number,
         sale_price: PropTypes.number
       }),
-      stock_display: PropTypes.number,
+      stock_display: PropTypes.oneOfType([
+        PropTypes.number,
+        PropTypes.shape({ status: PropTypes.string, available_qty_snapshot: PropTypes.number, as_of: PropTypes.string })
+      ]),
       status: PropTypes.string
     })),
     variants: PropTypes.arrayOf(PropTypes.shape({
