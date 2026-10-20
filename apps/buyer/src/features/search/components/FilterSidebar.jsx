@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import PropTypes from 'prop-types';
 import {
   SlidersHorizontal,
@@ -19,23 +19,29 @@ import { productApi } from '../../products/services/product.api';
 const CATEGORY_ICON_MAP = {
   all: Layers,
   'dien-thoai': Smartphone,
+  'dien-thoai-tablet': Smartphone,
   laptop: Laptop,
+  'laptop-may-tinh': Laptop,
   'gia-dung': Utensils,
+  'nha-cua-doi-song': Utensils,
   'tv-loa': Tv,
+  'tv-dien-may': Tv,
   'nha-sach': BookOpen,
+  'nha-sach-taca': BookOpen,
   'thoi-trang': Shirt,
   'lam-dep': Sparkles,
+  'lam-dep-suc-khoe': Sparkles,
 };
 
 const DEFAULT_CATEGORIES = [
   { id: 'all', label: 'Tất cả danh mục' },
-  { id: 'dien-thoai', label: 'Điện thoại' },
-  { id: 'laptop', label: 'Máy tính & Laptop' },
-  { id: 'gia-dung', label: 'Đồ gia dụng' },
-  { id: 'tv-loa', label: 'TV & Âm thanh' },
-  { id: 'nha-sach', label: 'Nhà sách' },
-  { id: 'thoi-trang', label: 'Thời trang' },
-  { id: 'lam-dep', label: 'Làm đẹp' },
+  { id: 'dien-thoai', slug: 'dien-thoai-tablet', label: 'Điện thoại & Tablet' },
+  { id: 'laptop', slug: 'laptop-may-tinh', label: 'Máy tính & Laptop' },
+  { id: 'gia-dung', slug: 'nha-cua-doi-song', label: 'Đồ gia dụng & Đời sống' },
+  { id: 'tv-loa', slug: 'tv-dien-may', label: 'TV & Điện máy' },
+  { id: 'nha-sach', slug: 'nha-sach-taca', label: 'Nhà sách Taca' },
+  { id: 'thoi-trang', slug: 'thoi-trang', label: 'Thời trang' },
+  { id: 'lam-dep', slug: 'lam-dep-suc-khoe', label: 'Làm đẹp & Sức khỏe' },
 ];
 
 const BRANDS = ['Apple', 'Samsung', 'Sony', 'Xiaomi', 'Logitech', 'Anker', 'Lock&Lock'];
@@ -60,6 +66,7 @@ const FilterSidebar = ({
   onRatingChange,
   onResetFilters
 }) => {
+  const instanceId = useId();
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
 
   useEffect(() => {
@@ -73,6 +80,7 @@ const FilterSidebar = ({
           tree.forEach(node => {
             dynamicCats.push({
               id: node.id || node.category_id || node.slug,
+              slug: node.slug || node.id,
               label: node.name || node.title || node.label,
             });
           });
@@ -89,11 +97,11 @@ const FilterSidebar = ({
   }, []);
 
   const hasActiveFilters = Boolean(
-    selectedCategory !== 'all' ||
+    (selectedCategory && selectedCategory !== 'all') ||
     selectedBrand ||
-    selectedPriceRange !== 'all' ||
+    (selectedPriceRange && selectedPriceRange !== 'all') ||
     isOfficialOnly ||
-    minRating > 0
+    Number(minRating) > 0
   );
 
   return (
@@ -110,7 +118,7 @@ const FilterSidebar = ({
           <button
             type="button"
             onClick={onResetFilters}
-            className="text-[11px] font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer transition-colors"
+            className="text-[11px] font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer transition-colors bg-transparent border-none p-0"
           >
             Xóa bộ lọc
           </button>
@@ -124,24 +132,26 @@ const FilterSidebar = ({
         </h4>
         <div className="flex flex-col gap-1 max-h-[220px] overflow-y-auto pr-1">
           {categories.map(cat => {
-            const isActive = selectedCategory === cat.id;
-            const IconComponent = CATEGORY_ICON_MAP[cat.id] || Layers;
+            const isActive = selectedCategory === cat.id || 
+              (cat.slug && selectedCategory === cat.slug) || 
+              (cat.id === 'all' && (!selectedCategory || selectedCategory === 'all'));
+            const IconComponent = CATEGORY_ICON_MAP[cat.id] || CATEGORY_ICON_MAP[cat.slug] || Layers;
             return (
               <button
                 key={cat.id}
                 type="button"
                 onClick={() => onCategoryChange && onCategoryChange(cat.id)}
-                className={`text-left text-[12px] py-1.5 px-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between ${
+                className={`text-left text-[12px] py-2 px-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between border-none ${
                   isActive 
                     ? 'font-bold text-white bg-taca-primary shadow-xs' 
-                    : 'text-slate-700 hover:text-indigo-600 hover:bg-indigo-50/50'
+                    : 'bg-transparent text-slate-700 hover:text-indigo-600 hover:bg-indigo-50/50'
                 }`}
               >
                 <span className="flex items-center gap-2 truncate">
                   <IconComponent className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
                   <span className="truncate">{cat.label}</span>
                 </span>
-                {isActive && <Check className="w-3.5 h-3.5" />}
+                {isActive && <Check className="w-3.5 h-3.5 shrink-0" />}
               </button>
             );
           })}
@@ -157,11 +167,11 @@ const FilterSidebar = ({
         </h4>
         <div className="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto pr-1">
           {BRANDS.map(brand => {
-            const checked = selectedBrand.toLowerCase() === brand.toLowerCase();
+            const checked = Boolean(selectedBrand && selectedBrand.toLowerCase() === brand.toLowerCase());
             return (
               <label
                 key={brand}
-                className={`flex items-center justify-between p-1.5 rounded-lg cursor-pointer transition-colors ${
+                className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors select-none ${
                   checked ? 'bg-indigo-50/80 text-indigo-700 font-bold' : 'hover:bg-slate-50 text-slate-700'
                 }`}
               >
@@ -193,13 +203,19 @@ const FilterSidebar = ({
             return (
               <label
                 key={range.id}
-                className={`flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition-colors ${
+                onClick={(e) => {
+                  if (checked && range.id !== 'all') {
+                    e.preventDefault();
+                    onPriceRangeChange && onPriceRangeChange('all');
+                  }
+                }}
+                className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors select-none ${
                   checked ? 'bg-indigo-50/80 text-indigo-700 font-bold' : 'hover:bg-slate-50 text-slate-700'
                 }`}
               >
                 <input
                   type="radio"
-                  name="priceRange"
+                  name={`priceRange-${instanceId}`}
                   checked={checked}
                   onChange={() => onPriceRangeChange && onPriceRangeChange(range.id)}
                   className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
@@ -219,7 +235,7 @@ const FilterSidebar = ({
           DỊCH VỤ & CAM KẾT
         </h4>
         <label
-          className={`flex items-center gap-2.5 p-2 rounded-xl cursor-pointer border transition-all ${
+          className={`flex items-center gap-2.5 p-2 rounded-xl cursor-pointer border transition-all select-none ${
             isOfficialOnly
               ? 'bg-rose-50/80 border-rose-300 text-rose-700 font-bold'
               : 'border-slate-200/80 hover:bg-slate-50 text-slate-700'
@@ -227,7 +243,7 @@ const FilterSidebar = ({
         >
           <input
             type="checkbox"
-            checked={isOfficialOnly}
+            checked={Boolean(isOfficialOnly)}
             onChange={(e) => onOfficialChange && onOfficialChange(e.target.checked)}
             className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 cursor-pointer"
           />
@@ -247,23 +263,29 @@ const FilterSidebar = ({
         </h4>
         <div className="flex flex-col gap-1.5">
           {[4.5, 4.0].map(star => {
-            const checked = minRating === star;
+            const checked = Number(minRating) === star;
             return (
               <label
                 key={star}
-                className={`flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition-colors ${
+                onClick={(e) => {
+                  if (checked) {
+                    e.preventDefault();
+                    onRatingChange && onRatingChange(0);
+                  }
+                }}
+                className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors select-none ${
                   checked ? 'bg-amber-50 text-amber-900 font-bold' : 'hover:bg-slate-50 text-slate-700'
                 }`}
               >
                 <input
                   type="radio"
-                  name="minRating"
+                  name={`minRating-${instanceId}`}
                   checked={checked}
-                  onChange={() => onRatingChange && onRatingChange(checked ? 0 : star)}
+                  onChange={() => onRatingChange && onRatingChange(star)}
                   className="w-4 h-4 text-amber-500 focus:ring-amber-400 cursor-pointer"
                 />
                 <span className="text-[12px] flex items-center gap-2">
-                  <div className="flex items-center gap-0.5">
+                  <span className="flex items-center gap-0.5">
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
@@ -274,7 +296,7 @@ const FilterSidebar = ({
                         }`}
                       />
                     ))}
-                  </div>
+                  </span>
                   <span>Từ {star} sao</span>
                 </span>
               </label>
