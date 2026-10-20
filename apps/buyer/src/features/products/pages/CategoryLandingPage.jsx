@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Flame,
   Zap,
@@ -15,11 +15,18 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   X,
+  Star,
 } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import FilterSidebar from '../../search/components/FilterSidebar';
 import { productApi } from '../services/product.api';
 import { useFavorites } from '../hooks/useFavorites';
+
+const PRICE_MAP = {
+  'under-5m': { minPrice: 0, maxPrice: 5000000 },
+  '5m-15m': { minPrice: 5000000, maxPrice: 15000000 },
+  'over-15m': { minPrice: 15000000, maxPrice: 999999999 },
+};
 
 const USE_CASES = [
   'Chụp ảnh đẹp', 'Gaming & Đồ họa', 'Pin trâu', 'Học tập & Văn phòng', '5G Siêu tốc', 'Gập cao cấp'
@@ -71,10 +78,42 @@ const CATEGORY_THEMES = {
 
 const CategoryLandingPage = () => {
   const { categorySlug, subCategorySlug } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  const brand = searchParams.get('brand') || '';
+  const priceRange = searchParams.get('priceRange') || 'all';
+  const isOfficial = searchParams.get('official') === 'true';
+  const minRating = Number(searchParams.get('rating')) || 0;
+
   const [products, setProducts] = useState([]);
   const [categoryInfo, setCategoryInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeChip, setActiveChip] = useState('popular');
+
+  const updateParam = (key, value) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (value === undefined || value === null || value === '' || value === 'all' || value === false || value === 0) {
+        next.delete(key);
+      } else {
+        next.set(key, String(value));
+      }
+      return next;
+    });
+  };
+
+  const handleResetFilters = () => {
+    setSearchParams(new URLSearchParams());
+  };
+
+  const handleCategoryChange = (newCatId) => {
+    if (newCatId === 'all') {
+      navigate('/search');
+    } else {
+      navigate(`/category/${newCatId}`);
+    }
+  };
 
   const currentTheme = CATEGORY_THEMES[categorySlug] || {
     title: `${(categorySlug || 'DANH MỤC').replace(/-/g, ' ').toUpperCase()} CHÍNH HÃNG`,
@@ -105,10 +144,18 @@ const CategoryLandingPage = () => {
     let isMounted = true;
     setLoading(true);
 
+    const priceBounds = PRICE_MAP[priceRange] || {};
+    const targetCatId = subCategorySlug || categorySlug || 'dien-thoai';
+
     productApi.getProducts({ 
-      category: categorySlug || 'dien-thoai',
+      category: targetCatId !== 'all' ? targetCatId : undefined,
+      brand: brand || undefined,
+      minPrice: priceBounds.minPrice,
+      maxPrice: priceBounds.maxPrice,
+      isOfficial: isOfficial || undefined,
+      rating: minRating || undefined,
       sort: activeChip,
-      size: 12
+      size: 16
     })
       .then(res => {
         if (isMounted) {
@@ -127,7 +174,7 @@ const CategoryLandingPage = () => {
     return () => {
       isMounted = false;
     };
-  }, [categorySlug, activeChip]);
+  }, [categorySlug, subCategorySlug, brand, priceRange, isOfficial, minRating, activeChip]);
   
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -152,7 +199,19 @@ const CategoryLandingPage = () => {
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* Sidebar Filters */}
         <div className="hidden lg:block w-[250px] flex-shrink-0">
-          <FilterSidebar selectedCategory={categorySlug || 'dien-thoai'} />
+          <FilterSidebar 
+            selectedCategory={categorySlug || 'dien-thoai'}
+            onCategoryChange={handleCategoryChange}
+            selectedBrand={brand}
+            onBrandChange={(val) => updateParam('brand', val)}
+            selectedPriceRange={priceRange}
+            onPriceRangeChange={(val) => updateParam('priceRange', val)}
+            isOfficialOnly={isOfficial}
+            onOfficialChange={(val) => updateParam('official', val)}
+            minRating={minRating}
+            onRatingChange={(val) => updateParam('rating', val)}
+            onResetFilters={handleResetFilters}
+          />
         </div>
 
         {/* Main Content */}
@@ -277,6 +336,54 @@ const CategoryLandingPage = () => {
                 })}
               </div>
             </div>
+
+            {/* Active Filters Badges */}
+            {(brand || priceRange !== 'all' || isOfficial || minRating > 0) && (
+              <div className="flex flex-wrap items-center gap-2 p-3 bg-white rounded-xl border border-slate-200/60 shadow-2xs">
+                <span className="text-[12px] font-bold text-slate-500">Đang lọc:</span>
+                {brand && (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full shadow-2xs">
+                    <span>Hãng: {brand}</span>
+                    <button type="button" onClick={() => updateParam('brand', '')} className="hover:text-rose-600 cursor-pointer flex items-center bg-transparent border-none p-0">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {priceRange !== 'all' && (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1 rounded-full shadow-2xs">
+                    <span>Giá: {priceRange}</span>
+                    <button type="button" onClick={() => updateParam('priceRange', 'all')} className="hover:text-rose-600 cursor-pointer flex items-center bg-transparent border-none p-0">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {isOfficial && (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 px-3 py-1 rounded-full shadow-2xs">
+                    <ShieldCheck className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Mall Chính hãng</span>
+                    <button type="button" onClick={() => updateParam('official', false)} className="hover:text-rose-600 cursor-pointer flex items-center bg-transparent border-none p-0">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {minRating > 0 && (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1 rounded-full shadow-2xs">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                    <span>Từ {minRating} sao</span>
+                    <button type="button" onClick={() => updateParam('rating', 0)} className="hover:text-rose-600 cursor-pointer flex items-center bg-transparent border-none p-0">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="text-[12px] font-bold text-rose-600 hover:text-rose-700 hover:underline ml-1 cursor-pointer transition-colors bg-transparent border-none p-0"
+                >
+                  Xóa tất cả
+                </button>
+              </div>
+            )}
 
             {/* Product Grid */}
             {loading ? (
@@ -403,7 +510,22 @@ const CategoryLandingPage = () => {
               </button>
             </div>
             <div className="flex-1">
-              <FilterSidebar selectedCategory={categorySlug || 'dien-thoai'} />
+              <FilterSidebar 
+                selectedCategory={categorySlug || 'dien-thoai'}
+                onCategoryChange={(val) => {
+                  handleCategoryChange(val);
+                  setIsMobileFilterOpen(false);
+                }}
+                selectedBrand={brand}
+                onBrandChange={(val) => updateParam('brand', val)}
+                selectedPriceRange={priceRange}
+                onPriceRangeChange={(val) => updateParam('priceRange', val)}
+                isOfficialOnly={isOfficial}
+                onOfficialChange={(val) => updateParam('official', val)}
+                minRating={minRating}
+                onRatingChange={(val) => updateParam('rating', val)}
+                onResetFilters={handleResetFilters}
+              />
             </div>
             <div className="pt-4 border-t border-slate-100 mt-4">
               <button

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Store, User as UserIcon, ShoppingCart, Menu, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../features/auth/hooks/useAuth';
@@ -20,6 +20,32 @@ const Header = () => {
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [sellerStatus, setSellerStatus] = useState(() => getSellerRegistrationStatus(user?.id));
   const navigate = useNavigate();
+  const megaMenuRef = useRef(null);
+
+  // Đóng MegaMenu khi click ra ngoài hoặc bấm Escape
+  useEffect(() => {
+    if (!isMegaMenuOpen) return;
+
+    const handleClickOutside = (event) => {
+      if (megaMenuRef.current && !megaMenuRef.current.contains(event.target)) {
+        setIsMegaMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsMegaMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMegaMenuOpen]);
 
   useEffect(() => {
     setSellerStatus(getSellerRegistrationStatus(user?.id));
@@ -211,21 +237,30 @@ const Header = () => {
 
       {/* Category Navigation Bar - White background */}
       <div className="bg-white border-b border-taca-border h-[42px] relative z-40">
-        <div className="max-w-[1440px] mx-auto h-full flex items-center px-4 sm:px-6 lg:px-[80px] gap-2 overflow-hidden">
+        <div className="max-w-[1440px] mx-auto h-full flex items-center px-4 sm:px-6 lg:px-[80px] gap-2">
           <div 
+            ref={megaMenuRef}
             className="relative h-full flex items-center mr-2 sm:mr-8 shrink-0"
             onMouseEnter={() => setIsMegaMenuOpen(true)}
             onMouseLeave={() => setIsMegaMenuOpen(false)}
           >
-            <button className="bg-transparent border-none text-[11px] font-extrabold text-taca-text-main cursor-pointer hover:text-taca-primary transition-colors py-2 flex items-center gap-1.5 whitespace-nowrap">
+            <button 
+              type="button"
+              id="category-menu-button"
+              onClick={() => setIsMegaMenuOpen((prev) => !prev)}
+              aria-expanded={isMegaMenuOpen}
+              aria-haspopup="true"
+              className="bg-transparent border-none text-[11px] font-extrabold text-taca-text-main cursor-pointer hover:text-taca-primary transition-colors py-2 flex items-center gap-1.5 whitespace-nowrap"
+            >
               <Menu className="w-3.5 h-3.5 text-slate-700 shrink-0" />
               <span className="hidden xs:inline">DANH MỤC</span>
               <span className="hidden md:inline">SẢN PHẨM</span>
+              <ChevronDown className={`w-3 h-3 text-slate-500 transition-transform duration-200 ${isMegaMenuOpen ? 'rotate-180 text-taca-primary' : ''}`} />
             </button>
-            <MegaMenu isOpen={isMegaMenuOpen} />
+            <MegaMenu isOpen={isMegaMenuOpen} onClose={() => setIsMegaMenuOpen(false)} />
           </div>
           
-          <nav className="flex items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-1">
+          <nav className="flex-1 min-w-0 flex items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-1">
             {['Điện thoại', 'Laptop', 'Nhà sách', 'Gia dụng', 'Làm đẹp', 'Thời trang', 'Voucher'].map((cat) => (
               <Link
                 key={cat}
