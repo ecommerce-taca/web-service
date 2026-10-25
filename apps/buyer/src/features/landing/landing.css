@@ -1,0 +1,406 @@
+/*
+ * Landing Page — hiệu ứng đặc thù không biểu diễn được bằng utility class
+ * (keyframes, gradient text/border, sticky hero, pipeline, dropdown header).
+ * Toàn bộ selector được giới hạn trong .taca-landing để không ảnh hưởng các trang khác.
+ */
+
+.taca-landing {
+  font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.taca-landing input,
+.taca-landing textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+.taca-landing img {
+  -webkit-user-drag: none;
+}
+.taca-landing .num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Keyframes ---------- */
+@keyframes landing-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@keyframes landing-pop { from { opacity: 0; transform: translateY(16px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes landing-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes landing-reveal { from { opacity: 0; transform: translateY(32px); } to { opacity: 1; transform: none; } }
+@keyframes landing-slide { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@keyframes landing-shake { 0%, 100% { transform: none; } 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+@keyframes landing-check { 0% { transform: scale(0) rotate(-45deg); } 70% { transform: scale(1.15); } 100% { transform: none; } }
+@keyframes landing-ring { 0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, .45); } 100% { box-shadow: 0 0 0 14px rgba(79, 70, 229, 0); } }
+@keyframes landing-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes landing-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes landing-dialog-in { from { opacity: 0; transform: translateY(16px) scale(.94); } to { opacity: 1; transform: none; } }
+@keyframes landing-dialog-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(10px) scale(.96); } }
+@keyframes landing-spin { to { transform: rotate(360deg); } }
+@keyframes landing-morph {
+  0%, 100% { border-radius: 40% 60% 55% 45% / 50% 45% 55% 50%; }
+  50% { border-radius: 55% 45% 40% 60% / 45% 55% 50% 50%; }
+}
+@keyframes landing-jump {
+  0% { opacity: 0; transform: translateY(-28px); }
+  18% { opacity: 1; transform: translateY(0) scale(1.12, .86); }
+  32% { transform: translateY(-16px) scale(.95, 1.06); }
+  48% { transform: translateY(0) scale(1.06, .93); }
+  60% { transform: translateY(-6px); }
+  72% { transform: translateY(0) scale(1.02, .98); }
+  84%, 100% { transform: none; }
+}
+
+/* ---------- Spectrum gradient ---------- */
+.taca-landing .spectrum-bar {
+  height: 4px;
+  background: linear-gradient(90deg, #4f46e5, #0a68ff 35%, #10b981 68%, #f97316);
+}
+.taca-landing .grad-text {
+  background: linear-gradient(100deg, #4338ca, #1d4ed8 38%, #047857 70%, #c2410c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.taca-landing .grad-fill {
+  background: linear-gradient(120deg, #4338ca 0%, #1d4ed8 38%, #047857 72%, #c2410c 100%);
+  color: #ffffff;
+}
+.taca-landing .tint-hero { background: linear-gradient(120deg, #eef2ff 0%, #eff6ff 35%, #ecfdf5 70%, #fff7ed 100%); }
+.taca-landing .tint-trust { background: linear-gradient(90deg, #fff7ed 0%, #ecfdf5 35%, #eff6ff 70%, #eef2ff 100%); }
+.taca-landing .tint-soft { background: linear-gradient(135deg, #eef2ff 0%, #ecfdf5 60%, #fff7ed 100%); }
+.taca-landing .tint-seller { background: linear-gradient(180deg, #f5f3ff 0%, #eff6ff 100%); }
+
+/* ---------- Nút & thẻ: nhấc lên khi hover ---------- */
+.taca-landing .press {
+  transition: transform .2s cubic-bezier(.2, .8, .2, 1), background-color .2s;
+}
+.taca-landing .press:hover { transform: translateY(-2px); }
+.taca-landing .press:active { transform: translateY(0) scale(.97); }
+
+.taca-landing .lift {
+  position: relative;
+  transition: transform .25s cubic-bezier(.2, .8, .2, 1), background-color .25s;
+}
+.taca-landing .lift:hover { transform: translateY(-4px); }
+.taca-landing .lift::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(120deg, #4f46e5, #0a68ff 35%, #10b981 68%, #f97316);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity .25s;
+  pointer-events: none;
+}
+.taca-landing .lift:hover::before { opacity: 1; }
+.taca-landing .lift .zoom { transition: transform .4s cubic-bezier(.2, .8, .2, 1); }
+.taca-landing .lift:hover .zoom { transform: scale(1.05); }
+
+.taca-landing .trust-item svg { transition: transform .3s cubic-bezier(.2, .8, .2, 1); }
+.taca-landing .trust-item:hover svg { transform: translateY(-3px) rotate(-6deg); }
+
+.taca-landing .partner,
+.taca-landing .store-badge { transition: transform .2s cubic-bezier(.2, .8, .2, 1), box-shadow .2s; }
+.taca-landing .partner:hover,
+.taca-landing .store-badge:hover { transform: translateY(-2px); }
+.taca-landing .store-badge:hover { box-shadow: inset 0 0 0 2px #a5b4fc; }
+
+/* Hiện dần khi cuộn tới (trình duyệt hỗ trợ scroll-driven animation) */
+@supports (animation-timeline: view()) {
+  .taca-landing .reveal {
+    animation: landing-reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 60%;
+  }
+}
+
+/* ---------- Header ---------- */
+.taca-landing .site-head {
+  background: rgba(255, 255, 255, .8);
+  -webkit-backdrop-filter: saturate(1.4) blur(14px);
+  backdrop-filter: saturate(1.4) blur(14px);
+  transition: box-shadow .3s, background-color .3s;
+}
+.taca-landing .site-head.scrolled {
+  background: rgba(255, 255, 255, .72);
+  box-shadow: 0 10px 30px -20px rgba(15, 23, 42, .35);
+}
+.taca-landing .head-in { transition: padding .3s cubic-bezier(.2, .8, .2, 1); }
+.taca-landing .site-head.scrolled .head-in { padding-top: 8px; padding-bottom: 8px; }
+.taca-landing .head-logo {
+  height: 40px;
+  transform-origin: 50% 100%;
+  transition: height .3s cubic-bezier(.2, .8, .2, 1);
+  animation: landing-jump 1.1s cubic-bezier(.3, .7, .4, 1) .15s both;
+}
+.taca-landing .site-head.scrolled .head-logo { height: 32px; }
+@media (max-width: 520px) {
+  .taca-landing .head-logo,
+  .taca-landing .site-head.scrolled .head-logo { height: 30px; }
+}
+
+.taca-landing .nav-item { position: relative; }
+.taca-landing .nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #334155;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  white-space: nowrap;
+  transition: background-color .2s, color .2s;
+}
+.taca-landing .nav-link::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 4px;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #4f46e5, #0a68ff 35%, #10b981 68%, #f97316);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .35s cubic-bezier(.2, .8, .2, 1);
+}
+.taca-landing .nav-item:hover .nav-link,
+.taca-landing .nav-item:focus-within .nav-link { background: #f5f3ff; color: #0f172a; }
+.taca-landing .nav-item:hover .nav-link::after,
+.taca-landing .nav-link.active::after { transform: scaleX(1); }
+.taca-landing .nav-link.active { color: #0f172a; }
+.taca-landing .nav-chev { transition: transform .3s cubic-bezier(.2, .8, .2, 1); }
+.taca-landing .nav-item:hover .nav-chev,
+.taca-landing .nav-item:focus-within .nav-chev { transform: rotate(180deg); }
+.taca-landing .nav-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: -8px;
+  z-index: 60;
+  width: max-content;
+  max-width: min(560px, 90vw);
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 28px 60px -24px rgba(15, 23, 42, .3);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px) scale(.98);
+  transform-origin: top left;
+  transition: opacity .25s ease, transform .35s cubic-bezier(.2, .8, .2, 1), visibility 0s linear .35s;
+}
+.taca-landing .nav-panel::before { content: ""; position: absolute; left: 0; right: 0; top: -14px; height: 14px; }
+.taca-landing .nav-item:hover .nav-panel,
+.taca-landing .nav-item:focus-within .nav-panel { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+.taca-landing .nav-panel > * { opacity: 0; transform: translateY(6px); transition: opacity .3s, transform .35s cubic-bezier(.2, .8, .2, 1); }
+.taca-landing .nav-item:hover .nav-panel > *,
+.taca-landing .nav-item:focus-within .nav-panel > * { opacity: 1; transform: none; }
+.taca-landing .nav-item:hover .nav-panel > *:nth-child(2),
+.taca-landing .nav-item:focus-within .nav-panel > *:nth-child(2) { transition-delay: .06s; }
+.taca-landing .nav-item:hover .nav-panel > *:nth-child(3),
+.taca-landing .nav-item:focus-within .nav-panel > *:nth-child(3) { transition-delay: .12s; }
+.taca-landing .panel-link {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #0f172a;
+  transition: background-color .2s, transform .2s;
+}
+.taca-landing .panel-link:hover { background: #f5f3ff; transform: translateX(3px); }
+.taca-landing .mini-search { animation: landing-up .35s cubic-bezier(.2, .8, .2, 1) both; }
+@media (max-width: 760px) {
+  .taca-landing .nav-panel { display: none; }
+}
+
+/* ---------- Hero ---------- */
+.taca-landing .hero-copy > * { animation: landing-up .7s cubic-bezier(.2, .8, .2, 1) both; }
+.taca-landing .hero-copy > *:nth-child(2) { animation-delay: .08s; }
+.taca-landing .hero-copy > *:nth-child(3) { animation-delay: .16s; }
+.taca-landing .hero-copy > *:nth-child(4) { animation-delay: .24s; }
+
+.taca-landing .hero-art > * { animation: landing-pop .8s cubic-bezier(.2, .8, .2, 1) both; }
+.taca-landing .hero-art .art-blob { animation: landing-pop 1s .1s both, landing-morph 14s 1.2s ease-in-out infinite; }
+.taca-landing .hero-art .art-orbit { animation: landing-fade-in .8s .3s both, landing-spin 40s linear infinite; }
+.taca-landing .hero-art .art-core { animation: landing-pop .8s .25s cubic-bezier(.2, .8, .2, 1) both, landing-float 6s 1.2s ease-in-out infinite; }
+.taca-landing .hero-art .art-chip-1 { animation: landing-pop .7s .5s cubic-bezier(.2, .8, .2, 1) both, landing-float 5s 1.4s ease-in-out infinite; }
+.taca-landing .hero-art .art-chip-2 { animation: landing-pop .7s .65s cubic-bezier(.2, .8, .2, 1) both, landing-float 6.5s 1.6s ease-in-out infinite; }
+.taca-landing .hero-art .art-chip-3 { animation: landing-pop .7s .8s cubic-bezier(.2, .8, .2, 1) both, landing-float 5.5s 1.8s ease-in-out infinite; }
+.taca-landing .hero-art .art-chip-4 { animation: landing-pop .7s .95s cubic-bezier(.2, .8, .2, 1) both, landing-float 7s 2s ease-in-out infinite; }
+.taca-landing .hero-art .art-chip,
+.taca-landing .hero-art .art-core { transition: filter .4s, box-shadow .4s, scale .4s cubic-bezier(.2, .8, .2, 1); }
+.taca-landing .hero-art .dim { filter: opacity(.4) saturate(.4); }
+.taca-landing .hero-art .lit { scale: 1.08; box-shadow: inset 0 0 0 2px #818cf8; }
+
+/* Minh họa ghim một bên, khối chữ trượt vào luân phiên trái/phải */
+.taca-landing .hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 56px;
+  align-items: start;
+}
+.taca-landing .hero-grid .hero-copy {
+  grid-column: 1;
+  grid-row: 1;
+  min-height: calc(100vh - 220px);
+  justify-content: center;
+}
+.taca-landing .hero-grid .hero-art {
+  grid-column: 1 / span 2;
+  grid-row: 1 / span 2;
+  width: calc(50% - 28px);
+  position: sticky;
+  top: calc(50vh - 200px);
+  translate: calc(100% + 56px) 0;
+  transition: translate .8s cubic-bezier(.65, 0, .35, 1);
+  pointer-events: none;
+}
+.taca-landing .hero-grid .hero-art.side-left { translate: 0 0; }
+.taca-landing .hero-grid .hero-feats { grid-column: 1 / span 2; grid-row: 2; padding-bottom: 12vh; }
+.taca-landing .feat {
+  width: calc(50% - 28px);
+  min-height: 60vh;
+  justify-content: center;
+  opacity: 0;
+  transform: translateX(-56px);
+  transition: opacity .6s, transform .7s cubic-bezier(.2, .8, .2, 1);
+}
+.taca-landing .feat:nth-child(even) { margin-left: auto; transform: translateX(56px); }
+.taca-landing .feat.on { opacity: 1; transform: none; }
+
+@media (max-width: 900px) {
+  .taca-landing .hero-grid { grid-template-columns: minmax(0, 1fr); row-gap: 40px; }
+  .taca-landing .hero-grid .hero-copy,
+  .taca-landing .hero-grid .hero-art,
+  .taca-landing .hero-grid .hero-feats { grid-column: 1; grid-row: auto; position: relative; top: auto; min-height: 0; }
+  .taca-landing .hero-grid .hero-art { min-height: 420px; width: auto; translate: none; }
+  .taca-landing .feat,
+  .taca-landing .feat:nth-child(even) { width: auto; margin-left: 0; min-height: 0; padding: 20px 0; opacity: 1; transform: none; }
+  .taca-landing .hero-art .dim { filter: none; }
+  .taca-landing .hero-art .lit { scale: 1; }
+}
+@media (max-width: 520px) {
+  .taca-landing .hero-grid .hero-art { min-height: 400px; }
+  .taca-landing .hero-art .art-orbit { width: 280px; height: 280px; margin: -140px 0 0 -140px; }
+  .taca-landing .hero-art .art-chip { font-size: 13px; }
+}
+
+/* ---------- Mua hàng trong 3 bước: thẻ mở/đóng ---------- */
+.taca-landing .step-head {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  min-height: 44px;
+  border-radius: 12px;
+}
+.taca-landing .step-head:focus-visible { outline: 2px solid #4f46e5; outline-offset: 6px; }
+.taca-landing .step-ico,
+.taca-landing .step-chev { transition: transform .45s cubic-bezier(.2, .8, .2, 1), background-color .3s; }
+.taca-landing .step-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: grid-template-rows .5s cubic-bezier(.2, .8, .2, 1), opacity .35s ease, transform .5s cubic-bezier(.2, .8, .2, 1);
+}
+.taca-landing .step-body > div { overflow: hidden; min-height: 0; }
+.taca-landing .step:hover .step-body,
+.taca-landing .step:focus-within .step-body { grid-template-rows: 1fr; opacity: 1; transform: none; transition-delay: .05s; }
+.taca-landing .step:hover .step-chev,
+.taca-landing .step:focus-within .step-chev { transform: rotate(180deg); background: #eef2ff; }
+.taca-landing .step:hover .step-ico,
+.taca-landing .step:focus-within .step-ico { transform: scale(1.08) rotate(-6deg); background: #eef2ff; }
+
+/* ---------- Biểu đồ Seller Center ---------- */
+.taca-landing .chart .bar {
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 1s cubic-bezier(.2, .8, .2, 1), filter .2s;
+}
+.taca-landing .chart.on .bar { transform: scaleY(1); }
+.taca-landing .chart .bar-val { opacity: 0; transform: translateY(6px); transition: opacity .25s, transform .3s cubic-bezier(.2, .8, .2, 1); }
+.taca-landing .chart.on .bar-col.today .bar-val { opacity: 1; transform: none; transition-delay: 1.1s; }
+.taca-landing .chart .bar-col:hover .bar-val { opacity: 1; transform: none; transition-delay: 0s; }
+.taca-landing .chart .bar-col:hover .bar { filter: brightness(1.12) saturate(1.1); }
+
+/* ---------- Pipeline mở shop ---------- */
+.taca-landing .pipe-node {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .5s cubic-bezier(.2, .8, .2, 1), background .4s, color .4s;
+}
+.taca-landing .pipe-line { flex: 1 1 auto; height: 4px; margin: 0 10px; border-radius: 4px; background: #e0e7ff; overflow: hidden; }
+.taca-landing .pipe-fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #4f46e5, #0a68ff 50%, #10b981);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .6s .25s cubic-bezier(.2, .8, .2, 1);
+}
+.taca-landing .pipe-step.last .pipe-line { visibility: hidden; }
+.taca-landing .pipe-card { opacity: .6; transform: translateY(10px); transition: opacity .45s, transform .5s cubic-bezier(.2, .8, .2, 1); }
+.taca-landing .pipe-step.done .pipe-node { background: linear-gradient(135deg, #4f46e5, #0a68ff); color: #ffffff; transform: scale(1.06); }
+.taca-landing .pipe-step.done .pipe-fill { transform: scaleX(1); }
+.taca-landing .pipe-step.done .pipe-card,
+.taca-landing .pipe-step.current .pipe-card { opacity: 1; transform: none; }
+.taca-landing .pipe-step.current .pipe-node { background: #eef2ff; color: #4338ca; animation: landing-ring 1.4s ease-out infinite; }
+@media (max-width: 900px) {
+  .taca-landing .pipe { grid-template-columns: 1fr; gap: 0; }
+  .taca-landing .pipe-step { flex-direction: row; gap: 16px; }
+  .taca-landing .pipe-row { flex-direction: column; align-self: stretch; }
+  .taca-landing .pipe-line { width: 4px; height: auto; min-height: 24px; margin: 8px 0; }
+  .taca-landing .pipe-fill { transform: scaleY(0); transform-origin: top; }
+  .taca-landing .pipe-step.done .pipe-fill { transform: scaleY(1); }
+  .taca-landing .pipe-card { flex: 1 1 auto; margin: 0 0 12px; }
+}
+
+/* ---------- Biểu phí ---------- */
+.taca-landing .fee-row { transition: background-color .2s, transform .2s; }
+.taca-landing .fee-row:hover { background: #f5f3ff; transform: translateX(3px); }
+.taca-landing .fee-out { animation: landing-slide .3s cubic-bezier(.2, .8, .2, 1); }
+
+/* ---------- FAQ ---------- */
+.taca-landing details summary { cursor: pointer; list-style: none; transition: color .2s; }
+.taca-landing details summary::-webkit-details-marker { display: none; }
+.taca-landing details summary:hover { color: #4f46e5; }
+.taca-landing .faq-plus { display: inline-block; transition: transform .3s cubic-bezier(.2, .8, .2, 1); }
+.taca-landing details[open] .faq-plus { transform: rotate(45deg); }
+.taca-landing details[open] p { animation: landing-slide .3s cubic-bezier(.2, .8, .2, 1); }
+
+/* ---------- Form, popup iOS ---------- */
+.taca-landing .landing-form [aria-invalid="true"] { border-color: #be123c; animation: landing-shake .4s; }
+.taca-landing .notify-block { animation: landing-up .6s cubic-bezier(.2, .8, .2, 1) both; }
+.taca-landing .form-done { animation: landing-up .5s cubic-bezier(.2, .8, .2, 1) both; }
+.taca-landing .form-check { animation: landing-check .5s .1s cubic-bezier(.2, .8, .2, 1) both; }
+.taca-landing .modal-scrim { animation: landing-fade-in .25s ease both; }
+.taca-landing .modal-box { animation: landing-dialog-in .4s cubic-bezier(.2, .8, .2, 1) both; }
+.taca-landing .modal-scrim.closing { animation: landing-fade-out .22s ease both; }
+.taca-landing .modal-scrim.closing .modal-box { animation: landing-dialog-out .22s ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .taca-landing *,
+  .taca-landing *::before,
+  .taca-landing *::after { animation: none !important; transition: none !important; }
+}
