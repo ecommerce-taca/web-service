@@ -3,11 +3,14 @@ import PropTypes from 'prop-types';
 import { X, MessageSquare, Package, Check, CheckCircle2 } from 'lucide-react';
 import StatusBadge from '../../../components/common/StatusBadge';
 
-export default function OrderDetailModal({ order, isOpen, onClose, onPrepare }) {
+export default function OrderDetailModal({ order, isOpen, onClose, onPrepare, onCancel }) {
   const [copied, setCopied] = useState(false);
   const [actionDone, setActionDone] = useState(null);
 
   if (!isOpen || !order) return null;
+
+  const isCancelled = order.status_type === 'cancelled' || order.status === 'Đã hủy' || order.status === 'CANCELLED';
+  const isPendingOrPreparing = order.status_type === 'pending' || order.status_type === 'preparing';
 
   const handleCopy = () => {
     navigator.clipboard.writeText(order.address || '28 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP.HCM');
@@ -168,34 +171,46 @@ export default function OrderDetailModal({ order, isOpen, onClose, onPrepare }) 
 
         {/* Modal Footer Actions */}
         <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => setActionDone('Đã gửi yêu cầu từ chối đơn hàng.')}
-            className="px-4 py-2 border border-rose-200 text-rose-600 hover:bg-rose-50 rounded-lg font-semibold text-[12px] transition-colors"
-          >
-            Từ chối đơn
-          </button>
+          {!isCancelled && isPendingOrPreparing ? (
+            <button
+              type="button"
+              onClick={() => {
+                if (onCancel) {
+                  onCancel(order);
+                } else {
+                  setActionDone('Đã gửi yêu cầu từ chối đơn hàng.');
+                }
+              }}
+              className="px-4 py-2 border border-rose-200 text-rose-600 hover:bg-rose-50 rounded-lg font-semibold text-[12px] transition-colors cursor-pointer"
+            >
+              Hủy / Từ chối đơn
+            </button>
+          ) : (
+            <div />
+          )}
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => window.print()}
-              className="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-lg font-semibold text-[12px] transition-colors"
+              className="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-lg font-semibold text-[12px] transition-colors cursor-pointer"
             >
               In phiếu
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (onPrepare) {
-                  onPrepare(order);
-                } else {
-                  setActionDone('Đã xác nhận & chuyển sang bước chuẩn bị hàng.');
-                }
-              }}
-              className="px-5 py-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg font-semibold text-[12px] shadow-sm transition-colors"
-            >
-              Xác nhận & chuẩn bị
-            </button>
+            {!isCancelled && isPendingOrPreparing && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (onPrepare) {
+                    onPrepare(order);
+                  } else {
+                    setActionDone('Đã xác nhận & chuyển sang bước chuẩn bị hàng.');
+                  }
+                }}
+                className="px-5 py-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg font-semibold text-[12px] shadow-sm transition-colors cursor-pointer"
+              >
+                Xác nhận & chuẩn bị
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -208,4 +223,5 @@ OrderDetailModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   onPrepare: PropTypes.func,
+  onCancel: PropTypes.func,
 };

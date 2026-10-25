@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { orderApi } from '../services/order.api';
 import { shipmentApi } from '../services/shipment.api';
+import { unwrapApiResponse } from '../../../../../../shared/utils/api-client';
 import { Button } from '@taca/ui-components';
 import { formatPhoneDisplay } from '../../../../../../shared/utils/phone';
 import { getOrderStatusInfo } from '../utils/orderStatus';
@@ -43,13 +44,18 @@ const OrderDetailPage = () => {
       ]);
 
       if (orderRes.status === 'fulfilled') {
-        setOrder(orderRes.value?.data?.data || orderRes.value?.data);
+        const orderData = unwrapApiResponse(orderRes.value);
+        if (orderData) {
+          setOrder(orderData);
+        } else {
+          throw new Error('Không thể tải chi tiết đơn hàng');
+        }
       } else {
         throw new Error(orderRes.reason?.message || 'Không thể tải chi tiết đơn hàng');
       }
 
       if (shipmentRes.status === 'fulfilled') {
-        setShipment(shipmentRes.value?.data?.data || null);
+        setShipment(unwrapApiResponse(shipmentRes.value) || null);
       }
     } catch (err) {
       setError(err.message || 'Không thể tải chi tiết đơn hàng');

@@ -11,6 +11,7 @@ const AdminFinancePage = lazy(() => import('../features/finance/pages/AdminFinan
 const AdminFeesTaxesPage = lazy(() => import('../features/finance/pages/AdminFeesTaxesPage'));
 const AdminProductsPage = lazy(() => import('../features/products/pages/AdminProductsPage'));
 const AdminCategoriesPage = lazy(() => import('../features/categories/pages/AdminCategoriesPage'));
+const AdminVouchersPage = lazy(() => import('../features/vouchers/pages/AdminVouchersPage'));
 
 function PageLoadingFallback() {
   return (
@@ -34,6 +35,7 @@ function AppRoutes() {
           <Route path="audit-logs" element={<AdminAuditLogsPage />} />
           <Route path="finance" element={<AdminFinancePage />} />
           <Route path="fees" element={<AdminFeesTaxesPage />} />
+          <Route path="vouchers" element={<AdminVouchersPage />} />
           <Route path="dashboard" element={<AdminKycPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

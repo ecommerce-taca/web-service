@@ -4,6 +4,117 @@
 
 ---
 
+## [2026-10-25] — Hoàn thành PHASE-06: Search Enhancement, Response Cleanup & E2E Verification (Hoàn Tất Toàn Bộ Roadmap)
+
+- **Phase ID**: `PHASE-06`
+- **Task IDs**: `TASK-06-SEARCH-SUGGEST-API`, `TASK-06-SEARCH-AUTOCOMPLETE-UI`, `TASK-06-UNIFIED-DATA-UNWRAP`, `TASK-06-E2E-VERIFICATION`
+- **Loại thay đổi**: `code` / `api-alignment` / `search` / `suggestion` / `response-cleanup` / `e2e` / `report`
+- **Những gì đã thay đổi**:
+  - `API-009`: Bổ sung helper `unwrapApiResponse(response)` và `createResponseEnvelope(payload, meta)` trong `shared/utils/api-client.js`. Thiết lập getter không thể liệt kê trên `envelope.data.data` trỏ về `payload`, bảo đảm tính tương thích ngược tuyệt đối cho toàn bộ codebase cũ đọc `res.data.data` đồng thời hỗ trợ cú pháp chuẩn 1 tầng `unwrapApiResponse(res)` và `res.data`.
+  - `API-009`: Chuẩn hóa unwrapping tại `seller-finance.api.js`, `FinancePage.jsx`, `order.api.js`, `shipment.api.js`, `payment.api.js`, `OrderDetailPage.jsx`.
+  - `MISS-001`: Xây dựng mới `apps/buyer/src/features/search/services/search.api.js` gọi `GET /search/suggest?q=...` tuân thủ nghiêm ngặt `search-service` spec §1.1 kèm fallback mock matching theo `PRODUCTS_CATALOG` và `CATEGORIES_TREE`.
+  - `MISS-001`: Xây dựng component `SearchSuggestDropdown.jsx` với giao diện 3 khu vực phân định rõ: Từ khóa gợi ý (`keywords`), Ngành hàng liên quan (`categories`) và Top sản phẩm nổi bật (`topProducts`) kèm giá tiền VND và thumbnail.
+  - `MISS-001`: Tích hợp debounce 250ms, click outside và phím tắt Escape vào cả `Header.jsx` và `WhiteHeader.jsx`.
+  - `shared/utils/api-client.js` (Sửa đổi)
+  - `apps/seller/src/features/finance/services/seller-finance.api.js` (Sửa đổi)
+  - `apps/seller/src/features/finance/pages/FinancePage.jsx` (Sửa đổi)
+  - `apps/buyer/src/features/search/services/search.api.js` (Tạo mới)
+  - `apps/buyer/src/features/search/components/SearchSuggestDropdown.jsx` (Tạo mới)
+  - `apps/buyer/src/components/layout/Header.jsx` (Sửa đổi)
+  - `apps/buyer/src/components/layout/WhiteHeader.jsx` (Sửa đổi)
+  - `apps/buyer/src/features/account/services/order.api.js` (Sửa đổi)
+  - `apps/buyer/src/features/account/services/shipment.api.js` (Sửa đổi)
+  - `apps/buyer/src/features/payment/services/payment.api.js` (Sửa đổi)
+  - `apps/buyer/src/features/account/pages/OrderDetailPage.jsx` (Sửa đổi)
+  - `reports/implementation/phases/PHASE-06/**` (Tạo mới `PLAN.md`, `IMPLEMENTATION_REPORT.md`, `TEST_REPORT.md`, `REMAINING_WORK.md`)
+- **Lý do thay đổi**:
+  - Hoàn tất 2 phát hiện kỹ thuật cuối cùng (`MISS-001` và `API-009`), chuẩn hóa toàn bộ response mapping trên toàn sàn và nghiệm thu hoàn thành 100% Roadmap Triển khai Taca Ecommerce.
+- **Kết quả kiểm thử**:
+  - `npm run lint`: `PASS` (exit code 0, 0 errors, 0 warnings trên cả 4 workspaces).
+  - `npm run build:remotes`: `PASS` (exit code 0, 3 remotes buyer, seller, admin build thành công).
+  - `npm run build -w @taca/shell`: `PASS` (exit code 0, shell host build thành công).
+- **Finding được xử lý**:
+  - `API-009` (Low) -> `RESOLVED`
+  - `MISS-001` (Medium) -> `RESOLVED`
+
+---
+
+## [2026-10-25] — Hoàn thành PHASE-05: Admin Governance, KYC & Finance Reconciliation
+
+- **Phase ID**: `PHASE-05`
+- **Task IDs**: `TASK-05-KYC-AUDIT-LOCK`, `TASK-05-REMOVE-PHANTOM-RECON`, `TASK-05-SETTLEMENT-BATCH`, `TASK-05-FINANCE-SUMMARY-EXPORT`, `TASK-05-PLATFORM-VOUCHERS`
+- **Loại thay đổi**: `code` / `api-alignment` / `admin` / `kyc` / `finance` / `settlement` / `vouchers` / `report`
+- **Những gì đã thay đổi**:
+  - `API-006`: Rà soát và bảo vệ toàn vẹn tài liệu kiểm toán KYC (§2.31 `auth-user.md`), đảm bảo không cung cấp endpoint xóa tài liệu; chỉ cho phép các thao tác Duyệt (`APPROVE`), Từ chối (`REJECT` kèm lý do >= 10 ký tự và 2FA Step-Up qua `X-MFA-Step-Up`), và Yêu cầu bổ sung (`NEEDS_INFO` kèm lý do >= 10 ký tự).
+  - `API-007`: Gỡ bỏ phantom method `runReconciliation` (`POST /admin/payments/reconciliation/run`) và nút trigger thủ công khỏi `apps/admin/src/services/admin-finance.api.js` và `AdminFinancePage.jsx`. Giữ nguyên bảng đối soát `GET /admin/payments/reconciliation` kèm badge ghi chú lịch Cronjob tự động `00:00 UTC+7`.
+  - `MISS-009`: Bổ sung method `createSettlementBatch(payload, stepUpToken)` (`POST /admin/settlements/batch`) kèm header `X-MFA-Step-Up`, xây dựng component `CreateSettlementBatchModal.jsx` hỗ trợ chọn kỳ quyết toán, phạm vi shop (`ALL` hoặc danh sách ID), ghi chú và xác thực OTP 2FA Step-Up, bổ sung nút "+ Tạo đợt quyết toán" trên `AdminFinancePage.jsx`.
+  - `MISS-010`: Cập nhật `getFinanceSummary(params)` và `exportFinanceSummary(params)` trong `admin-finance.api.js`, bổ sung thanh công cụ lọc khoảng thời gian (`from`, `to`), nút Lọc, Đặt lại 30 ngày, dropdown chọn định dạng (`.xlsx` hoặc `.csv`) và nút Xuất báo cáo tài chính toàn sàn qua signed download URL trên `AdminFinancePage.jsx`.
+  - `MISS-011`: Xây dựng module Quản trị Voucher toàn sàn: tạo mới `admin-voucher.api.js` tích hợp đầy đủ CRUD (`GET /admin/vouchers`, `POST /admin/vouchers`, `PUT /admin/vouchers/{id}`, `DELETE /admin/vouchers/{id}` soft archive), tạo `PlatformVoucherModal.jsx` hỗ trợ phát hành voucher `PLATFORM` và `FREESHIP` kèm 2FA Step-Up, tạo `AdminVouchersPage.jsx` hiển thị 4 metric, tabs phân loại, tìm kiếm mã, tiến độ sử dụng và ngừng phát hành sớm, đăng ký route `/vouchers` trong `App.jsx`.
+  - `apps/admin/src/services/admin-finance.api.js` (Sửa đổi)
+  - `apps/admin/src/features/finance/components/CreateSettlementBatchModal.jsx` (Tạo mới)
+  - `apps/admin/src/features/finance/pages/AdminFinancePage.jsx` (Sửa đổi)
+  - `apps/admin/src/services/admin-voucher.api.js` (Tạo mới)
+  - `apps/admin/src/features/vouchers/components/PlatformVoucherModal.jsx` (Tạo mới)
+  - `apps/admin/src/features/vouchers/pages/AdminVouchersPage.jsx` (Tạo mới)
+  - `apps/admin/src/app/App.jsx` (Sửa đổi: Khai báo route /vouchers)
+  - `reports/implementation/phases/PHASE-05/**` (Tạo mới)
+- **Lý do thay đổi**:
+  - Khắc phục 5 vấn đề quản trị sàn Admin (`API-006`, `API-007`, `MISS-009`, `MISS-010`, `MISS-011`) theo đúng hợp đồng specs của Auth-User, Payment-Wallet và Order-Commerce services.
+- **Kết quả kiểm thử**:
+  - `npm run lint`: `PASS` (exit code 0, sạch 100% trên cả 4 workspaces).
+  - `npm run build:remotes`: `PASS` (exit code 0, cả 3 remotes build thành công).
+  - `npm run build -w @taca/shell`: `PASS` (exit code 0, shell build thành công).
+- **Finding được xử lý**:
+  - `API-006` (Medium) -> `RESOLVED`
+  - `API-007` (Medium) -> `RESOLVED`
+  - `MISS-009` (Medium) -> `RESOLVED`
+  - `MISS-010` (Medium) -> `RESOLVED`
+  - `MISS-011` (Medium) -> `RESOLVED`
+
+---
+
+## [2026-10-25] — Hoàn thành PHASE-04: Seller Orders & Fulfillment Alignment
+
+- **Phase ID**: `PHASE-04`
+- **Task IDs**: `TASK-04-CARRIER-COMPARE`, `TASK-04-INVENTORY-MODULE`, `TASK-04-ORDERS-EXPORT`, `TASK-04-ORDER-CANCEL`, `TASK-04-VOUCHER-MUTATION`
+- **Loại thay đổi**: `code` / `api-alignment` / `seller` / `fulfillment` / `inventory` / `orders` / `vouchers` / `report`
+- **Những gì đã thay đổi**:
+  - `MISS-003`: Bổ sung `getShipmentCarriers` gọi `GET /seller/orders/{orderId}/shipment/carriers`, nâng cấp `PrepareShipmentModal.jsx` hiển thị bảng so sánh cước phí và thời gian giao hàng các hãng (`GHN`, `SPX`, `J&T`), vô hiệu hóa hãng chưa phủ sóng (`available: false`), truyền `carrier` đã chọn vào `fulfillSellerOrder(orderId, { action: 'SHIP', carrier, version })`.
+  - `MISS-004`: Xây dựng module Quản lý kho hàng chuyên biệt: tạo mới `seller-inventory.api.js` tích hợp `GET /seller/inventory` và `PATCH /seller/inventory/{skuId}/adjust`, tạo `StockAdjustModal.jsx` điều chỉnh delta (nhập/xuất/cân đối) chống tồn âm, tạo `InventoryPage.jsx` hiển thị 4 metric và bảng SKU, tích hợp route `/inventory` vào `App.jsx` và menu `SellerNav.jsx`.
+  - `MISS-006`: Bổ sung `exportSellerOrders` gọi `GET /seller/orders/export`, cập nhật nút "Xuất file" trên `OrdersPage.jsx` tải file Excel qua signed download URL và hiển thị số lượng bản ghi đã xuất.
+  - `MISS-007`: Bổ sung `cancelSellerOrder` gọi `POST /seller/orders/{orderId}/cancel`, xây dựng `CancelOrderModal.jsx` với danh mục lý do chuẩn (`OUT_OF_STOCK`, `CUSTOMER_REQUEST`, `UNDELIVERABLE_AREA`, `SELLER_REQUEST`), tích hợp vào `OrderDetailModal.jsx` và bảng đơn hàng `OrdersPage.jsx`.
+  - `MISS-008`: Bổ sung `updateSellerVoucher` (`PUT /seller/vouchers/{id}`) và `deleteSellerVoucher` (`DELETE /seller/vouchers/{id}`), xây dựng `EditVoucherModal.jsx` (khóa mã nếu đã có lượt dùng theo specs §3.7c), bổ sung nút dừng kích hoạt sớm voucher trên `VouchersPage.jsx`.
+  - `apps/seller/src/app/App.jsx` (Sửa đổi: Đăng ký route /inventory)
+  - `apps/seller/src/components/layout/SellerNav.jsx` (Sửa đổi: Thêm nav item Quản lý kho hàng)
+  - `apps/seller/src/features/inventory/components/StockAdjustModal.jsx` (Tạo mới)
+  - `apps/seller/src/features/inventory/pages/InventoryPage.jsx` (Tạo mới)
+  - `apps/seller/src/features/inventory/services/seller-inventory.api.js` (Tạo mới)
+  - `apps/seller/src/features/orders/components/CancelOrderModal.jsx` (Tạo mới)
+  - `apps/seller/src/features/orders/components/OrderDetailModal.jsx` (Sửa đổi)
+  - `apps/seller/src/features/orders/components/PrepareShipmentModal.jsx` (Sửa đổi)
+  - `apps/seller/src/features/orders/pages/OrdersPage.jsx` (Sửa đổi)
+  - `apps/seller/src/features/orders/services/seller-order.api.js` (Sửa đổi)
+  - `apps/seller/src/features/vouchers/components/EditVoucherModal.jsx` (Tạo mới)
+  - `apps/seller/src/features/vouchers/pages/VouchersPage.jsx` (Sửa đổi)
+  - `apps/seller/src/features/vouchers/services/seller-voucher.api.js` (Sửa đổi)
+  - `reports/implementation/phases/PHASE-04/**` (Tạo mới)
+- **Lý do thay đổi**:
+  - Khắc phục 5 thiếu sót nghiệp vụ Seller (`MISS-003`, `MISS-004`, `MISS-006`, `MISS-007`, `MISS-008`) theo đúng hợp đồng specs của Order-Commerce, Logistics và Inventory services.
+- **Kết quả kiểm thử**:
+  - `npm run lint`: `PASS` (exit code 0, sạch 100% trên cả 4 workspaces).
+  - `npm run build:remotes`: `PASS` (exit code 0, cả 3 remotes build thành công).
+  - `npm run build -w @taca/shell`: `PASS` (exit code 0, shell build thành công).
+- **Finding được xử lý**:
+  - `MISS-003` (High) -> `RESOLVED`
+  - `MISS-004` (High) -> `RESOLVED`
+  - `MISS-006` (Medium) -> `RESOLVED`
+  - `MISS-007` (Medium) -> `RESOLVED`
+  - `MISS-008` (Medium) -> `RESOLVED`
+- **Finding mới phát hiện**: `0`
+- **Vấn đề còn tồn tại**: 7 findings thuộc các Phase 5 và 6 (0 critical, 0 high, 6 medium, 1 low).
+
+---
+
 ## [2026-10-25] — Hoàn thành PHASE-03: Buyer Reviews & Order Tracking Alignment
 
 - **Phase ID**: `PHASE-03`
