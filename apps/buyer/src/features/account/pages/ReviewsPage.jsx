@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Star } from 'lucide-react';
 import { reviewApi } from '../services/review.api';
+import { orderApi } from '../services/order.api';
 import { Button } from '@taca/ui-components';
 import ReviewFormModal from '../components/ReviewFormModal';
 
@@ -13,22 +14,75 @@ const ReviewsPage = () => {
   const fetchReviews = useCallback(async (tab) => {
     setLoading(true);
     try {
-      let response;
+      // API-002: Lấy danh sách đánh giá từ đơn hàng đã giao (GET /orders) và client records
+      const [ordersRes] = await Promise.all([
+        orderApi.getOrders({ size: 100 }),
+      ]);
+
+      const allOrders = ordersRes?.data?.data || [];
+      // Đơn hàng đủ điều kiện đánh giá là đơn đã giao thành công
+      const deliveredOrders = allOrders.filter(
+        o => o.status === 'DELIVERED' || o.status === 'COMPLETED'
+      );
+
+      const submittedReviews = reviewApi.getClientSubmittedReviews();
+
       if (tab === 'pending') {
-        response = await reviewApi.getPendingReviews();
+        const pendingItems = [];
+        deliveredOrders.forEach((order) => {
+          const items = order.order_items || order.items || [];
+          items.forEach((item, index) => {
+            const orderId = order.id || order.order_id || '';
+            const productId = item.product_id || item.productId || `PROD_${index + 1}`;
+            const skuId = item.sku_id || item.sku || 'DEFAULT';
+
+            const isAlreadyReviewed = submittedReviews.some(
+              r => r.order_id === orderId && (r.product_id === productId || r.sku_id === skuId)
+            );
+
+            if (!isAlreadyReviewed) {
+              pendingItems.push({
+                id: `${orderId}_${skuId}_${index}`,
+                order_id: orderId,
+                order_number: order.order_number,
+                product_id: productId,
+                sku_id: skuId,
+                name: item.product_name || item.name || item.title || 'Sản phẩm đã mua',
+                image: item.product_image || item.image || '',
+                variant: item.variant_name || item.variant || 'Tiêu chuẩn',
+                shop_name: order.shop?.name || 'Taca Apple Flagship Store',
+                order_date: order.created_at
+              });
+            }
+          });
+        });
+        setReviews(pendingItems);
       } else {
-        response = await reviewApi.getCompletedReviews();
+        // Tab đã đánh giá
+        const completedList = submittedReviews.map((r) => ({
+          id: r.review_id,
+          product_id: r.product_id,
+          name: r.product_name || 'Sản phẩm đã đánh giá',
+          image: r.product_image || '',
+          variant: r.variant_label || 'Tiêu chuẩn',
+          shop_name: r.shop_name || 'Taca Mall',
+          rating: r.rating || 5,
+          content: r.comment || '',
+          images: (r.media || []).map(m => (typeof m === 'string' ? m : m.url)),
+          created_at: r.created_at,
+          seller_reply: r.seller_reply ? (typeof r.seller_reply === 'string' ? r.seller_reply : r.seller_reply.content) : null
+        }));
+        setReviews(completedList);
       }
-      setReviews(response.data.data || []);
     } catch (error) {
       console.error('Failed to fetch reviews', error);
+      setReviews([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-     
     fetchReviews(activeTab);
   }, [activeTab, fetchReviews]);
 
@@ -61,7 +115,7 @@ const ReviewsPage = () => {
           {loading ? (
             <div className="text-center py-12 text-gray-500">Đang tải đánh giá...</div>
           ) : reviews.length > 0 ? (
-            reviews.map(review => (
+            reviews.map((review) => (
               <div key={review.id} className="bg-white p-6 border border-gray-200 rounded-xl hover:shadow-sm transition-shadow">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="w-[80px] h-[80px] bg-gray-50 border border-gray-100 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
@@ -101,9 +155,11 @@ const ReviewsPage = () => {
                             ))}
                           </div>
                         )}
-                        <span className="text-[11px] text-gray-400">
-                          {new Date(review.created_at).toLocaleString('vi-VN')}
-                        </span>
+                        {review.created_at && (
+                          <span className="text-[11px] text-gray-400">
+                            {new Date(review.created_at).toLocaleString('vi-VN')}
+                          </span>
+                        )}
 
                         {/* Người bán phản hồi */}
                         {review.seller_reply && (
@@ -122,9 +178,9 @@ const ReviewsPage = () => {
                         Đánh giá
                       </Button>
                     ) : (
-                      <Button variant="outline" className="w-full sm:w-auto !px-6 !rounded-lg text-[13px]">
-                        Sửa đánh giá
-                      </Button>
+                      <span className="text-[12px] font-medium text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                        Đã đánh giá
+                      </span>
                     )}
                   </div>
                 </div>

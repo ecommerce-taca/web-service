@@ -97,6 +97,7 @@ const ProductDetailPage = () => {
 
         {/* Ratings & Comments */}
         <ProductReviews 
+          productId={product.id || id}
           rating={product.rating} 
           reviewCount={product.reviewCount} 
         />
