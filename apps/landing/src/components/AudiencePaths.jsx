@@ -1,6 +1,5 @@
-import { Link } from 'react-router-dom';
-import { useAuth } from '../../auth/hooks/useAuth';
 import { SECTION_IDS } from '../constants/landingContent';
+import { storeUrl } from '../constants/links';
 
 const BUYER_POINTS = [
   'Tìm và lọc theo từ khóa, danh mục, giá',
@@ -28,8 +27,6 @@ function PointList({ points }) {
 }
 
 export default function AudiencePaths() {
-  const { user, openAuthModal } = useAuth();
-
   return (
     <section id={SECTION_IDS.shop} className="mx-auto max-w-[1200px] px-6 pb-10 pt-20">
       <h2 className="reveal m-0 mb-3 text-[clamp(28px,3.4vw,40px)] font-extrabold tracking-[-0.02em]">
@@ -41,21 +38,15 @@ export default function AudiencePaths() {
           <h3 className="m-0 text-[26px] font-extrabold tracking-[-0.01em]">Người mua: vào xem ngay</h3>
           <PointList points={BUYER_POINTS} />
           <div className="mt-auto flex flex-wrap gap-3 pt-2">
-            <Link to="/" className={primaryButton}>Vào cửa hàng</Link>
-            {user ? (
-              <Link to="/account/profile" className={secondaryButton}>Tài khoản của tôi</Link>
-            ) : (
-              <button type="button" onClick={() => openAuthModal()} className={`${secondaryButton} cursor-pointer border-0`}>
-                Tạo tài khoản
-              </button>
-            )}
+            <a href={storeUrl('/')} className={primaryButton}>Vào cửa hàng</a>
+            <a href={storeUrl('/')} className={secondaryButton}>Tạo tài khoản</a>
           </div>
         </article>
         <article className="lift reveal flex flex-col gap-4 rounded-3xl bg-gradient-to-br from-orange-50 to-emerald-50 p-8 text-slate-900">
           <h3 className="m-0 text-[26px] font-extrabold tracking-[-0.01em]">Người bán: mở shop</h3>
           <PointList points={SELLER_POINTS} />
           <div className="mt-auto flex flex-wrap gap-3 pt-2">
-            <Link to="/account/seller-register" className={primaryButton}>Bắt đầu bán hàng</Link>
+            <a href={storeUrl('/account/seller-register')} className={primaryButton}>Bắt đầu bán hàng</a>
             <a href={`#${SECTION_IDS.sell}`} className={secondaryButton}>Tìm hiểu thêm</a>
           </div>
         </article>

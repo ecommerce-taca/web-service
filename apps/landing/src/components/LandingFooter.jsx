@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
 import { Banknote, Check, CreditCard, Landmark, Package, QrCode, Truck, Wallet, Zap } from 'lucide-react';
 import {
   LEGAL_INFO,
@@ -8,7 +7,8 @@ import {
   SHIPPING_PARTNERS,
 } from '../constants/landingContent';
 import { TONES } from '../constants/tones';
-import { tacaLogoUrl as tacaLogo } from '../assets/tacaLogo';
+import tacaLogo from '../assets/taca-logo.png';
+import { storeUrl } from '../constants/links';
 
 const PARTNER_ICONS = {
   wallet: Wallet,
@@ -99,15 +99,15 @@ export default function LandingFooter({ onOpenIosDialog }) {
         </div>
         <nav aria-label="Mua sắm" className="flex flex-col gap-1">
           <span className="pb-1.5 text-sm font-bold text-slate-900">Mua sắm</span>
-          <Link to="/" className={footerLink}>Trang chủ cửa hàng</Link>
-          <Link to="/category" className={footerLink}>Danh mục</Link>
-          <Link to="/account/vouchers" className={footerLink}>Voucher</Link>
+          <a href={storeUrl('/')} className={footerLink}>Trang chủ cửa hàng</a>
+          <a href={storeUrl('/category')} className={footerLink}>Danh mục</a>
+          <a href={storeUrl('/account/vouchers')} className={footerLink}>Voucher</a>
         </nav>
         <nav aria-label="Người bán" className="flex flex-col gap-1">
           <span className="pb-1.5 text-sm font-bold text-slate-900">Người bán</span>
           <a href={`#${SECTION_IDS.sell}`} className={footerLink}>Bán hàng cùng Taca</a>
           <a href={`#${SECTION_IDS.fees}`} className={footerLink}>Biểu phí</a>
-          <Link to="/seller" className={footerLink}>Seller Center</Link>
+          <a href={storeUrl('/seller')} className={footerLink}>Seller Center</a>
         </nav>
         <nav aria-label="Hỗ trợ" className="flex flex-col gap-1">
           <span className="pb-1.5 text-sm font-bold text-slate-900">Hỗ trợ</span>

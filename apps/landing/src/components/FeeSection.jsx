@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   DEFAULT_CALCULATOR_PRICE,
   FEE_CATEGORIES,
@@ -7,6 +6,7 @@ import {
   WITHHOLDING_TAX_RATE,
 } from '../constants/landingContent';
 import { formatVnd } from '../utils/formatNumber';
+import { storeUrl } from '../constants/links';
 
 const MAX_PRICE_DIGITS = 11;
 const fieldClass = 'rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-slate-900';
@@ -122,12 +122,12 @@ export default function FeeSection() {
               <span className="num grad-text text-[26px] font-extrabold">{formatVnd(net)}</span>
             </div>
           </div>
-          <Link
-            to="/account/seller-register"
+          <a
+            href={storeUrl('/account/seller-register')}
             className="press grad-fill self-start rounded-xl px-[22px] py-3.5 text-[15px] font-bold no-underline"
           >
             Bắt đầu bán hàng
-          </Link>
+          </a>
         </div>
       </div>
     </section>

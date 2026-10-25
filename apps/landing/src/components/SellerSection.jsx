@@ -1,8 +1,8 @@
-import { Link } from 'react-router-dom';
 import SellerResultsCard from './SellerResultsCard';
 import PlatformStats from './PlatformStats';
 import OpenShopPipeline from './OpenShopPipeline';
 import { SECTION_IDS } from '../constants/landingContent';
+import { storeUrl } from '../constants/links';
 
 export default function SellerSection() {
   return (
@@ -18,9 +18,9 @@ export default function SellerSection() {
               Shop của bạn đến được người mua trên cả nước.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link to="/account/seller-register" className="press grad-fill rounded-xl px-6 py-[15px] text-base font-bold no-underline">
+              <a href={storeUrl('/account/seller-register')} className="press grad-fill rounded-xl px-6 py-[15px] text-base font-bold no-underline">
                 Bắt đầu bán hàng
-              </Link>
+              </a>
               <a
                 href={`#${SECTION_IDS.fees}`}
                 className="press rounded-xl bg-white px-6 py-[15px] text-base font-bold text-slate-900 no-underline"
