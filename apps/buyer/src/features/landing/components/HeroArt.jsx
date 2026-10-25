@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { RotateCcw, ShieldCheck, Sparkles, Truck } from 'lucide-react';
 import { TONES } from '../constants/tones';
-import tacaLogo from '../assets/taca-logo.png';
+import { tacaLogoUrl as tacaLogo } from '../assets/tacaLogo';
 
 const CHIPS = [
   { id: 'genuine', Icon: ShieldCheck, tone: 'emerald', label: 'Hàng chính hãng', position: 'left-[2%] top-[10%]' },

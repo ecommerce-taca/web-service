@@ -8,7 +8,7 @@ import {
   SHIPPING_PARTNERS,
 } from '../constants/landingContent';
 import { TONES } from '../constants/tones';
-import tacaLogo from '../assets/taca-logo.png';
+import { tacaLogoUrl as tacaLogo } from '../assets/tacaLogo';
 
 const PARTNER_ICONS = {
   wallet: Wallet,
