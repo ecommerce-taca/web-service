@@ -17,21 +17,7 @@ import { useLandingScroll } from '../hooks/useLandingScroll';
 import { prefersReducedMotion } from '../utils/motion';
 import '../landing.css';
 
-const FONT_LINK_ID = 'taca-landing-font';
-const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap';
 const HEADER_SECTIONS = [SECTION_IDS.shop, SECTION_IDS.sell, SECTION_IDS.faq];
-
-// Font Be Vietnam Pro chỉ dùng cho landing page nên được nạp khi vào trang
-function useLandingFont() {
-  useEffect(() => {
-    if (document.getElementById(FONT_LINK_ID)) return;
-    const link = document.createElement('link');
-    link.id = FONT_LINK_ID;
-    link.rel = 'stylesheet';
-    link.href = FONT_HREF;
-    document.head.appendChild(link);
-  }, []);
-}
 
 // Cuộn mượt khi bấm link neo (#fees, #faq...) trong lúc ở landing page
 function useSmoothAnchorScroll() {
@@ -59,7 +45,6 @@ export default function LandingPage() {
   const [iosNotifyRequest, setIosNotifyRequest] = useState(0);
   const { isScrolled, showMiniSearch, activeSection } = useLandingScroll(HEADER_SECTIONS);
 
-  useLandingFont();
   useSmoothAnchorScroll();
 
   const handleAcceptIos = () => {

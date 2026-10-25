@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import { RotateCcw, ShieldCheck, Sparkles, Truck } from 'lucide-react';
 import HeroArt from './HeroArt';
 import { HERO_FEATURES, SECTION_IDS } from '../constants/landingContent';
 import { TONES } from '../constants/tones';
+import { searchUrl, storeUrl } from '../constants/links';
 
 const FEATURE_ICONS = {
   genuine: ShieldCheck,
@@ -43,7 +43,6 @@ function useActiveFeature(containerRef) {
 }
 
 export default function LandingHero() {
-  const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const featuresRef = useRef(null);
   const activeIndex = useActiveFeature(featuresRef);
@@ -51,7 +50,7 @@ export default function LandingHero() {
   const handleSearch = (event) => {
     event.preventDefault();
     const keyword = query.trim();
-    navigate(keyword ? `/search?q=${encodeURIComponent(keyword)}` : '/search');
+    window.location.assign(searchUrl(keyword));
   };
 
   return (
@@ -87,9 +86,9 @@ export default function LandingHero() {
             </button>
           </form>
           <div className="flex flex-wrap gap-3">
-            <Link to="/" className="press grad-fill rounded-xl px-6 py-[15px] text-base font-bold no-underline">
+            <a href={storeUrl('/')} className="press grad-fill rounded-xl px-6 py-[15px] text-base font-bold no-underline">
               Mua sắm ngay
-            </Link>
+            </a>
             <a
               href={`#${SECTION_IDS.sell}`}
               className="press rounded-xl bg-white px-6 py-[15px] text-base font-bold text-slate-900 no-underline"

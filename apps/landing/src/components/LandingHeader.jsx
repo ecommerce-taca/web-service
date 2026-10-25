@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Link, useNavigate } from 'react-router-dom';
 import { ChevronDown, Search } from 'lucide-react';
-import { useAuth } from '../../auth/hooks/useAuth';
 import { SECTION_IDS } from '../constants/landingContent';
-import { tacaLogoUrl as tacaLogo } from '../assets/tacaLogo';
+import tacaLogo from '../assets/taca-logo.png';
+import { searchUrl, storeUrl } from '../constants/links';
 
 const SHOP_LINKS = [
   { to: '/category/dien-thoai', title: 'Điện thoại & Máy tính bảng', hint: 'Chính hãng từ shop xác minh' },
@@ -17,14 +16,12 @@ function NavChevron() {
 }
 
 export default function LandingHeader({ activeSection, isScrolled, showMiniSearch }) {
-  const navigate = useNavigate();
-  const { user, openAuthModal } = useAuth();
   const [miniQuery, setMiniQuery] = useState('');
 
   const handleMiniSearch = (event) => {
     event.preventDefault();
     const keyword = miniQuery.trim();
-    navigate(keyword ? `/search?q=${encodeURIComponent(keyword)}` : '/search');
+    window.location.assign(searchUrl(keyword));
   };
 
   const navClass = (sectionId) => `nav-link ${activeSection === sectionId ? 'active' : ''}`;
@@ -50,31 +47,31 @@ export default function LandingHeader({ activeSection, isScrolled, showMiniSearc
               <div className="flex flex-col gap-0.5">
                 <span className="px-3 pb-1.5 pt-1 text-[13px] font-bold text-slate-500">Danh mục nổi bật</span>
                 {SHOP_LINKS.map((link) => (
-                  <Link key={link.to} className="panel-link" to={link.to}>
+                  <a key={link.to} className="panel-link" href={storeUrl(link.to)}>
                     <span className="text-[15px] font-bold">{link.title}</span>
                     <span className="text-[13px] font-normal text-slate-500">{link.hint}</span>
-                  </Link>
+                  </a>
                 ))}
-                <Link className="panel-link" to="/category">
+                <a className="panel-link" href={storeUrl('/category')}>
                   <span className="text-[15px] font-bold text-indigo-700">Xem tất cả danh mục</span>
                   <span className="text-[13px] font-normal text-slate-500">Tìm theo nhu cầu của bạn</span>
-                </Link>
+                </a>
               </div>
               <div className="flex flex-col gap-2.5">
-                <Link
-                  to="/"
+                <a
+                  href={storeUrl('/')}
                   className="flex flex-col gap-1 rounded-2xl bg-gradient-to-br from-rose-50 to-orange-50 p-4 text-slate-900 no-underline"
                 >
                   <span className="text-base font-extrabold text-rose-700">Flash sale</span>
                   <span className="text-[13px] text-slate-600">Giá tốt mỗi ngày, số lượng có hạn</span>
-                </Link>
-                <Link
-                  to="/account/vouchers"
+                </a>
+                <a
+                  href={storeUrl('/account/vouchers')}
                   className="flex flex-col gap-1 rounded-2xl bg-gradient-to-br from-indigo-50 to-emerald-50 p-4 text-slate-900 no-underline"
                 >
                   <span className="text-base font-extrabold text-indigo-700">Voucher</span>
                   <span className="text-[13px] text-slate-600">Mã giảm giá của sàn và của shop</span>
-                </Link>
+                </a>
               </div>
             </div>
           </div>
@@ -93,12 +90,12 @@ export default function LandingHeader({ activeSection, isScrolled, showMiniSearc
                 <span className="text-[15px] font-bold">Biểu phí</span>
                 <span className="text-[13px] font-normal text-slate-500">Hoa hồng, thuế và rút tiền</span>
               </a>
-              <Link
-                to="/account/seller-register"
+              <a
+                href={storeUrl('/account/seller-register')}
                 className="press grad-fill mt-2 rounded-xl px-[18px] py-3 text-center text-[15px] font-bold no-underline"
               >
                 Mở shop ngay
-              </Link>
+              </a>
             </div>
           </div>
 
@@ -150,31 +147,19 @@ export default function LandingHeader({ activeSection, isScrolled, showMiniSearc
         )}
 
         <div className="ml-auto flex items-center gap-1 sm:gap-3 md:ml-0">
-          {user ? (
-            <Link
-              to="/account/profile"
-              className="press grad-fill rounded-[10px] px-5 py-3 text-[15px] font-bold no-underline"
-            >
-              Tài khoản của tôi
-            </Link>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => openAuthModal()}
-                className="press cursor-pointer rounded-[10px] border-0 bg-transparent px-2 py-3 text-[15px] font-semibold sm:px-4 text-slate-900"
-              >
-                Đăng nhập
-              </button>
-              <button
-                type="button"
-                onClick={() => openAuthModal()}
-                className="press grad-fill cursor-pointer rounded-[10px] border-0 px-4 py-3 text-[15px] font-bold sm:px-5"
-              >
-                Đăng ký
-              </button>
-            </>
-          )}
+          {/* Đăng nhập/đăng ký nằm ở cửa hàng (modal của buyer), landing chỉ dẫn sang đó */}
+          <a
+            href={storeUrl('/')}
+            className="press rounded-[10px] px-2 py-3 text-[15px] font-semibold text-slate-900 no-underline sm:px-4"
+          >
+            Đăng nhập
+          </a>
+          <a
+            href={storeUrl('/')}
+            className="press grad-fill rounded-[10px] px-4 py-3 text-[15px] font-bold no-underline sm:px-5"
+          >
+            Đăng ký
+          </a>
         </div>
       </div>
     </header>

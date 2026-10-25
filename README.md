@@ -7,6 +7,7 @@ Dự án Taca E-commerce sử dụng kiến trúc **Micro-Frontend (Module Feder
 - `apps/buyer`: Ứng dụng cho người mua hàng (remote - port `5174`)
 - `apps/seller`: Ứng dụng cho người bán hàng (remote - port `5175`)
 - `apps/admin`: Ứng dụng cho ban quản trị (remote - port `5176`)
+- `apps/landing`: Landing page giới thiệu Taca (ứng dụng độc lập - port `5177`, chạy bằng `npm run dev:landing`)
 - `shared`: Các module, components và utilities dùng chung.
 
 ## 🚀 Chạy dự án ở môi trường Local (Dev)

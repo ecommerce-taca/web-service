@@ -28,7 +28,6 @@ const FollowingShopsPage = lazy(() => import('../features/account/pages/Followin
 const SellerRegisterPage = lazy(() => import('../features/account/pages/SellerRegisterPage'));
 const CartPage = lazy(() => import('../features/cart/pages/CartPage'));
 const CheckoutPage = lazy(() => import('../features/checkout/pages/CheckoutPage'));
-const LandingPage = lazy(() => import('../features/landing/pages/LandingPage'));
 
 function PageLoadingFallback() {
   return (
@@ -82,7 +81,6 @@ function AppContent() {
       <AuthModal />
       <Suspense fallback={<PageLoadingFallback />}>
         <Routes>
-          <Route path="/landing" element={<LandingPage />} />
           <Route element={<BuyerLayout />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/search" element={<SearchPage />} />
