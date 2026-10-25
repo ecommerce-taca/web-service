@@ -105,3 +105,86 @@ export const createSellerVoucher = async (voucherData) => {
   saveStoredMockVouchers(updatedVouchers);
   return newVoucher;
 };
+
+/**
+ * Cập nhật voucher cửa hàng (MISS-008)
+ * @param {string} voucherId
+ * @param {Object} voucherData
+ */
+export const updateSellerVoucher = async (voucherId, voucherData = {}) => {
+  if (!isMockMode()) {
+    try {
+      const res = await apiClient.put(`/seller/vouchers/${voucherId}`, voucherData);
+      return res?.data || res;
+    } catch (err) {
+      console.warn(`Lỗi khi gọi PUT /seller/vouchers/${voucherId}:`, err);
+      throw err;
+    }
+  }
+
+  await new Promise((r) => setTimeout(r, 300));
+  const currentVouchers = getStoredMockVouchers();
+  const updatedItems = currentVouchers.items.map((item) => {
+    const id = item.voucher_id || item.id || item.code;
+    if (id === voucherId || item.code === voucherId) {
+      return {
+        ...item,
+        name: voucherData.name || item.name,
+        discount: voucherData.discountValue || item.discount,
+        condition: voucherData.minOrder ? `Đơn từ ${voucherData.minOrder}` : item.condition,
+        total: voucherData.usageLimit || voucherData.total || item.total,
+        time_range: voucherData.dateRange || item.time_range,
+        version: (item.version || 1) + 1,
+      };
+    }
+    return item;
+  });
+
+  const updatedVouchers = {
+    ...currentVouchers,
+    items: updatedItems,
+  };
+  saveStoredMockVouchers(updatedVouchers);
+  return { success: true, voucherId, ...voucherData };
+};
+
+/**
+ * Kết thúc sớm / dừng kích hoạt voucher cửa hàng (MISS-008)
+ * @param {string} voucherId
+ * @param {Object} options - { version }
+ */
+export const deleteSellerVoucher = async (voucherId, { version = 1 } = {}) => {
+  if (!isMockMode()) {
+    try {
+      const res = await apiClient.delete(`/seller/vouchers/${voucherId}`, {
+        data: { version },
+      });
+      return res?.data || res;
+    } catch (err) {
+      console.warn(`Lỗi khi gọi DELETE /seller/vouchers/${voucherId}:`, err);
+      throw err;
+    }
+  }
+
+  await new Promise((r) => setTimeout(r, 300));
+  const currentVouchers = getStoredMockVouchers();
+  const updatedItems = currentVouchers.items.map((item) => {
+    const id = item.voucher_id || item.id || item.code;
+    if (id === voucherId || item.code === voucherId) {
+      return {
+        ...item,
+        status: 'Đã kết thúc',
+        status_type: 'expired',
+        version: (item.version || 1) + 1,
+      };
+    }
+    return item;
+  });
+
+  const updatedVouchers = {
+    ...currentVouchers,
+    items: updatedItems,
+  };
+  saveStoredMockVouchers(updatedVouchers);
+  return { data: { voucher_id: voucherId, status: 'INACTIVE' } };
+};

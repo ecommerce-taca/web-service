@@ -181,3 +181,135 @@ export const bulkAcceptSellerOrders = async (orderIds = []) => {
   saveStoredMockOrders(updatedOrders);
   return { success: true, count: orderIds.length };
 };
+
+/**
+ * Lấy danh sách hãng vận chuyển và so sánh biểu phí trước khi giao hàng (MISS-003)
+ * @param {string} orderId
+ */
+export const getShipmentCarriers = async (orderId) => {
+  if (!isMockMode()) {
+    try {
+      const res = await apiClient.get(`/seller/orders/${orderId}/shipment/carriers`);
+      return res?.data || res;
+    } catch (err) {
+      console.warn(`Lỗi gọi API /seller/orders/${orderId}/shipment/carriers:`, err);
+      // Fallback mock nếu backend chưa khởi động
+    }
+  }
+
+  await new Promise((r) => setTimeout(r, 250));
+  return {
+    order_id: orderId,
+    carriers: [
+      {
+        carrier: 'GHN',
+        name: 'Giao Hàng Nhanh (GHN Express)',
+        available: true,
+        fee: 32000,
+        currency: 'VND',
+        estimate: { min_days: 2, max_days: 4 },
+      },
+      {
+        carrier: 'SPX',
+        name: 'Shopee Express (SPX Express)',
+        available: true,
+        fee: 28000,
+        currency: 'VND',
+        estimate: { min_days: 3, max_days: 5 },
+      },
+      {
+        carrier: 'J&T',
+        name: 'J&T Express',
+        available: false,
+        fee: null,
+        currency: 'VND',
+        estimate: null,
+        unavailable_reason: 'REGION_NOT_COVERED',
+      },
+    ],
+    quote_expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+  };
+};
+
+/**
+ * Xuất danh sách đơn hàng ra file Excel hoặc CSV (MISS-006)
+ * @param {Object} params - { status, from, to, format }
+ */
+export const exportSellerOrders = async (params = {}) => {
+  const exportFormat = params.format || 'xlsx';
+  if (!isMockMode()) {
+    try {
+      const res = await apiClient.get('/seller/orders/export', {
+        params: {
+          ...params,
+          format: exportFormat,
+        },
+      });
+      return res?.data || res;
+    } catch (err) {
+      console.warn('Lỗi gọi API /seller/orders/export:', err);
+    }
+  }
+
+  await new Promise((r) => setTimeout(r, 500));
+  const currentOrders = getStoredMockOrders();
+  const count = currentOrders?.items?.length || 0;
+
+  // Tạo mock signed download URL
+  return {
+    export_url: `https://storage.example/signed-download/orders-export-${Date.now()}.${exportFormat}`,
+    format: exportFormat,
+    row_count: count,
+    generated_at: new Date().toISOString(),
+    expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+  };
+};
+
+/**
+ * Hủy đơn hàng phía người bán theo quy định (MISS-007)
+ * @param {string} orderId
+ * @param {Object} payload - { reason, version }
+ */
+export const cancelSellerOrder = async (orderId, { reason = 'SELLER_REQUEST', version = 1 } = {}) => {
+  if (!isMockMode()) {
+    try {
+      const idempotencyKey = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+      const res = await apiClient.post(
+        `/seller/orders/${orderId}/cancel`,
+        { reason, version },
+        { headers: { 'Idempotency-Key': idempotencyKey } }
+      );
+      return res?.data || res;
+    } catch (err) {
+      console.warn(`Lỗi gọi POST /seller/orders/${orderId}/cancel:`, err);
+      throw err;
+    }
+  }
+
+  await new Promise((r) => setTimeout(r, 350));
+  const currentOrders = getStoredMockOrders();
+  const updatedItems = currentOrders.items.map((item) => {
+    if (item.id === orderId) {
+      return {
+        ...item,
+        status: 'Đã hủy',
+        status_type: 'cancelled',
+        cancel_reason: reason,
+        version: (item.version || 1) + 1,
+      };
+    }
+    return item;
+  });
+
+  const updatedOrders = {
+    ...currentOrders,
+    items: updatedItems,
+  };
+  saveStoredMockOrders(updatedOrders);
+  return {
+    order_id: orderId,
+    status: 'CANCELLED',
+    reason,
+    version: version + 1,
+  };
+};

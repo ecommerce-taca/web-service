@@ -200,4 +200,47 @@ export const isMockMode = () => {
   return false;
 };
 
+/**
+ * Chuẩn hóa payload từ Backend envelope hoặc Axios response (API-009)
+ * Trả về đúng 1 tầng data object/array, triệt tiêu hoàn toàn tình trạng res.data.data.data
+ * @param {any} response
+ * @returns {any}
+ */
+export const unwrapApiResponse = (response) => {
+  if (response === null || response === undefined) return null;
+  if (response?.data?.data !== undefined) {
+    return response.data.data;
+  }
+  if (response?.data !== undefined) {
+    return response.data;
+  }
+  return response;
+};
+
+/**
+ * Tạo chuẩn response envelope { data, meta } đồng nhất toàn sàn (API-009)
+ * Hỗ trợ getter tương thích ngược an toàn cho code cũ đọc .data.data
+ */
+export const createResponseEnvelope = (payload, meta = null) => {
+  const envelope = {
+    data: payload,
+    meta: meta || { request_id: `req-${Date.now()}` }
+  };
+  if (payload && (typeof payload === 'object') && !('data' in payload)) {
+    try {
+      Object.defineProperty(envelope.data, 'data', {
+        get() {
+          return payload;
+        },
+        configurable: true,
+        enumerable: false,
+      });
+    } catch {
+      // Ignore
+    }
+  }
+  return envelope;
+};
+
 export default apiClient;
+

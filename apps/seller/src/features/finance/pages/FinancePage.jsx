@@ -5,6 +5,7 @@ import StatusBadge from '../../../components/common/StatusBadge';
 import WithdrawModal from '../components/WithdrawModal';
 import { SELLER_MOCK_DATA } from '../../../services/seller.mock';
 import { sellerFinanceApi } from '../services/seller-finance.api';
+import { unwrapApiResponse } from '../../../../../../shared/utils/api-client';
 
 export default function FinancePage() {
   const { finance: fallbackFinance } = SELLER_MOCK_DATA;
@@ -26,14 +27,17 @@ export default function FinancePage() {
         sellerFinanceApi.getLedger()
       ]);
 
-      if (walletRes.status === 'fulfilled' && walletRes.value?.data?.data) {
-        setWallet(walletRes.value.data.data);
+      if (walletRes.status === 'fulfilled') {
+        const walletData = unwrapApiResponse(walletRes.value);
+        if (walletData) setWallet(walletData);
       }
-      if (revenueRes.status === 'fulfilled' && revenueRes.value?.data?.data) {
-        setRevenue(revenueRes.value.data.data);
+      if (revenueRes.status === 'fulfilled') {
+        const revenueData = unwrapApiResponse(revenueRes.value);
+        if (revenueData) setRevenue(revenueData);
       }
-      if (ledgerRes.status === 'fulfilled' && ledgerRes.value?.data?.data) {
-        setLedger(ledgerRes.value.data.data);
+      if (ledgerRes.status === 'fulfilled') {
+        const ledgerData = unwrapApiResponse(ledgerRes.value);
+        if (ledgerData) setLedger(ledgerData);
       }
     } catch (err) {
       console.warn('Lỗi khi tải thông tin tài chính người bán:', err);

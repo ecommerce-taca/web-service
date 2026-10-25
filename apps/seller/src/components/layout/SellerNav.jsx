@@ -8,6 +8,7 @@ export default function SellerNav() {
     const navItems = [
     { label: 'Tổng quan', path: `${basePath}/`, exact: true },
     { label: 'Quản lý sản phẩm', path: `${basePath}/products` },
+    { label: 'Quản lý kho hàng', path: `${basePath}/inventory` },
     { label: 'Xử lý đơn hàng', path: `${basePath}/orders` },
     { label: 'Khuyến mãi & Voucher', path: `${basePath}/vouchers` },
     { label: 'Ví doanh thu & Rút tiền', path: `${basePath}/finance` },

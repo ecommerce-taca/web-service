@@ -6,6 +6,7 @@ import { ErrorBoundary } from '@taca/ui-components';
 // Route-level Lazy Loading (AUD-03)
 const DashboardPage = lazy(() => import('../features/dashboard/pages/DashboardPage'));
 const ProductsPage = lazy(() => import('../features/products/pages/ProductsPage'));
+const InventoryPage = lazy(() => import('../features/inventory/pages/InventoryPage'));
 const OrdersPage = lazy(() => import('../features/orders/pages/OrdersPage'));
 const VouchersPage = lazy(() => import('../features/vouchers/pages/VouchersPage'));
 const FinancePage = lazy(() => import('../features/finance/pages/FinancePage'));
@@ -28,6 +29,7 @@ function AppRoutes() {
         <Route element={<SellerLayout />}>
           <Route index element={<DashboardPage />} />
           <Route path="products" element={<ProductsPage />} />
+          <Route path="inventory" element={<InventoryPage />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="vouchers" element={<VouchersPage />} />
           <Route path="finance" element={<FinancePage />} />

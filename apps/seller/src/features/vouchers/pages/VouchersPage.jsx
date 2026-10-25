@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { X, Ticket } from 'lucide-react';
+import { X, Ticket, Plus } from 'lucide-react';
 import MetricCard from '../../../components/common/MetricCard';
 import StatusBadge from '../../../components/common/StatusBadge';
 import CreateVoucherModal from '../components/CreateVoucherModal';
+import EditVoucherModal from '../components/EditVoucherModal';
 import {
   getSellerVouchers,
   createSellerVoucher,
+  deleteSellerVoucher,
 } from '../services/seller-voucher.api';
 
 export default function VouchersPage() {
@@ -15,6 +17,7 @@ export default function VouchersPage() {
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingVoucher, setEditingVoucher] = useState(null);
 
   const fetchVouchers = useCallback(async () => {
     setLoading(true);
@@ -60,6 +63,36 @@ export default function VouchersPage() {
     }
   };
 
+  const handleEditSuccess = (updated) => {
+    setFeedback({
+      type: 'success',
+      text: `Đã cập nhật cấu hình cho voucher "${updated.code || ''}" thành công!`,
+    });
+    fetchVouchers();
+    setTimeout(() => setFeedback(null), 4000);
+  };
+
+  const handleDeactivateVoucher = async (voucher) => {
+    const code = voucher.code;
+    const confirmMsg = `Bạn có chắc chắn muốn kết thúc sớm voucher "${code}" không? Sau khi kết thúc, khách hàng sẽ không thể tiếp tục áp dụng mã này.`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const voucherId = voucher.voucher_id || voucher.id || voucher.code;
+      await deleteSellerVoucher(voucherId, { version: voucher.version || 1 });
+      setFeedback({
+        type: 'success',
+        text: `Đã dừng kích hoạt voucher "${code}" thành công!`,
+      });
+      fetchVouchers();
+    } catch (err) {
+      console.warn('Lỗi dừng kích hoạt voucher:', err);
+      setFeedback({ type: 'error', text: 'Không thể kết thúc voucher vào lúc này. Vui lòng thử lại.' });
+    } finally {
+      setTimeout(() => setFeedback(null), 4000);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* Page Header */}
@@ -77,7 +110,7 @@ export default function VouchersPage() {
           onClick={() => setIsCreateOpen(true)}
           className="px-5 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg font-bold text-[13px] shadow-sm transition-colors flex items-center gap-2 self-start sm:self-auto cursor-pointer"
         >
-          <span>＋</span>
+          <Plus className="w-4 h-4" aria-hidden="true" />
           <span>Tạo voucher</span>
         </button>
       </div>
@@ -95,7 +128,7 @@ export default function VouchersPage() {
             type="button"
             onClick={() => setFeedback(null)}
             aria-label="Đóng thông báo"
-            className="text-slate-400 hover:text-slate-600 p-1 ml-3"
+            className="text-slate-400 hover:text-slate-600 p-1 ml-3 cursor-pointer"
           >
             <X className="w-4 h-4" aria-hidden="true" />
           </button>
@@ -124,7 +157,7 @@ export default function VouchersPage() {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors whitespace-nowrap cursor-pointer ${
                 activeTab === tab.id
                   ? 'bg-[#4F46E5] text-white shadow-2xs'
                   : 'text-slate-600 hover:bg-slate-100'
@@ -135,7 +168,7 @@ export default function VouchersPage() {
           ))}
         </div>
 
-        {/* Search & Actions */}
+        {/* Search */}
         <div className="flex items-center gap-3">
           <div className="relative w-full sm:w-64">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[13px]">
@@ -149,14 +182,6 @@ export default function VouchersPage() {
               className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[12px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#4F46E5] focus:bg-white transition-all"
             />
           </div>
-
-          <button
-            type="button"
-            onClick={() => setFeedback({ type: 'info', text: 'Bộ lọc nâng cao theo đối tượng và ngân sách đang được áp dụng.' })}
-            className="px-3.5 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-[12px] font-semibold transition-colors cursor-pointer"
-          >
-            Bộ lọc
-          </button>
         </div>
       </div>
 
@@ -190,9 +215,11 @@ export default function VouchersPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {(vouchersData.items || []).map((v) => {
-                  const usedCount = typeof v.used === 'number' ? v.used : 0;
-                  const totalCount = typeof v.total === 'number' && v.total > 0 ? v.total : 1000;
+                  const usedCount = typeof v.used === 'number' ? v.used : (v.used_count || 0);
+                  const totalCount = typeof v.total === 'number' && v.total > 0 ? v.total : (v.usage_limit || 1000);
                   const percentUsed = Math.min(100, Math.round((usedCount / totalCount) * 100));
+                  const isExpired = v.status_type === 'expired' || v.status === 'Đã kết thúc' || v.status === 'INACTIVE';
+
                   return (
                     <tr key={v.code} className="hover:bg-slate-50/60 transition-colors">
                       <td className="py-4 px-6">
@@ -204,10 +231,10 @@ export default function VouchersPage() {
                         </div>
                       </td>
                       <td className="py-4 px-6 text-slate-700 font-medium">
-                        {v.type}
+                        {v.type || (v.discount_type === 'FIXED' ? 'Giảm số tiền' : 'Phần trăm')}
                       </td>
                       <td className="py-4 px-6 font-extrabold text-[#4F46E5]">
-                        {v.discount}
+                        {v.discount || v.value}
                       </td>
                       <td className="py-4 px-6 text-slate-600 text-[12px]">
                         {v.condition}
@@ -230,13 +257,24 @@ export default function VouchersPage() {
                         <StatusBadge status={v.status} type={v.status_type} />
                       </td>
                       <td className="py-4 px-6 text-right">
-                        <button
-                          type="button"
-                          onClick={() => setFeedback({ type: 'info', text: `Đang mở trình biên tập cấu hình cho voucher ${v.code}` })}
-                          className="text-[12px] font-semibold text-[#4F46E5] hover:underline cursor-pointer"
-                        >
-                          Chỉnh sửa
-                        </button>
+                        <div className="flex items-center justify-end gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setEditingVoucher(v)}
+                            className="text-[12px] font-semibold text-[#4F46E5] hover:underline cursor-pointer"
+                          >
+                            Chỉnh sửa
+                          </button>
+                          {!isExpired && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeactivateVoucher(v)}
+                              className="text-[12px] font-semibold text-rose-600 hover:underline cursor-pointer"
+                            >
+                              Dừng
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -253,6 +291,17 @@ export default function VouchersPage() {
         onClose={() => setIsCreateOpen(false)}
         onCreate={handleCreateVoucher}
       />
+
+      {/* Edit Voucher Modal (MISS-008) */}
+      {editingVoucher && (
+        <EditVoucherModal
+          key={editingVoucher.voucher_id || editingVoucher.code}
+          voucher={editingVoucher}
+          isOpen={Boolean(editingVoucher)}
+          onClose={() => setEditingVoucher(null)}
+          onSuccess={handleEditSuccess}
+        />
+      )}
     </div>
   );
 }

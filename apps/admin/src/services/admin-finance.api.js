@@ -31,25 +31,34 @@ export const adminFinanceApi = {
   },
 
   /**
-   * Kích hoạt chạy tiến trình đối soát thủ công: POST /admin/payments/reconciliation/run
-   * Quyền: FINANCE_OPS
+   * Tạo lô quyết toán doanh thu người bán: POST /admin/settlements/batch (#15a, MISS-009)
+   * Quyền: FINANCE_OPS + 2FA (header X-MFA-Step-Up)
+   * Lưu ý: Đối soát thanh toán chạy theo lịch Cron tự động tại backend, không có endpoint thủ công (API-007).
    */
-  runReconciliation: async () => {
+  createSettlementBatch: async (payload, stepUpToken = '') => {
     if (!isMockMode()) {
-      try {
-        const response = await apiClient.post('/admin/payments/reconciliation/run');
-        return response?.data;
-      } catch (err) {
-        console.warn('API Gateway POST /admin/payments/reconciliation/run failed, using mock', err);
-      }
+      const headers = stepUpToken ? { 'X-MFA-Step-Up': stepUpToken } : {};
+      const response = await apiClient.post('/admin/settlements/batch', payload, { headers });
+      return response?.data;
     }
+    const newBatchId = `SET-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+    const newBatch = {
+      batch_id: newBatchId,
+      period: payload?.period_start && payload?.period_end
+        ? `${payload.period_start.slice(5)} – ${payload.period_end.slice(5)}`
+        : '01/09 – 15/09',
+      sellers_count: payload?.shop_ids?.length || 1850,
+      total_gross: 135000000000,
+      total_commission: 6750000000,
+      total_net: 128250000000,
+      status: 'PENDING_RECONCILIATION',
+      status_label: 'Chờ đối soát',
+      created_at: new Date().toISOString(),
+      note: payload?.note || 'Đợt quyết toán chu kỳ bán hàng'
+    };
     return {
-      data: {
-        reconciliation_job_id: `rec-job-${Date.now()}`,
-        status: 'PROCESSING',
-        started_at: new Date().toISOString(),
-        message: 'Tiến trình đối soát giao dịch sàn và VNPAY đã được khởi động thành công.'
-      }
+      data: newBatch,
+      meta: { request_id: `req-set-${Date.now()}` }
     };
   },
 

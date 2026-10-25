@@ -1,4 +1,4 @@
-import apiClient, { isMockMode } from '../../../../../../shared/utils/api-client';
+import apiClient, { isMockMode, createResponseEnvelope, unwrapApiResponse } from '../../../../../../shared/utils/api-client';
 
 export const shipmentApi = {
   /**
@@ -10,14 +10,14 @@ export const shipmentApi = {
     if (!isMockMode()) {
       try {
         const response = await apiClient.get(`/orders/${orderId}/shipment`);
-        const data = response?.data?.data || response?.data;
+        const data = unwrapApiResponse(response);
         if (data) {
-          return { data: { data } };
+          return createResponseEnvelope(data);
         }
       } catch (err) {
         // 404 SHIPMENT_NOT_FOUND nghĩa là đơn hàng chưa tạo vận đơn
         if (err?.response?.status === 404) {
-          return { data: { data: null, notCreated: true } };
+          return createResponseEnvelope({ notCreated: true });
         }
         console.warn(`GET /orders/${orderId}/shipment failed`, err);
       }
@@ -61,11 +61,7 @@ export const shipmentApi = {
       created_at: '2026-08-28T14:30:00Z'
     };
 
-    return {
-      data: {
-        data: mockShipment
-      }
-    };
+    return createResponseEnvelope(mockShipment);
   }
 };
 

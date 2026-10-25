@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Package, X, ClipboardList } from 'lucide-react';
+import { Package, X, ClipboardList, Download } from 'lucide-react';
 import MetricCard from '../../../components/common/MetricCard';
 import StatusBadge from '../../../components/common/StatusBadge';
 import OrderDetailModal from '../components/OrderDetailModal';
 import PrepareShipmentModal from '../components/PrepareShipmentModal';
+import CancelOrderModal from '../components/CancelOrderModal';
 import {
   getSellerOrders,
   fulfillSellerOrder,
   bulkAcceptSellerOrders,
+  exportSellerOrders,
 } from '../services/seller-order.api';
 
 export default function OrdersPage() {
@@ -18,6 +20,8 @@ export default function OrdersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
   const [selectedOrderShipment, setSelectedOrderShipment] = useState(null);
+  const [selectedOrderCancel, setSelectedOrderCancel] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -47,6 +51,7 @@ export default function OrdersPage() {
     { id: 'preparing', label: 'Chuẩn bị' },
     { id: 'shipping', label: 'Đang giao' },
     { id: 'completed', label: 'Hoàn tất' },
+    { id: 'cancelled', label: 'Đã hủy' },
   ];
 
   const handleBulkAccept = async () => {
@@ -76,11 +81,12 @@ export default function OrdersPage() {
     try {
       await fulfillSellerOrder(ord.id, {
         action: 'SHIP',
-        carrier: ord.carrier || 'GHN Express',
+        carrier: ord.carrier || 'GHN',
+        version: ord.version || 1,
       });
       setFeedback({
         type: 'success',
-        text: `Đơn hàng ${ord.id} đã sẵn sàng bàn giao cho ${ord.carrier || 'đơn vị vận chuyển'}!`,
+        text: `Đơn hàng ${ord.id} đã sẵn sàng bàn giao cho ${ord.carrierName || ord.carrier || 'đơn vị vận chuyển'}!`,
       });
       fetchOrders();
     } catch {
@@ -88,6 +94,46 @@ export default function OrdersPage() {
     } finally {
       setTimeout(() => setFeedback(null), 4000);
     }
+  };
+
+  const handleExportOrders = async (format = 'xlsx') => {
+    setExporting(true);
+    try {
+      const res = await exportSellerOrders({
+        status: activeTab !== 'all' ? activeTab : undefined,
+        format,
+      });
+
+      if (res?.export_url) {
+        // Tạo thẻ a ẩn để tải file an toàn
+        const link = document.createElement('a');
+        link.href = res.export_url;
+        link.setAttribute('download', `orders_export_${Date.now()}.${format}`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      setFeedback({
+        type: 'success',
+        text: `Đã xuất ${res?.row_count ?? (ordersData.items || []).length} đơn hàng ra file ${format.toUpperCase()} thành công!`,
+      });
+    } catch (err) {
+      console.warn('Lỗi xuất đơn hàng:', err);
+      setFeedback({ type: 'error', text: 'Có lỗi xảy ra khi xuất danh sách đơn hàng!' });
+    } finally {
+      setExporting(false);
+      setTimeout(() => setFeedback(null), 4000);
+    }
+  };
+
+  const handleCancelSuccess = (res) => {
+    setFeedback({
+      type: 'success',
+      text: `Đã hủy đơn hàng ${res.order_id || ''} thành công! Lý do: ${res.reason || 'Yêu cầu người bán'}.`,
+    });
+    fetchOrders();
+    setTimeout(() => setFeedback(null), 4000);
   };
 
   return (
@@ -127,7 +173,7 @@ export default function OrdersPage() {
             type="button"
             onClick={() => setFeedback(null)}
             aria-label="Đóng thông báo"
-            className="text-slate-400 hover:text-slate-600 p-1 ml-3"
+            className="text-slate-400 hover:text-slate-600 p-1 ml-3 cursor-pointer"
           >
             <X className="w-4 h-4" aria-hidden="true" />
           </button>
@@ -157,7 +203,7 @@ export default function OrdersPage() {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors whitespace-nowrap cursor-pointer ${
                 activeTab === tab.id
                   ? 'bg-[#4F46E5] text-white shadow-2xs'
                   : 'text-slate-600 hover:bg-slate-100'
@@ -183,19 +229,19 @@ export default function OrdersPage() {
             />
           </div>
 
+          {/* Export Orders Button (MISS-006) */}
           <button
             type="button"
-            onClick={() => setFeedback({ type: 'info', text: 'Bộ lọc nâng cao theo ngày, kênh vận chuyển đang được đồng bộ.' })}
-            className="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-[12px] font-semibold transition-colors cursor-pointer"
+            disabled={exporting}
+            onClick={() => handleExportOrders('xlsx')}
+            className="px-3.5 py-1.5 border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-[12px] font-semibold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
-            Lọc
-          </button>
-          <button
-            type="button"
-            onClick={() => setFeedback({ type: 'success', text: 'Đã xuất dữ liệu danh sách đơn hàng sang bảng tính CSV.' })}
-            className="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-[12px] font-semibold transition-colors cursor-pointer"
-          >
-            Xuất
+            {exporting ? (
+              <div className="w-3.5 h-3.5 border-2 border-slate-600 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Download className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
+            )}
+            <span>Xuất file</span>
           </button>
         </div>
       </div>
@@ -228,59 +274,71 @@ export default function OrdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {(ordersData.items || []).map((order) => (
-                  <tr key={order.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-4 px-6 font-bold text-slate-900">{order.id}</td>
-                    <td className="py-4 px-6">
-                      <div className="font-semibold text-slate-800">{order.customer}</div>
-                      <div className="text-[11px] text-slate-400">{order.phone}</div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="font-semibold text-slate-900">{order.product}</div>
-                      <div className="text-[11px] text-slate-400">
-                        {order.sku} · x{order.quantity}
-                      </div>
-                    </td>
-                    <td className="py-4 px-6 font-extrabold text-slate-900">
-                      {order.cod_amount}
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex flex-col gap-1 items-start">
-                        <StatusBadge status={order.status} type={order.status_type} />
-                        {order.sla && (
-                          <span className="text-[10px] font-mono font-semibold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
-                            SLA {order.sla}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="text-[12px] font-medium text-slate-700 bg-slate-100 px-2 py-1 rounded">
-                        {order.carrier}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-right">
-                      <div className="flex items-center justify-end gap-3">
-                        {order.status_type === 'pending' || order.status_type === 'preparing' ? (
+                {(ordersData.items || []).map((order) => {
+                  const isCancellable = order.status_type === 'pending' || order.status_type === 'preparing';
+                  return (
+                    <tr key={order.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-4 px-6 font-bold text-slate-900">{order.id}</td>
+                      <td className="py-4 px-6">
+                        <div className="font-semibold text-slate-800">{order.customer}</div>
+                        <div className="text-[11px] text-slate-400">{order.phone}</div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="font-semibold text-slate-900">{order.product}</div>
+                        <div className="text-[11px] text-slate-400">
+                          {order.sku} · x{order.quantity}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 font-extrabold text-slate-900">
+                        {order.cod_amount || order.amount}
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex flex-col gap-1 items-start">
+                          <StatusBadge status={order.status} type={order.status_type} />
+                          {order.sla && (
+                            <span className="text-[10px] font-mono font-semibold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                              SLA {order.sla}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="text-[12px] font-medium text-slate-700 bg-slate-100 px-2 py-1 rounded">
+                          {order.carrier}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-right">
+                        <div className="flex items-center justify-end gap-2.5">
+                          {isCancellable ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedOrderShipment(order)}
+                                className="px-3 py-1 bg-indigo-50 text-[#4F46E5] hover:bg-[#4F46E5] hover:text-white rounded-lg text-[12px] font-semibold transition-colors shadow-2xs cursor-pointer"
+                              >
+                                Chuẩn bị
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedOrderCancel(order)}
+                                className="px-2.5 py-1 text-rose-600 hover:bg-rose-50 rounded-lg text-[12px] font-semibold transition-colors cursor-pointer"
+                              >
+                                Hủy
+                              </button>
+                            </>
+                          ) : null}
                           <button
                             type="button"
-                            onClick={() => setSelectedOrderShipment(order)}
-                            className="px-3 py-1 bg-indigo-50 text-[#4F46E5] hover:bg-[#4F46E5] hover:text-white rounded-lg text-[12px] font-semibold transition-colors shadow-2xs cursor-pointer"
+                            onClick={() => setSelectedOrderDetail(order)}
+                            className="text-[12px] font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
                           >
-                            Chuẩn bị hàng
+                            Chi tiết
                           </button>
-                        ) : null}
-                        <button
-                          type="button"
-                          onClick={() => setSelectedOrderDetail(order)}
-                          className="text-[12px] font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
-                        >
-                          Chi tiết
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -296,15 +354,33 @@ export default function OrdersPage() {
           setSelectedOrderDetail(null);
           setSelectedOrderShipment(ord);
         }}
+        onCancel={(ord) => {
+          setSelectedOrderDetail(null);
+          setSelectedOrderCancel(ord);
+        }}
       />
 
-      {/* Prepare Shipment Modal */}
-      <PrepareShipmentModal
-        order={selectedOrderShipment}
-        isOpen={Boolean(selectedOrderShipment)}
-        onClose={() => setSelectedOrderShipment(null)}
-        onConfirm={handleShipmentConfirm}
-      />
+      {/* Prepare Shipment Modal (MISS-003) */}
+      {selectedOrderShipment && (
+        <PrepareShipmentModal
+          key={selectedOrderShipment.id}
+          order={selectedOrderShipment}
+          isOpen={Boolean(selectedOrderShipment)}
+          onClose={() => setSelectedOrderShipment(null)}
+          onConfirm={handleShipmentConfirm}
+        />
+      )}
+
+      {/* Cancel Order Modal (MISS-007) */}
+      {selectedOrderCancel && (
+        <CancelOrderModal
+          key={selectedOrderCancel.id}
+          order={selectedOrderCancel}
+          isOpen={Boolean(selectedOrderCancel)}
+          onClose={() => setSelectedOrderCancel(null)}
+          onSuccess={handleCancelSuccess}
+        />
+      )}
     </div>
   );
 }

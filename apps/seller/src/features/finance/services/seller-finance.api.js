@@ -1,4 +1,4 @@
-import apiClient, { isMockMode } from '../../../../../../shared/utils/api-client';
+import apiClient, { isMockMode, createResponseEnvelope, unwrapApiResponse } from '../../../../../../shared/utils/api-client';
 import { SELLER_MOCK_DATA } from '../../../services/seller.mock';
 
 const generateIdempotencyKey = () => {
@@ -17,9 +17,9 @@ export const sellerFinanceApi = {
     if (!isMockMode()) {
       try {
         const response = await apiClient.get('/seller/wallet');
-        const data = response?.data?.data || response?.data;
+        const data = unwrapApiResponse(response);
         if (data) {
-          return { data: { data } };
+          return createResponseEnvelope(data);
         }
       } catch (err) {
         console.warn('API Gateway GET /seller/wallet failed, falling back to mock data', err);
@@ -27,25 +27,21 @@ export const sellerFinanceApi = {
     }
 
     // Mock wallet data chuẩn spec
-    return {
-      data: {
-        data: {
-          wallet_id: 'wal-shop-001',
-          shop_id: 'shop-01',
-          available_balance: 42800000,
-          pending_balance: 5200000,
-          currency: 'VND',
-          status: 'ACTIVE',
-          bank_account: {
-            bank_name: 'Vietcombank',
-            account_number: '•••• 4838',
-            account_holder: 'NGUYEN MINH ANH'
-          },
-          settlement_cycle: 'Hàng ngày (T+2)',
-          updated_at: new Date().toISOString()
-        }
-      }
-    };
+    return createResponseEnvelope({
+      wallet_id: 'wal-shop-001',
+      shop_id: 'shop-01',
+      available_balance: 42800000,
+      pending_balance: 5200000,
+      currency: 'VND',
+      status: 'ACTIVE',
+      bank_account: {
+        bank_name: 'Vietcombank',
+        account_number: '•••• 4838',
+        account_holder: 'NGUYEN MINH ANH'
+      },
+      settlement_cycle: 'Hàng ngày (T+2)',
+      updated_at: new Date().toISOString()
+    });
   },
 
   /**
@@ -57,9 +53,9 @@ export const sellerFinanceApi = {
     if (!isMockMode()) {
       try {
         const response = await apiClient.get('/seller/revenue', { params });
-        const data = response?.data?.data || response?.data;
+        const data = unwrapApiResponse(response);
         if (data) {
-          return { data: { data } };
+          return createResponseEnvelope(data);
         }
       } catch (err) {
         console.warn('API Gateway GET /seller/revenue failed, falling back to mock data', err);
@@ -67,17 +63,15 @@ export const sellerFinanceApi = {
     }
 
     const { finance } = SELLER_MOCK_DATA;
-    return {
-      data: {
-        data: {
-          range: {
-            from: params.from || '2026-08-01',
-            to: params.to || '2026-08-31',
-            granularity: params.granularity || 'MONTH'
-          },
-          currency: 'VND',
-          total_gmv: 128500000,
-          monthly_revenue: finance.monthlyRevenue,
+    return createResponseEnvelope({
+      range: {
+        from: params.from || '2026-08-01',
+        to: params.to || '2026-08-31',
+        granularity: params.granularity || 'MONTH'
+      },
+      currency: 'VND',
+      total_gmv: 128500000,
+      monthly_revenue: finance.monthlyRevenue,
           monthly_growth: finance.monthlyGrowth,
           platform_fee: finance.platformFee,
           platform_fee_rate: finance.platformFeeRate,
@@ -96,11 +90,8 @@ export const sellerFinanceApi = {
           },
           buckets: [
             { period: '2026-08-01', gross: 4200000, commission: 294000, tax: 42000, net: 3864000, order_count: 12 },
-            { period: '2026-08-02', gross: 3850000, commission: 269500, tax: 38500, net: 3542000, order_count: 10 }
           ]
-        }
-      }
-    };
+    });
   },
 
   /**
@@ -153,31 +144,26 @@ export const sellerFinanceApi = {
     if (!isMockMode()) {
       try {
         const response = await apiClient.get('/seller/wallet/ledger', { params });
-        const data = response?.data?.data || response?.data;
+        const data = unwrapApiResponse(response);
         if (data) {
-          return { data: { data } };
+          return createResponseEnvelope(data, response?.meta);
         }
       } catch (err) {
         console.warn('API Gateway GET /seller/wallet/ledger failed, using mock data', err);
       }
     }
 
-    return {
-      data: {
-        data: [
-          {
-            entry_id: 'entry-001',
-            entry_type: 'CREDIT',
-            amount: 1062000,
-            balance_after: 42800000,
-            reference: { type: 'ORDER', id: 'TC-20260830-0001' },
-            description: 'Doanh thu đơn hàng TC-20260830-0001',
-            created_at: new Date().toISOString()
-          }
-        ],
-        meta: { page: params.page || 1, size: params.size || 20, total: 1, total_pages: 1 }
+    return createResponseEnvelope([
+      {
+        entry_id: 'entry-001',
+        entry_type: 'CREDIT',
+        amount: 1062000,
+        balance_after: 42800000,
+        reference: { type: 'ORDER', id: 'TC-20260830-0001' },
+        description: 'Doanh thu đơn hàng TC-20260830-0001',
+        created_at: new Date().toISOString()
       }
-    };
+    ], { page: params.page || 1, size: params.size || 20, total: 1, total_pages: 1 });
   },
 
   /**
@@ -189,21 +175,19 @@ export const sellerFinanceApi = {
     if (!isMockMode()) {
       try {
         const response = await apiClient.get('/seller/revenue/export', { params });
-        return response?.data;
+        return response?.data || response;
       } catch (err) {
         console.warn('API Gateway GET /seller/revenue/export failed, using fallback', err);
       }
     }
 
-    return {
-      data: {
-        export_url: `https://storage.example/signed-download/revenue-shop-export.${params.format || 'xlsx'}`,
-        format: params.format || 'xlsx',
-        row_count: 31,
-        generated_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString()
-      }
-    };
+    return createResponseEnvelope({
+      export_url: `https://storage.example/signed-download/revenue-shop-export.${params.format || 'xlsx'}`,
+      format: params.format || 'xlsx',
+      row_count: 31,
+      generated_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString()
+    });
   },
 
   /**
@@ -215,9 +199,9 @@ export const sellerFinanceApi = {
     if (!isMockMode()) {
       try {
         const response = await apiClient.get('/seller/payouts', { params });
-        const data = response?.data?.data || response?.data;
+        const data = unwrapApiResponse(response);
         if (data) {
-          return { data: { data } };
+          return createResponseEnvelope(data, response?.meta);
         }
       } catch (err) {
         console.warn('API Gateway GET /seller/payouts failed, using mock data', err);
@@ -225,12 +209,10 @@ export const sellerFinanceApi = {
     }
 
     const { finance } = SELLER_MOCK_DATA;
-    return {
-      data: {
-        data: finance.withdrawals || [],
-        meta: { page: params.page || 1, size: params.size || 20, total: 2, total_pages: 1 }
-      }
-    };
+    return createResponseEnvelope(
+      finance.withdrawals || [],
+      { page: params.page || 1, size: params.size || 20, total: 2, total_pages: 1 }
+    );
   }
 };
 

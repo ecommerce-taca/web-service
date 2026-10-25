@@ -1,4 +1,4 @@
-import apiClient, { isMockMode } from '../../../../../../shared/utils/api-client';
+import apiClient, { isMockMode, createResponseEnvelope, unwrapApiResponse } from '../../../../../../shared/utils/api-client';
 
 const MOCK_PAYMENTS_KEY = 'taca_mock_payments';
 
@@ -38,8 +38,8 @@ export const paymentApi = {
 
     if (!isMockMode()) {
       const response = await apiClient.get(`/payments/${paymentId}`);
-      const data = response?.data?.data || response?.data || response;
-      return { data: { data } };
+      const data = unwrapApiResponse(response);
+      return createResponseEnvelope(data);
     }
 
     // Mock handler chuẩn Backend payment-wallet spec
@@ -61,11 +61,7 @@ export const paymentApi = {
       saveStoredMockPayment(paymentId, payment);
     }
 
-    return {
-      data: {
-        data: payment
-      }
-    };
+    return createResponseEnvelope(payment);
   },
 
   /**

@@ -1,4 +1,4 @@
-import apiClient, { isMockMode } from '../../../../../../shared/utils/api-client';
+import apiClient, { isMockMode, createResponseEnvelope, unwrapApiResponse } from '../../../../../../shared/utils/api-client';
 
 const STORAGE_KEY = 'taca_user_orders';
 
@@ -95,18 +95,14 @@ export const orderApi = {
         : (Array.isArray(response?.data?.data) ? response.data.data : response?.data?.items);
 
       if (Array.isArray(rawList)) {
-        return {
-          data: {
-            data: rawList,
-            total: response?.meta?.total || rawList.length,
-            page: response?.meta?.page || params.page || 1,
-            size: response?.meta?.size || params.size || 20,
-            total_pages: response?.meta?.total_pages || 1,
-          },
-          meta: response?.meta || { total: rawList.length }
-        };
+        return createResponseEnvelope(rawList, {
+          total: response?.meta?.total || rawList.length,
+          page: response?.meta?.page || params.page || 1,
+          size: response?.meta?.size || params.size || 20,
+          total_pages: response?.meta?.total_pages || 1,
+        });
       }
-      return { data: { data: rawList || [], total: 0, page: 1, size: 20 } };
+      return createResponseEnvelope(rawList || [], { total: 0, page: 1, size: 20 });
     }
     
     const stored = getStoredOrders();
@@ -116,14 +112,11 @@ export const orderApi = {
       filtered = filtered.filter(o => o.status === params.status);
     }
 
-    return {
-      data: {
-        data: filtered,
-        total: filtered.length,
-        page: params.page || 1,
-        size: params.size || 20
-      }
-    };
+    return createResponseEnvelope(filtered, {
+      total: filtered.length,
+      page: params.page || 1,
+      size: params.size || 20
+    });
   },
 
   /**
@@ -133,9 +126,9 @@ export const orderApi = {
   getOrderDetail: async (orderId) => {
     if (!isMockMode()) {
       const response = await apiClient.get(`/orders/${orderId}`);
-      const orderData = response?.data?.data || response?.data || response;
+      const orderData = unwrapApiResponse(response);
       if (orderData) {
-        return { data: { data: orderData } };
+        return createResponseEnvelope(orderData);
       }
       throw new Error('Không tìm thấy dữ liệu đơn hàng từ máy chủ');
     }
@@ -144,7 +137,7 @@ export const orderApi = {
     const all = [...stored, ...INITIAL_DEMO_ORDERS];
     const order = all.find(o => o.id === orderId || o.order_number === orderId);
     if (order) {
-      return { data: { data: order } };
+      return createResponseEnvelope(order);
     }
     throw new Error('Không tìm thấy đơn hàng');
   },
@@ -157,24 +150,17 @@ export const orderApi = {
   previewCheckout: async (previewPayload) => {
     if (!isMockMode()) {
       const response = await apiClient.post('/checkout/preview', previewPayload);
-      const data = response?.data?.data || response?.data;
-      if (data) {
-        return { data: { data } };
-      }
-      return { data: { data: response } };
+      const data = unwrapApiResponse(response);
+      return createResponseEnvelope(data);
     }
 
-    return {
-      data: {
-        data: {
-          subtotal: previewPayload.subtotal || 0,
-          shipping_fee: previewPayload.shipping_fee || 0,
-          discount: previewPayload.discount || 0,
-          grand_total: previewPayload.total || 0,
-          warnings: []
-        }
-      }
-    };
+    return createResponseEnvelope({
+      subtotal: previewPayload.subtotal || 0,
+      shipping_fee: previewPayload.shipping_fee || 0,
+      discount: previewPayload.discount || 0,
+      grand_total: previewPayload.total || 0,
+      warnings: []
+    });
   },
 
   /**

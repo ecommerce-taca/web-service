@@ -4,6 +4,8 @@ import { Search, Store, User as UserIcon, ShoppingCart, Menu, ChevronDown } from
 import { useAuth } from '../../features/auth/hooks/useAuth';
 import { useCart } from '../../features/cart/hooks/useCart';
 import { getSellerRegistrationStatus } from '../../features/account/services/seller-register.api';
+import searchApi from '../../features/search/services/search.api';
+import SearchSuggestDropdown from '../../features/search/components/SearchSuggestDropdown';
 import MegaMenu from './MegaMenu';
 
 const getSellerUrl = (path = '/seller') => {
@@ -17,10 +19,14 @@ const Header = () => {
   const { user, openAuthModal } = useAuth();
   const { cartCount } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState({ keywords: [], categories: [], topProducts: [] });
+  const [isSuggestOpen, setIsSuggestOpen] = useState(false);
+  const [isSuggestLoading, setIsSuggestLoading] = useState(false);
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [sellerStatus, setSellerStatus] = useState(() => getSellerRegistrationStatus(user?.id));
   const navigate = useNavigate();
   const megaMenuRef = useRef(null);
+  const searchContainerRef = useRef(null);
 
   // Đóng MegaMenu khi click ra ngoài hoặc bấm Escape
   useEffect(() => {
@@ -104,10 +110,72 @@ const Header = () => {
     };
   }, [user, sellerStatus]);
 
+  // Debounce 250ms gọi API gợi ý tức thì GET /search/suggest?q=... (MISS-001)
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+    if (trimmed.length < 2) {
+      setSuggestions({ keywords: [], categories: [], topProducts: [] });
+      setIsSuggestOpen(false);
+      setIsSuggestLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setIsSuggestLoading(true);
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await searchApi.getSuggestions(trimmed, { signal: controller.signal });
+        const data = res?.data || res;
+        if (data) {
+          setSuggestions(data);
+          setIsSuggestOpen(true);
+        }
+      } catch (err) {
+        if (err?.name !== 'CanceledError' && err?.code !== 'ERR_CANCELED') {
+          console.warn('Failed to fetch search suggestions', err);
+        }
+      } finally {
+        setIsSuggestLoading(false);
+      }
+    }, 250);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [searchQuery]);
+
+  // Đóng Search Suggest Dropdown khi click ra ngoài hoặc bấm Escape
+  useEffect(() => {
+    if (!isSuggestOpen) return;
+
+    const handleClickOutside = (e) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setIsSuggestOpen(false);
+      }
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsSuggestOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isSuggestOpen]);
+
   const handleSearch = (e) => {
     e.preventDefault();
+    setIsSuggestOpen(false);
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate('/search');
     }
   };
 
@@ -123,8 +191,8 @@ const Header = () => {
             </h1>
           </Link>
 
-          {/* Search Bar - Responsive, centered & balanced */}
-          <div className="flex-1 min-w-0 max-w-[640px] h-[38px] sm:h-[44px]">
+          {/* Search Bar - Responsive, centered & balanced with auto-suggest dropdown */}
+          <div className="relative flex-1 min-w-0 max-w-[640px] h-[38px] sm:h-[44px]" ref={searchContainerRef}>
             <form onSubmit={handleSearch} className="flex items-center bg-white h-full w-full rounded-xl border border-transparent focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-white/30 overflow-hidden shadow-xs transition-all">
               <div className="pl-3 sm:pl-3.5 pr-1 flex items-center text-slate-400">
                 <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
@@ -135,8 +203,14 @@ const Header = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => {
+                  if (searchQuery.trim().length >= 2) {
+                    setIsSuggestOpen(true);
+                  }
+                }}
                 placeholder="Bạn tìm gì hôm nay? (iPhone, Laptop, Sách…)"
                 aria-label="Tìm kiếm sản phẩm"
+                autoComplete="off"
                 className="flex-1 min-w-0 h-full px-2 sm:px-2.5 border-none outline-none text-[12px] sm:text-[13px] font-normal text-taca-text-main bg-transparent placeholder:text-gray-400"
               />
               <button type="submit" className="h-[30px] sm:h-[36px] px-3 sm:px-5 mr-1 bg-taca-primary text-white border-none text-[11px] sm:text-[12px] font-bold cursor-pointer hover:bg-taca-primary-hover transition-colors rounded-lg shrink-0 flex items-center justify-center">
@@ -144,6 +218,26 @@ const Header = () => {
                 <Search className="w-3.5 h-3.5 sm:hidden" />
               </button>
             </form>
+
+            <SearchSuggestDropdown
+              query={searchQuery}
+              suggestions={suggestions}
+              loading={isSuggestLoading}
+              isOpen={isSuggestOpen}
+              onSelectKeyword={(kw) => {
+                setSearchQuery(kw);
+                setIsSuggestOpen(false);
+                navigate(`/search?q=${encodeURIComponent(kw)}`);
+              }}
+              onSelectCategory={(cat) => {
+                setIsSuggestOpen(false);
+                navigate(`/search?q=${encodeURIComponent(searchQuery || cat.name)}&category=${encodeURIComponent(cat.id || cat.slug)}`);
+              }}
+              onSelectProduct={(prd) => {
+                setIsSuggestOpen(false);
+                navigate(`/product/${prd.id}`);
+              }}
+            />
           </div>
 
           {/* Right Action Group - Căn phải chuẩn đẹp */}
