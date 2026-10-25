@@ -115,7 +115,7 @@ const SearchPage = () => {
       </div>
 
       {/* Page Title & Stats */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-[22px] font-black text-slate-900 m-0 mb-1 tracking-tight">
             {query ? (

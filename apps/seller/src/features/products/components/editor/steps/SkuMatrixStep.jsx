@@ -131,34 +131,36 @@ export default function SkuMatrixStep({
       )}
 
       <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
-        <table className="w-full text-left border-collapse text-[12px]">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
-              <th className="py-2.5 px-4">BIẾN THỂ ĐA THUỘC TÍNH</th>
-              <th className="py-2.5 px-4">
-                <span className="inline-flex items-center gap-1 text-slate-700">
-                  <Barcode className="w-3.5 h-3.5 text-[#4F46E5]" aria-hidden="true" />
-                  <span>MÃ SKU *</span>
-                </span>
-              </th>
-              <th className="py-2.5 px-4">GIÁ BÁN (₫)</th>
-              <th className="py-2.5 px-4">TỒN KHO</th>
-              <th className="py-2.5 px-4 text-center">HIỂN THỊ</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {skus.map((sku) => (
-              <SkuMatrixRow
-                key={sku.id}
-                sku={sku}
-                onUpdateCode={onUpdateSkuCode}
-                onUpdatePrice={onUpdateSkuPrice}
-                onUpdateStock={onUpdateSkuStock}
-                onToggle={onToggleSku}
-              />
-            ))}
-          </tbody>
-        </table>
+        <div className="max-h-[45vh] overflow-y-auto">
+          <table className="w-full text-left border-collapse text-[12px]">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10">
+                <th className="py-2.5 px-4 bg-slate-50">BIẾN THỂ ĐA THUỘC TÍNH</th>
+                <th className="py-2.5 px-4 bg-slate-50">
+                  <span className="inline-flex items-center gap-1 text-slate-700">
+                    <Barcode className="w-3.5 h-3.5 text-[#4F46E5]" aria-hidden="true" />
+                    <span>MÃ SKU *</span>
+                  </span>
+                </th>
+                <th className="py-2.5 px-4 bg-slate-50">GIÁ BÁN (₫)</th>
+                <th className="py-2.5 px-4 bg-slate-50">TỒN KHO</th>
+                <th className="py-2.5 px-4 text-center bg-slate-50">HIỂN THỊ</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {skus.map((sku) => (
+                <SkuMatrixRow
+                  key={sku.id}
+                  sku={sku}
+                  onUpdateCode={onUpdateSkuCode}
+                  onUpdatePrice={onUpdateSkuPrice}
+                  onUpdateStock={onUpdateSkuStock}
+                  onToggle={onToggleSku}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
         <div className="p-3 bg-slate-50 border-t border-slate-200 text-[11px] text-slate-500 text-center font-medium">
           Tổng cộng: <strong className="text-slate-900">{skus.length}</strong> biến thể SKU
         </div>

@@ -38,19 +38,18 @@
 | `MISS-012` | P2 | Admin / Finance | Thiếu bộ lọc theo chu kỳ ngày đối soát | **RESOLVED_VERIFIED** | Date picker chọn chu kỳ đối soát trong Admin |
 | `MOCK-001` | P2 | Shared / Mock | Mock data không đồng bộ kiểu dữ liệu số tiền | **RESOLVED_VERIFIED** | Chuẩn hóa toàn bộ giá trị tiền tệ về kiểu số nguyên VND |
 | `MOCK-002` | P3 | Shared / Mock | Thiếu mock response cho kịch bản lỗi 400/403/409 | **RESOLVED_VERIFIED** | Thêm các mock response lỗi có mã lỗi nghiệp vụ chuẩn |
-| `AUDIT-UI-001` | P3 | Buyer / Mobile | Lề đệm Drawer lọc trên màn hình cực hẹp (<375px) | **PENDING_POST_AUDIT** | Đề xuất tăng lề đệm từ 12px lên 16px |
+| `AUDIT-UI-001` | P3 | Buyer / Mobile | Lề đệm Drawer lọc trên màn hình cực hẹp (<375px) | **RESOLVED_VERIFIED** | Đã tinh chỉnh lề đệm p-4 sm:p-5 loại bỏ co cụm UI |
+| `AUDIT-UI-002` | P3 | Seller / Products | Container cuộn bảng ma trận SKU trong modal | **RESOLVED_VERIFIED** | Đã bọc max-h-[45vh] overflow-y-auto và sticky header |
 | `AUDIT-TEST-001` | P3 | DevOps / Test | Chưa tích hợp bộ test runner tự động Vitest | **PENDING_POST_AUDIT** | Đề xuất cấu hình Vitest và RTL trong lộ trình tiếp theo |
 
 ---
 
 ## 2. Chi Tiết Các Phát Hiện Tồn Đọng (Pending Recommendations)
 
-### Phát hiện `AUDIT-UI-001`: Lề đệm Drawer bộ lọc tìm kiếm
-- **Mức độ nghiêm trọng**: `P3 — LOW`
-- **Tác động**: Thẩm mỹ giao diện trên các thiết bị di động rất nhỏ. Không ảnh hưởng đến dữ liệu hay chức năng.
-- **Biện pháp xử lý**: Thêm lớp `px-4 pb-6` vào Drawer component trong `SearchPage.jsx`.
-
 ### Phát hiện `AUDIT-TEST-001`: Chưa có test runner tự động
+- **Mức độ nghiêm trọng**: `P3 — LOW`
+- **Tác động**: Phụ thuộc vào kiểm tra tĩnh và build test trong CI thay vì unit test tự động.
+- **Biện pháp xử lý**: Cài đặt `vitest`, `@testing-library/react`, `@testing-library/jest-dom` trong giai đoạn nâng cấp tiếp theo.
 - **Mức độ nghiêm trọng**: `P3 — LOW`
 - **Tác động**: Phụ thuộc vào kiểm tra tĩnh và build test trong CI thay vì unit test tự động.
 - **Biện pháp xử lý**: Cài đặt `vitest`, `@testing-library/react`, `@testing-library/jest-dom` trong giai đoạn nâng cấp tiếp theo.

@@ -105,7 +105,7 @@ const FilterSidebar = ({
   );
 
   return (
-    <aside className="w-full lg:w-[250px] flex flex-col gap-6 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs sticky top-24">
+    <aside className="w-full lg:w-[250px] flex flex-col gap-6 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs sticky top-24">
       {/* Header with Reset */}
       <div className="flex items-center justify-between pb-3 border-b border-slate-100">
         <div className="flex items-center gap-2">
