@@ -14,7 +14,7 @@ const MOCK_KYC_QUEUE = [
     risk_signal: 'Tín hiệu: IP trùng 2 shop bị khóa · Ngân hàng xác minh hợp lệ.',
     status: 'PENDING',
     submitted_at: '2026-10-11T09:35:00Z',
-    document_count: 3,
+    document_count: 1,
     age_hours: 2.5,
     legal_rep: 'NGUYỄN MINH ANH',
     address: '28 Nguyễn Huệ, Quận 1, TP.HCM',
@@ -29,26 +29,6 @@ const MOCK_KYC_QUEUE = [
         size_bytes: 5242880,
         status: 'VERIFIED',
         download_url: 'https://example.com/docs/gpdkkd.pdf',
-      },
-      {
-        id: 'doc-002',
-        document_type: 'IDENTITY_FRONT',
-        title: 'CCCD người đại diện.jpg',
-        file_name: 'CCCD người đại diện.jpg',
-        content_type: 'image/jpeg',
-        size_bytes: 2097152,
-        status: 'VERIFIED',
-        download_url: 'https://example.com/docs/cccd.jpg',
-      },
-      {
-        id: 'doc-003',
-        document_type: 'BANK_STATEMENT',
-        title: 'Xác nhận tài khoản ngân hàng.pdf',
-        file_name: 'Xác nhận tài khoản ngân hàng.pdf',
-        content_type: 'application/pdf',
-        size_bytes: 1048576,
-        status: 'VERIFIED',
-        download_url: 'https://example.com/docs/bank.pdf',
       },
     ],
   },
@@ -96,7 +76,7 @@ const MOCK_KYC_QUEUE = [
     risk_signal: 'Thiếu sao kê tài khoản ngân hàng khớp tên chủ hộ.',
     status: 'NEEDS_INFO',
     submitted_at: '2026-10-11T08:10:00Z',
-    document_count: 2,
+    document_count: 1,
     age_hours: 4.0,
     legal_rep: 'LÊ MINH PHÁT',
     address: '104 Hoàng Diệu, Phường 12, Quận 4, TP.HCM',
@@ -104,13 +84,13 @@ const MOCK_KYC_QUEUE = [
     documents: [
       {
         id: 'doc-005',
-        document_type: 'IDENTITY_FRONT',
-        title: 'CCCD chủ hộ kinh doanh.jpg',
-        file_name: 'CCCD chủ hộ kinh doanh.jpg',
-        content_type: 'image/jpeg',
+        document_type: 'BUSINESS_REGISTRATION',
+        title: 'Giấy chứng nhận đăng ký hộ kinh doanh.pdf',
+        file_name: 'Giấy chứng nhận đăng ký hộ kinh doanh.pdf',
+        content_type: 'application/pdf',
         size_bytes: 1843200,
         status: 'VERIFIED',
-        download_url: 'https://example.com/docs/cccd_minhphat.jpg',
+        download_url: 'https://example.com/docs/gpdkkd_minhphat.pdf',
       },
     ],
   },
@@ -190,16 +170,6 @@ const getStoredQueue = () => {
               size_bytes: 3145728,
               status: 'VERIFIED',
               download_url: 'https://example.com/docs/gpdkkd.pdf',
-            },
-            {
-              id: 'doc-auto-02',
-              document_type: 'IDENTITY_FRONT',
-              title: 'CCCD người đại diện.jpg',
-              file_name: 'CCCD người đại diện.jpg',
-              content_type: 'image/jpeg',
-              size_bytes: 1843200,
-              status: 'VERIFIED',
-              download_url: 'https://example.com/docs/cccd.jpg',
             },
           ],
         });
@@ -334,7 +304,7 @@ export const getKycDetail = async (shopId) => {
   }
 };
 
-export const reviewKyc = async (shopId, { decision, reason = '' }) => {
+export const reviewKyc = async (shopId, { decision, reason = '' }, stepUpToken = '') => {
   if (!['APPROVED', 'NEEDS_INFO', 'REJECTED'].includes(decision)) {
     throw new Error('Quyết định không hợp lệ. Chỉ chấp nhận APPROVED, NEEDS_INFO hoặc REJECTED.');
   }
@@ -492,10 +462,18 @@ export const reviewKyc = async (shopId, { decision, reason = '' }) => {
   }
 
   try {
-    const response = await apiClient.post(`/admin/shops/${shopId}/kyc/review`, {
-      decision,
-      reason: reason.trim(),
-    });
+    const headers = {};
+    if (stepUpToken) {
+      headers['X-MFA-Step-Up'] = stepUpToken;
+    }
+    const response = await apiClient.post(
+      `/admin/shops/${shopId}/kyc/review`,
+      {
+        decision,
+        reason: reason.trim(),
+      },
+      { headers }
+    );
     return response?.data || response;
   } catch (err) {
     console.error('[AdminKycApi] reviewKyc failed:', err);
@@ -518,26 +496,46 @@ export const getUserRoles = async (userId) => {
   return apiClient.get(`/admin/users/${userId}/roles`);
 };
 
-export const updateUserRole = async (userId, { action, role, shop_id = null, reason = '' }) => {
+export const updateUserRole = async (
+  userId,
+  { action, role, shop_id = null, reason = '' },
+  stepUpToken = ''
+) => {
   if (isMockMode()) {
     return { data: { success: true, user_id: userId, role, action } };
   }
-  return apiClient.patch(`/admin/users/${userId}/roles`, {
-    action,
-    role,
-    shop_id,
-    reason,
-  });
+  const headers = {};
+  if (stepUpToken) {
+    headers['X-MFA-Step-Up'] = stepUpToken;
+  }
+  return apiClient.patch(
+    `/admin/users/${userId}/roles`,
+    {
+      action,
+      role,
+      shop_id,
+      reason,
+    },
+    { headers }
+  );
 };
 
-export const updateUserStatus = async (userId, { status, reason = '' }) => {
+export const updateUserStatus = async (userId, { status, reason = '' }, stepUpToken = '') => {
   if (isMockMode()) {
     return { data: { success: true, user_id: userId, status, reason } };
   }
-  return apiClient.patch(`/admin/users/${userId}/status`, {
-    status,
-    reason,
-  });
+  const headers = {};
+  if (stepUpToken) {
+    headers['X-MFA-Step-Up'] = stepUpToken;
+  }
+  return apiClient.patch(
+    `/admin/users/${userId}/status`,
+    {
+      status,
+      reason,
+    },
+    { headers }
+  );
 };
 
 /**

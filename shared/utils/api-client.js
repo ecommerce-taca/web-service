@@ -21,14 +21,30 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
+const setAuthHeader = (requestConfig, token) => {
+  if (!requestConfig) return;
+  if (!requestConfig.headers) {
+    requestConfig.headers = {};
+  }
+  if (typeof requestConfig.headers.set === 'function') {
+    requestConfig.headers.set('Authorization', `Bearer ${token}`);
+  } else {
+    requestConfig.headers['Authorization'] = `Bearer ${token}`;
+  }
+};
+
 // Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('taca_access_token');
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete config.headers['Authorization'];
+      setAuthHeader(config, token);
+    } else if (config.headers) {
+      if (typeof config.headers.delete === 'function') {
+        config.headers.delete('Authorization');
+      } else {
+        delete config.headers['Authorization'];
+      }
     }
     return config;
   },
@@ -39,6 +55,10 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response.data,
   async (error) => {
+    if (axios.isCancel(error)) {
+      return Promise.reject(error);
+    }
+
     const originalRequest = error.config;
 
     // Do not attempt token refresh or broadcast logout for public auth endpoints
@@ -46,13 +66,14 @@ apiClient.interceptors.response.use(
       originalRequest.url.includes('/auth/signin') ||
       originalRequest.url.includes('/auth/signup') ||
       originalRequest.url.includes('/auth/email') ||
-      originalRequest.url.includes('/auth/password')
+      originalRequest.url.includes('/auth/password') ||
+      originalRequest.url.includes('/auth/signout')
     );
 
     // Handle 401 Unauthorized for protected endpoints
-    if (error.response?.status === 401 && !isAuthEndpoint && !originalRequest._retry) {
+    if (error.response?.status === 401 && !isAuthEndpoint && !originalRequest?._retry) {
       // If it's the refresh endpoint itself that failed, don't retry it to avoid infinite loop
-      if (originalRequest.url.includes('/auth/refresh')) {
+      if (originalRequest?.url?.includes('/auth/refresh')) {
         return Promise.reject(error);
       }
 
@@ -60,7 +81,7 @@ apiClient.interceptors.response.use(
         return new Promise(function(resolve, reject) {
           failedQueue.push({ resolve, reject });
         }).then(token => {
-          originalRequest.headers['Authorization'] = 'Bearer ' + token;
+          setAuthHeader(originalRequest, token);
           return apiClient(originalRequest);
         }).catch(err => {
           return Promise.reject(err);
@@ -76,6 +97,16 @@ apiClient.interceptors.response.use(
         // Broadcast logout event so Context and other tabs can pick it up
         broadcastAuthLogout();
         return Promise.reject(error);
+      }
+
+      // Handle mock refresh when running in mock mode or with mock tokens
+      if (isMockMode() || refreshToken.startsWith('mock-')) {
+        const newAccessToken = 'mock-access-token-' + Date.now();
+        localStorage.setItem('taca_access_token', newAccessToken);
+        setAuthHeader(originalRequest, newAccessToken);
+        processQueue(null, newAccessToken);
+        isRefreshing = false;
+        return apiClient(originalRequest);
       }
 
       return new Promise((resolve, reject) => {
@@ -98,7 +129,7 @@ apiClient.interceptors.response.use(
             localStorage.setItem('taca_refresh_token', newRefreshToken);
           }
 
-          originalRequest.headers['Authorization'] = 'Bearer ' + newAccessToken;
+          setAuthHeader(originalRequest, newAccessToken);
           
           processQueue(null, newAccessToken);
           resolve(apiClient(originalRequest));
@@ -163,7 +194,10 @@ if (typeof window !== 'undefined') {
 
 export const isMockMode = () => {
   const flag = import.meta.env.VITE_USE_MOCK;
-  return flag !== 'false' && flag !== false;
+  if (flag === 'true' || flag === true) return true;
+  if (flag === 'false' || flag === false) return false;
+  if (typeof window !== 'undefined' && localStorage.getItem('taca_force_mock') === 'true') return true;
+  return false;
 };
 
 export default apiClient;

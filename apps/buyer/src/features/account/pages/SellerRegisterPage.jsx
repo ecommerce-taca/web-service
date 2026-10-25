@@ -205,7 +205,7 @@ export default function SellerRegisterPage() {
                 </span>
               </div>
               <p className="text-[12px] text-slate-600 mt-1">
-                Thông tin cơ bản đã được lưu. Bước tiếp theo: vui lòng truy cập Kênh Người Bán để hoàn thiện thủ tục Onboarding (Tải lên CCCD 2 mặt, Giấy phép kinh doanh, Tài khoản ngân hàng và Địa chỉ kho) trước khi gửi thẩm định.
+                Thông tin cơ bản đã được lưu. Bước tiếp theo: vui lòng truy cập Kênh Người Bán để hoàn thiện thủ tục Onboarding (Tải lên Giấy chứng nhận ĐKKD / Hộ kinh doanh, Địa chỉ kho lấy hàng và Tài khoản ngân hàng) trước khi gửi thẩm định.
               </p>
             </div>
           </div>
@@ -472,6 +472,28 @@ export default function SellerRegisterPage() {
           />
         </div>
 
+        {/* Hộp tóm tắt Quy chế hoạt động & Điều khoản người bán */}
+        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5 text-[12px] text-slate-600">
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-slate-800 text-[13px] flex items-center gap-1.5">
+              <FileText className="w-4 h-4 text-[#0A68FF]" aria-hidden="true" />
+              <span>Quy chế hoạt động Người Bán Taca</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsPolicyModalOpen(true)}
+              className="text-[#0A68FF] hover:text-blue-800 font-bold underline transition-colors cursor-pointer text-xs"
+            >
+              Xem toàn văn quy chế →
+            </button>
+          </div>
+          <ul className="list-disc pl-5 space-y-1 text-slate-600 text-[11px] leading-relaxed">
+            <li>Người bán cam kết chỉ kinh doanh hàng hóa chính hãng, xuất xứ rõ ràng, không vi phạm pháp luật hoặc quyền SHTT.</li>
+            <li>Hoàn thành 4 bước Onboarding (Hồ sơ, Giấy chứng nhận ĐKKD / Hộ kinh doanh, Kho lấy hàng, Tài khoản ngân hàng).</li>
+            <li>Thời gian đóng gói và giao hàng cho đơn vị vận chuyển tối đa 48 giờ kể từ khi khách đặt đơn (SLA).</li>
+          </ul>
+        </div>
+
         {/* Checkbox điều khoản & Quy chế */}
         <div className="flex items-start gap-2.5 text-[12px] text-slate-600">
           <input
@@ -479,22 +501,20 @@ export default function SellerRegisterPage() {
             type="checkbox"
             checked={agreed}
             onChange={(e) => setAgreed(e.target.checked)}
-            className="mt-0.5 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+            className="mt-0.5 rounded text-blue-600 focus:ring-blue-500 cursor-pointer shrink-0"
           />
-          <label htmlFor="seller-policy-agree-checkbox" className="cursor-pointer">
-            Tôi cam kết các thông tin khai báo trên là chính xác và đồng ý tuân thủ{' '}
+          <div className="leading-relaxed">
+            <label htmlFor="seller-policy-agree-checkbox" className="cursor-pointer">
+              Tôi cam kết các thông tin khai báo trên là chính xác và đồng ý tuân thủ
+            </label>{' '}
             <button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsPolicyModalOpen(true);
-              }}
+              onClick={() => setIsPolicyModalOpen(true)}
               className="text-[#0A68FF] font-semibold underline hover:text-blue-800 transition-colors inline cursor-pointer"
             >
               Quy chế hoạt động Người Bán Taca
             </button>.
-          </label>
+          </div>
         </div>
 
         {/* Submit Button */}

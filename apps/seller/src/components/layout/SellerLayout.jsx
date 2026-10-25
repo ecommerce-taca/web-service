@@ -100,6 +100,32 @@ export default function SellerLayout() {
         <main className="flex-1 max-w-[1200px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Outlet />
         </main>
+        <footer className="bg-white border-t border-slate-200 py-6 px-6 lg:px-12 text-center text-[12px] text-slate-500">
+          <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p>© 2026 Taca Ecommerce System. Kênh Người Bán & Quản lý vận hành.</p>
+            <div className="flex items-center gap-6">
+              <button
+                type="button"
+                onClick={() => setIsPolicyModalOpen(true)}
+                className="hover:text-slate-700 cursor-pointer text-[12px] text-slate-500 hover:underline"
+              >
+                Chính sách người bán
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsPolicyModalOpen(true)}
+                className="hover:text-slate-700 cursor-pointer text-[12px] text-slate-500 hover:underline"
+              >
+                Quy chế hoạt động
+              </button>
+              <span className="text-slate-500">Hỗ trợ: 1900 6688</span>
+            </div>
+          </div>
+        </footer>
+        <SellerPolicyModal
+          isOpen={isPolicyModalOpen}
+          onClose={() => setIsPolicyModalOpen(false)}
+        />
       </div>
     );
   }
@@ -279,7 +305,7 @@ export default function SellerLayout() {
                   Gian hàng đang trong quá trình thiết lập
                 </h1>
                 <p className="text-slate-600 text-sm max-w-lg mx-auto leading-relaxed mb-8">
-                  Gian hàng <strong>{shop?.name}</strong> đã được khởi tạo. Bạn cần hoàn tất tải lên CCCD, tài khoản ngân hàng và địa chỉ kho để gửi Ban Quản Trị phê duyệt.
+                  Gian hàng <strong>{shop?.name}</strong> đã được khởi tạo. Bạn cần hoàn tất tải lên Giấy chứng nhận ĐKKD / Hộ kinh doanh, tài khoản ngân hàng và địa chỉ kho để gửi Ban Quản Trị phê duyệt.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                   <a
@@ -331,8 +357,31 @@ export default function SellerLayout() {
         </main>
 
         <footer className="bg-white border-t border-slate-200 py-6 px-6 lg:px-12 text-center text-[12px] text-slate-500">
-          <p>© 2026 Taca Ecommerce System. Kênh Người Bán & Quản lý vận hành.</p>
+          <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p>© 2026 Taca Ecommerce System. Kênh Người Bán & Quản lý vận hành.</p>
+            <div className="flex items-center gap-6">
+              <button
+                type="button"
+                onClick={() => setIsPolicyModalOpen(true)}
+                className="hover:text-slate-700 cursor-pointer text-[12px] text-slate-500 hover:underline"
+              >
+                Chính sách người bán
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsPolicyModalOpen(true)}
+                className="hover:text-slate-700 cursor-pointer text-[12px] text-slate-500 hover:underline"
+              >
+                Quy chế hoạt động
+              </button>
+              <span className="text-slate-500">Hỗ trợ: 1900 6688</span>
+            </div>
+          </div>
         </footer>
+        <SellerPolicyModal
+          isOpen={isPolicyModalOpen}
+          onClose={() => setIsPolicyModalOpen(false)}
+        />
       </div>
     );
   }

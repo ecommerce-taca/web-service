@@ -37,13 +37,9 @@ export const paymentApi = {
     }
 
     if (!isMockMode()) {
-      try {
-        const response = await apiClient.get(`/payments/${paymentId}`);
-        const data = response?.data?.data || response?.data || response;
-        return { data: { data } };
-      } catch (err) {
-        console.warn(`API Gateway GET /payments/${paymentId} failed, falling back to mock`, err);
-      }
+      const response = await apiClient.get(`/payments/${paymentId}`);
+      const data = response?.data?.data || response?.data || response;
+      return { data: { data } };
     }
 
     // Mock handler chuẩn Backend payment-wallet spec
@@ -73,11 +69,16 @@ export const paymentApi = {
   },
 
   /**
-   * Cập nhật giả lập trạng thái thanh toán thành công (dành cho môi trường Mock/Dev khi người dùng bấm "Tôi đã thanh toán")
+   * Cập nhật giả lập trạng thái thanh toán thành công (chỉ cho phép trong môi trường Mock/Dev khi người dùng bấm "Tôi đã thanh toán")
    * @param {string} paymentId
    */
   confirmMockPaymentSuccess: async (paymentId) => {
     if (!paymentId) return;
+    if (!isMockMode()) {
+      console.warn('confirmMockPaymentSuccess chỉ được phép trong chế độ Mock');
+      return { data: { success: false, message: 'Simulation not allowed in live mode' } };
+    }
+
     const stored = getStoredMockPayments();
     const payment = stored[paymentId] || {
       payment_id: paymentId,

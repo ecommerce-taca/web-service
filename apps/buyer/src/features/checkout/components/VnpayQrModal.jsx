@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Modal, Button } from '@taca/ui-components';
 import { paymentApi } from '../../payment/services/payment.api';
+import { isMockMode } from '../../../../../../shared/utils/api-client';
 import { CheckCircle2, AlertCircle, Clock, Loader2 } from 'lucide-react';
 
 export default function VnpayQrModal({
@@ -61,11 +62,11 @@ export default function VnpayQrModal({
 
     if (manual) {
       setIsVerifying(true);
-      setVerifyMessage('Đang kiểm tra kết quả với cổng VNPAY...');
+      setVerifyMessage('Đang kiểm tra kết quả giao dịch với cổng VNPAY...');
     }
 
     try {
-      if (manual) {
+      if (manual && isMockMode()) {
         // Trong chế độ phát triển/mock, việc bấm xác nhận sẽ kích hoạt chuyển trạng thái thành công
         await paymentApi.confirmMockPaymentSuccess(paymentId);
       }
@@ -91,7 +92,7 @@ export default function VnpayQrModal({
         setPaymentStatus('FAILED');
         setVerifyMessage('Giao dịch thanh toán không thành công.');
       } else if (manual) {
-        setVerifyMessage('Chưa nhận được giao dịch. Vui lòng hoàn tất trên ứng dụng ngân hàng.');
+        setVerifyMessage('Chưa nhận được giao dịch từ ngân hàng. Vui lòng hoàn tất thanh toán trên ứng dụng ngân hàng.');
       }
     } catch (err) {
       console.warn('Lỗi kiểm tra trạng thái thanh toán VNPAY:', err);
@@ -212,29 +213,38 @@ export default function VnpayQrModal({
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-3 w-full">
-          <Button
-            variant="secondary"
-            onClick={onClose}
-            className="flex-1 h-11 text-xs font-semibold"
-          >
-            Đóng
-          </Button>
-          <Button
-            variant="primary"
-            disabled={isVerifying || paymentStatus === 'EXPIRED'}
-            onClick={() => checkStatus(true)}
-            className="flex-1 h-11 text-xs font-bold bg-[#4F46E5] hover:bg-[#4338CA] flex items-center justify-center gap-1.5"
-          >
-            {isVerifying ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Đang kiểm tra...</span>
-              </>
-            ) : (
-              'Tôi đã thanh toán'
-            )}
-          </Button>
+        <div className="flex flex-col gap-2 w-full">
+          <div className="flex gap-3 w-full">
+            <Button
+              variant="secondary"
+              onClick={onClose}
+              className="flex-1 h-11 text-xs font-semibold"
+            >
+              Đóng
+            </Button>
+            <Button
+              variant="primary"
+              disabled={isVerifying || paymentStatus === 'EXPIRED'}
+              onClick={() => checkStatus(true)}
+              className="flex-1 h-11 text-xs font-bold bg-[#4F46E5] hover:bg-[#4338CA] flex items-center justify-center gap-1.5"
+            >
+              {isVerifying ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Đang kiểm tra...</span>
+                </>
+              ) : isMockMode() ? (
+                'Tôi đã thanh toán (Test)'
+              ) : (
+                'Kiểm tra thanh toán'
+              )}
+            </Button>
+          </div>
+          {isMockMode() && (
+            <span className="text-[10px] text-amber-600 font-medium">
+              Chế độ Mock: Bấm nút trên để giả lập thanh toán thành công
+            </span>
+          )}
         </div>
       </div>
     </Modal>

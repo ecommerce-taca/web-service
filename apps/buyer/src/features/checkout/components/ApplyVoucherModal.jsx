@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Modal, Button } from '@taca/ui-components';
-import { Check, Ticket, AlertCircle } from 'lucide-react';
+import { Check, Ticket, AlertCircle, Truck } from 'lucide-react';
 import { voucherApi } from '../../account/services/voucher.api';
 
 export default function ApplyVoucherModal({ 
@@ -9,8 +9,10 @@ export default function ApplyVoucherModal({
   onClose, 
   selectedShopVoucher = null, 
   selectedTacaVoucher = null,
+  selectedFreeshipVoucher = null,
   onApplyVouchers,
-  subtotal = 0
+  subtotal = 0,
+  shippingFee = 30000
 }) {
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -20,12 +22,14 @@ export default function ApplyVoucherModal({
   // Trạng thái tạm thời khi người dùng đang chọn trong modal
   const [tempShopVoucher, setTempShopVoucher] = useState(selectedShopVoucher);
   const [tempTacaVoucher, setTempTacaVoucher] = useState(selectedTacaVoucher);
+  const [tempFreeshipVoucher, setTempFreeshipVoucher] = useState(selectedFreeshipVoucher);
 
   // Đồng bộ lại lựa chọn khi mở modal
   useEffect(() => {
     if (isOpen) {
       setTempShopVoucher(selectedShopVoucher);
       setTempTacaVoucher(selectedTacaVoucher);
+      setTempFreeshipVoucher(selectedFreeshipVoucher);
       setInputCode('');
       setCodeMessage(null);
 
@@ -43,14 +47,27 @@ export default function ApplyVoucherModal({
           setLoading(false);
         });
     }
-  }, [isOpen, selectedShopVoucher, selectedTacaVoucher]);
+  }, [isOpen, selectedShopVoucher, selectedTacaVoucher, selectedFreeshipVoucher]);
 
+  // Phân loại voucher theo 3 slots chuẩn Backend: SHOP, PLATFORM, FREESHIP
   const shopVouchers = useMemo(() => {
-    return vouchers.filter(v => v.provider === 'SHOP');
+    return vouchers.filter(v => v.provider === 'SHOP' || v.scope === 'SHOP');
   }, [vouchers]);
 
   const tacaVouchers = useMemo(() => {
-    return vouchers.filter(v => v.provider === 'TACA');
+    return vouchers.filter(v => 
+      (v.provider === 'TACA' || v.scope === 'PLATFORM') && 
+      v.type !== 'SHIPPING' && 
+      v.scope !== 'FREESHIP'
+    );
+  }, [vouchers]);
+
+  const freeshipVouchers = useMemo(() => {
+    return vouchers.filter(v => 
+      v.type === 'SHIPPING' || 
+      v.scope === 'FREESHIP' || 
+      v.code?.toUpperCase().includes('FREESHIP')
+    );
   }, [vouchers]);
 
   // Toggle chọn hoặc BỎ CHỌN (bấm xóa đi dấu tick) voucher cửa hàng
@@ -71,11 +88,20 @@ export default function ApplyVoucherModal({
     }
   };
 
+  // Toggle chọn hoặc BỎ CHỌN voucher miễn phí vận chuyển
+  const handleToggleFreeshipVoucher = (voucher) => {
+    if (tempFreeshipVoucher && (tempFreeshipVoucher.id === voucher.id || tempFreeshipVoucher.code === voucher.code)) {
+      setTempFreeshipVoucher(null); // Bỏ tick chọn
+    } else {
+      setTempFreeshipVoucher(voucher); // Đánh dấu tick
+    }
+  };
+
   // Xử lý nhập mã voucher thủ công
   const handleApplyInputCode = () => {
     if (!inputCode.trim()) return;
     const cleanCode = inputCode.trim().toUpperCase();
-    const found = vouchers.find(v => v.code.toUpperCase() === cleanCode);
+    const found = vouchers.find(v => v.code?.toUpperCase() === cleanCode);
 
     if (!found) {
       setCodeMessage({ type: 'error', text: 'Mã voucher không tồn tại hoặc đã hết hạn.' });
@@ -90,7 +116,11 @@ export default function ApplyVoucherModal({
       return;
     }
 
-    if (found.provider === 'SHOP') {
+    const isShipping = found.type === 'SHIPPING' || found.scope === 'FREESHIP' || found.code?.toUpperCase().includes('FREESHIP');
+    if (isShipping) {
+      setTempFreeshipVoucher(found);
+      setCodeMessage({ type: 'success', text: `Đã áp dụng mã miễn phí vận chuyển ${found.code}!` });
+    } else if (found.provider === 'SHOP' || found.scope === 'SHOP') {
       setTempShopVoucher(found);
       setCodeMessage({ type: 'success', text: `Đã áp dụng mã giảm giá cửa hàng ${found.code}!` });
     } else {
@@ -99,7 +129,7 @@ export default function ApplyVoucherModal({
     }
   };
 
-  // Tính tổng số tiền tiết kiệm
+  // Tính tổng số tiền tiết kiệm trên cả 3 slots
   const totalSavings = useMemo(() => {
     let savings = 0;
     if (tempShopVoucher) {
@@ -108,26 +138,31 @@ export default function ApplyVoucherModal({
     if (tempTacaVoucher) {
       savings += tempTacaVoucher.discount_amount || 0;
     }
+    if (tempFreeshipVoucher) {
+      const freeshipDiscount = tempFreeshipVoucher.discount_amount || 0;
+      savings += Math.min(shippingFee, freeshipDiscount);
+    }
     return savings;
-  }, [tempShopVoucher, tempTacaVoucher]);
+  }, [tempShopVoucher, tempTacaVoucher, tempFreeshipVoucher, shippingFee]);
 
-  const selectedCount = (tempShopVoucher ? 1 : 0) + (tempTacaVoucher ? 1 : 0);
+  const selectedCount = (tempShopVoucher ? 1 : 0) + (tempTacaVoucher ? 1 : 0) + (tempFreeshipVoucher ? 1 : 0);
 
   const handleConfirm = () => {
     if (onApplyVouchers) {
       onApplyVouchers({
         shopVoucher: tempShopVoucher,
-        tacaVoucher: tempTacaVoucher
+        tacaVoucher: tempTacaVoucher,
+        freeshipVoucher: tempFreeshipVoucher
       });
     }
     onClose();
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="CHỌN VOUCHER GIẢM GIÁ" width="max-w-xl">
+    <Modal isOpen={isOpen} onClose={onClose} title="CHỌN VOUCHER GIẢM GIÁ" width="max-w-2xl">
       <div className="p-2 sm:p-4">
-        <p className="text-[12px] text-taca-text-muted mb-4">
-          Áp dụng tối đa 1 voucher Cửa hàng + 1 voucher Taca toàn sàn cho mỗi đơn hàng.
+        <p className="text-[12px] text-taca-text-muted mb-4 leading-relaxed">
+          Áp dụng tối đa 3 loại voucher theo cơ chế Multi-slot: 1 Voucher Cửa hàng + 1 Voucher Toàn sàn + 1 Mã Miễn phí vận chuyển.
         </p>
         
         {/* Nhập mã voucher */}
@@ -167,13 +202,13 @@ export default function ApplyVoucherModal({
         </div>
 
         {/* Danh sách Voucher - Duy nhất 1 thanh cuộn sạch sẽ */}
-        <div className="space-y-6 max-h-[380px] overflow-y-auto pr-1">
-          {/* 1. Voucher Cửa hàng */}
+        <div className="space-y-6 max-h-[420px] overflow-y-auto pr-1">
+          {/* 1. Voucher Cửa hàng (Slot SHOP) */}
           <div>
             <div className="flex items-center justify-between mb-2.5">
               <h4 className="font-bold text-taca-text-main text-[13px] uppercase tracking-wide flex items-center gap-1.5">
                 <Ticket size={15} className="text-taca-sale" />
-                VOUCHER CỬA HÀNG
+                VOUCHER CỬA HÀNG (TỐI ĐA 1)
               </h4>
               {tempShopVoucher && (
                 <button 
@@ -251,12 +286,12 @@ export default function ApplyVoucherModal({
             )}
           </div>
 
-          {/* 2. Voucher Taca Toàn sàn */}
+          {/* 2. Voucher Taca Toàn sàn (Slot PLATFORM) */}
           <div>
             <div className="flex items-center justify-between mb-2.5">
               <h4 className="font-bold text-taca-text-main text-[13px] uppercase tracking-wide flex items-center gap-1.5">
                 <Ticket size={15} className="text-taca-primary" />
-                VOUCHER TACA TOÀN SÀN
+                VOUCHER TACA TOÀN SÀN (TỐI ĐA 1)
               </h4>
               {tempTacaVoucher && (
                 <button 
@@ -333,13 +368,96 @@ export default function ApplyVoucherModal({
               </div>
             )}
           </div>
+
+          {/* 3. Mã Miễn phí vận chuyển (Slot FREESHIP) */}
+          <div>
+            <div className="flex items-center justify-between mb-2.5">
+              <h4 className="font-bold text-taca-text-main text-[13px] uppercase tracking-wide flex items-center gap-1.5">
+                <Truck size={15} className="text-emerald-600" />
+                MÃ MIỄN PHÍ VẬN CHUYỂN (TỐI ĐA 1)
+              </h4>
+              {tempFreeshipVoucher && (
+                <button 
+                  type="button"
+                  onClick={() => setTempFreeshipVoucher(null)}
+                  className="text-[11px] font-semibold text-emerald-600 hover:underline cursor-pointer bg-transparent"
+                >
+                  Bỏ chọn mã freeship
+                </button>
+              )}
+            </div>
+
+            {loading ? (
+              <p className="text-[12px] text-taca-text-muted py-2">Đang tải mã giảm giá...</p>
+            ) : freeshipVouchers.length === 0 ? (
+              <p className="text-[12px] text-taca-text-muted py-2">Không có mã miễn phí vận chuyển nào.</p>
+            ) : (
+              <div className="space-y-3">
+                {freeshipVouchers.map(v => {
+                  const isChecked = tempFreeshipVoucher?.id === v.id || tempFreeshipVoucher?.code === v.code;
+                  const isEligible = !v.min_order_value || subtotal >= v.min_order_value;
+
+                  return (
+                    <div 
+                      key={v.id} 
+                      onClick={() => isEligible && handleToggleFreeshipVoucher(v)}
+                      className={`flex border rounded-xl overflow-hidden transition-all cursor-pointer select-none ${
+                        !isEligible 
+                          ? 'opacity-50 bg-slate-50 border-slate-200 cursor-not-allowed'
+                          : isChecked
+                            ? 'border-emerald-500 bg-emerald-50/40 shadow-xs'
+                            : 'border-taca-border bg-white hover:border-slate-400'
+                      }`}
+                    >
+                      <div className="w-28 bg-[#ECFDF5] border-r border-dashed border-emerald-200 flex flex-col items-center justify-center p-3 text-center shrink-0">
+                        <span className="font-extrabold text-[16px] text-emerald-600 leading-tight">
+                          {new Intl.NumberFormat('vi-VN').format(v.discount_amount || 0)} ₫
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-700 mt-0.5">FREESHIP</span>
+                      </div>
+                      
+                      <div className="flex-1 p-3 flex items-center justify-between gap-3">
+                        <div>
+                          <p className="font-bold text-taca-text-main text-[13px]">{v.title}</p>
+                          <p className="text-[11px] text-taca-text-muted mt-0.5">{v.description}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[11px] font-extrabold text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded">
+                              {v.code}
+                            </span>
+                            {isEligible ? (
+                              <span className="text-[11px] text-emerald-600 font-medium inline-flex items-center gap-1">
+                                <Check className="w-3 h-3" /> Đủ điều kiện
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-taca-sale font-medium">Chưa đủ đơn tối thiểu</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Checkbox toggle: bấm xóa hoặc chọn lại dấu tick */}
+                        <div 
+                          className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
+                            isChecked 
+                              ? 'border-emerald-600 bg-emerald-600 text-white' 
+                              : 'border-slate-300 bg-white hover:border-slate-400'
+                          }`}
+                        >
+                          {isChecked && <Check size={13} strokeWidth={3} />}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Thanh tóm tắt và nút Xác nhận áp dụng */}
         <div className="mt-6 pt-4 border-t border-taca-border flex items-center justify-between gap-4">
           <div>
             <p className="font-bold text-taca-text-main text-[13px]">
-              {selectedCount > 0 ? `${selectedCount} voucher đã chọn` : 'Chưa chọn voucher nào'}
+              {selectedCount > 0 ? `${selectedCount} voucher đã chọn (tối đa 3)` : 'Chưa chọn voucher nào'}
             </p>
             {totalSavings > 0 ? (
               <p className="font-extrabold text-emerald-600 text-[14px] mt-0.5">
@@ -351,12 +469,13 @@ export default function ApplyVoucherModal({
           </div>
           
           <div className="flex items-center gap-2">
-            {(tempShopVoucher || tempTacaVoucher) && (
+            {(tempShopVoucher || tempTacaVoucher || tempFreeshipVoucher) && (
               <Button 
                 variant="outline"
                 onClick={() => {
                   setTempShopVoucher(null);
                   setTempTacaVoucher(null);
+                  setTempFreeshipVoucher(null);
                 }}
                 className="h-11 px-4 text-[13px] rounded-lg"
               >
@@ -382,6 +501,8 @@ ApplyVoucherModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   selectedShopVoucher: PropTypes.object,
   selectedTacaVoucher: PropTypes.object,
+  selectedFreeshipVoucher: PropTypes.object,
   onApplyVouchers: PropTypes.func,
   subtotal: PropTypes.number,
+  shippingFee: PropTypes.number,
 };

@@ -3,11 +3,13 @@ import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import { X, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 import { reviewKyc, getKycDetail } from '../../../services/admin-kyc.api';
+import StepUpMfaModal from '../../../components/common/StepUpMfaModal';
 
 export default function KycReviewModal({ isOpen, onClose, item, onDecisionSuccess }) {
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isMfaOpen, setIsMfaOpen] = useState(false);
 
   const shopId = item?.shop_id;
   const hasFullData = Boolean(item?.tax_code_masked && item?.documents?.length > 0);
@@ -52,19 +54,18 @@ export default function KycReviewModal({ isOpen, onClose, item, onDecisionSucces
 
   const effectiveItem = detail || item;
 
-  const handleDecision = async (decision) => {
-    if (['NEEDS_INFO', 'REJECTED'].includes(decision) && (!reason || reason.trim().length < 10)) {
-      setErrorMessage('Vui lòng nhập lý do tối thiểu 10 ký tự cho quyết định này.');
-      return;
-    }
-
+  const executeDecision = async (decision, stepUpToken = '') => {
     setLoading(true);
     setErrorMessage('');
     try {
-      await reviewKyc(item.shop_id, {
-        decision,
-        reason: reason.trim() || 'Hồ sơ và tài liệu hợp lệ.',
-      });
+      await reviewKyc(
+        item.shop_id,
+        {
+          decision,
+          reason: reason.trim() || 'Hồ sơ và tài liệu hợp lệ.',
+        },
+        stepUpToken
+      );
       if (onDecisionSuccess) onDecisionSuccess(item.shop_id, decision);
       if (onClose) onClose();
     } catch (err) {
@@ -76,6 +77,20 @@ export default function KycReviewModal({ isOpen, onClose, item, onDecisionSucces
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDecision = (decision) => {
+    if (['NEEDS_INFO', 'REJECTED'].includes(decision) && (!reason || reason.trim().length < 10)) {
+      setErrorMessage('Vui lòng nhập lý do tối thiểu 10 ký tự cho quyết định này.');
+      return;
+    }
+
+    if (decision === 'REJECTED') {
+      setIsMfaOpen(true);
+      return;
+    }
+
+    executeDecision(decision);
   };
 
   const getRiskBadge = (level) => {
@@ -247,6 +262,16 @@ export default function KycReviewModal({ isOpen, onClose, item, onDecisionSucces
           </button>
         </div>
       </div>
+      <StepUpMfaModal
+        isOpen={isMfaOpen}
+        title="Xác thực Từ chối Hồ sơ KYC"
+        description={`Thao tác từ chối hồ sơ người bán ${effectiveItem?.shop_name || ''} yêu cầu xác thực 2FA Step-Up (§2.31 auth-user.md). Vui lòng nhập mã OTP.`}
+        onClose={() => setIsMfaOpen(false)}
+        onSuccess={(stepUpToken) => {
+          setIsMfaOpen(false);
+          executeDecision('REJECTED', stepUpToken);
+        }}
+      />
     </div>,
     document.body
   );

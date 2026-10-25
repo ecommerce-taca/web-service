@@ -88,28 +88,25 @@ export const orderApi = {
    */
   getOrders: async (params = { page: 1, size: 20 }) => {
     if (!isMockMode()) {
-      try {
-        const response = await apiClient.get('/orders', { params });
-        // Xử lý cả 2 chuẩn response envelope: { data: [...], meta } hoặc { data: { data: [...] } }
-        const rawList = Array.isArray(response?.data) 
-          ? response.data 
-          : (Array.isArray(response?.data?.data) ? response.data.data : response?.data?.items);
+      const response = await apiClient.get('/orders', { params });
+      // Xử lý cả 2 chuẩn response envelope: { data: [...], meta } hoặc { data: { data: [...] } }
+      const rawList = Array.isArray(response?.data) 
+        ? response.data 
+        : (Array.isArray(response?.data?.data) ? response.data.data : response?.data?.items);
 
-        if (Array.isArray(rawList)) {
-          return {
-            data: {
-              data: rawList,
-              total: response?.meta?.total || rawList.length,
-              page: response?.meta?.page || params.page || 1,
-              size: response?.meta?.size || params.size || 20,
-              total_pages: response?.meta?.total_pages || 1,
-            },
-            meta: response?.meta || { total: rawList.length }
-          };
-        }
-      } catch (err) {
-        console.warn('API Gateway GET /orders failed, falling back to local orders', err);
+      if (Array.isArray(rawList)) {
+        return {
+          data: {
+            data: rawList,
+            total: response?.meta?.total || rawList.length,
+            page: response?.meta?.page || params.page || 1,
+            size: response?.meta?.size || params.size || 20,
+            total_pages: response?.meta?.total_pages || 1,
+          },
+          meta: response?.meta || { total: rawList.length }
+        };
       }
+      return { data: { data: rawList || [], total: 0, page: 1, size: 20 } };
     }
     
     const stored = getStoredOrders();
@@ -135,15 +132,12 @@ export const orderApi = {
    */
   getOrderDetail: async (orderId) => {
     if (!isMockMode()) {
-      try {
-        const response = await apiClient.get(`/orders/${orderId}`);
-        const orderData = response?.data?.data || response?.data || response;
-        if (orderData) {
-          return { data: { data: orderData } };
-        }
-      } catch (err) {
-        console.warn(`API Gateway GET /orders/${orderId} failed, falling back to local order`, err);
+      const response = await apiClient.get(`/orders/${orderId}`);
+      const orderData = response?.data?.data || response?.data || response;
+      if (orderData) {
+        return { data: { data: orderData } };
       }
+      throw new Error('Không tìm thấy dữ liệu đơn hàng từ máy chủ');
     }
 
     const stored = getStoredOrders();
@@ -162,15 +156,12 @@ export const orderApi = {
    */
   previewCheckout: async (previewPayload) => {
     if (!isMockMode()) {
-      try {
-        const response = await apiClient.post('/checkout/preview', previewPayload);
-        const data = response?.data?.data || response?.data;
-        if (data) {
-          return { data: { data } };
-        }
-      } catch (err) {
-        console.warn('API Gateway POST /checkout/preview failed, using local preview calculation', err);
+      const response = await apiClient.post('/checkout/preview', previewPayload);
+      const data = response?.data?.data || response?.data;
+      if (data) {
+        return { data: { data } };
       }
+      return { data: { data: response } };
     }
 
     return {
@@ -236,9 +227,30 @@ export const orderApi = {
   createOrder: async (orderData) => {
     const timestamp = Date.now().toString().slice(-6);
     const orderNum = `TC-${new Date().getFullYear().toString().slice(-2)}${timestamp}`;
-    const paymentMethodStandard = orderData.payment_method === 'VNPAY QR' ? 'VNPAY' : 'COD';
+    const paymentMethodStandard = orderData.payment_method === 'VNPAY QR' ? 'VNPAY' : (orderData.payment_method || 'COD');
 
-    // Tạo bản ghi local order để người dùng thấy ngay trên giao diện
+    // Chuẩn hóa payload theo đúng hợp đồng Backend POST /checkout (order-commerce-docs §3.5)
+    const checkoutPayload = {
+      cart_id: orderData.cart_id || (typeof window !== 'undefined' ? localStorage.getItem('taca_cart_id') : null) || `cart-${Date.now()}`,
+      selected_item_ids: (orderData.items || []).map(item => String(item.id || item.sku_id || item.item_id)),
+      address_id: orderData.shipping_address?.id || 'addr-default-01',
+      payment_method: paymentMethodStandard,
+      voucher_codes: orderData.voucher_codes || [],
+    };
+
+    if (!isMockMode()) {
+      // Gọi trực tiếp POST /checkout qua API Gateway kèm Idempotency-Key
+      const res = await orderApi.checkout(checkoutPayload);
+      const resData = res?.data?.data || res?.data || {};
+      const orders = resData?.orders || (resData?.data ? [resData.data] : []);
+      if (orders.length > 0) {
+        const current = getStoredOrders();
+        saveStoredOrders([...orders, ...current]);
+      }
+      return res;
+    }
+
+    // Mock Mode tạo bản ghi local order chuẩn specs
     const newOrder = {
       id: `TACA${new Date().getFullYear().toString().slice(-2)}${timestamp}`,
       order_number: orderNum,
@@ -263,30 +275,30 @@ export const orderApi = {
       }))
     };
 
-    // Lưu vào local storage làm bộ nhớ đệm hiển thị tức thì
     const current = getStoredOrders();
     saveStoredOrders([newOrder, ...current]);
 
-    // Chuẩn hóa payload theo đúng hợp đồng Backend POST /checkout (order-commerce-docs §3.5)
-    const checkoutPayload = {
-      cart_id: orderData.cart_id || (typeof window !== 'undefined' ? localStorage.getItem('taca_cart_id') : null) || `cart-${Date.now()}`,
-      selected_item_ids: (orderData.items || []).map(item => String(item.id || item.sku_id || item.item_id)),
-      address_id: orderData.shipping_address?.id || 'addr-default-01',
-      payment_method: paymentMethodStandard,
-      voucher_codes: orderData.voucher_codes || [],
+    return {
+      data: {
+        checkout_group_id: `group-${Date.now()}`,
+        orders: [
+          {
+            order_id: newOrder.id,
+            order_number: newOrder.order_number,
+            shop_id: 'shop-01',
+            status: paymentMethodStandard === 'VNPAY' ? 'PENDING_PAYMENT' : 'CONFIRMED',
+            reservation_id: `res-${Date.now()}`,
+            payment_status: paymentMethodStandard === 'VNPAY' ? 'PENDING' : 'PENDING_COD',
+          }
+        ],
+        payment_next_action: {
+          type: paymentMethodStandard === 'VNPAY' ? 'VNPAY_QR' : 'NONE',
+          payment_id: paymentMethodStandard === 'VNPAY' ? `pay-${Date.now()}` : null,
+        },
+        reservation_expires_at: paymentMethodStandard === 'VNPAY' ? new Date(Date.now() + 15 * 60 * 1000).toISOString() : null,
+      },
+      meta: { request_id: `req-${Date.now()}` }
     };
-
-    if (!isMockMode()) {
-      try {
-        const res = await orderApi.checkout(checkoutPayload);
-        return res;
-      } catch (err) {
-        console.warn('API Gateway POST /checkout failed, using client order cache', err);
-        return { data: { data: newOrder } };
-      }
-    }
-
-    return { data: { data: newOrder } };
   },
 
   /**
