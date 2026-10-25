@@ -1,6 +1,4 @@
-import apiClient from '../../../../../../shared/utils/api-client';
-
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
+import apiClient, { isMockMode } from '../../../../../../shared/utils/api-client';
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -82,37 +80,186 @@ const MOCK_VOUCHERS = [
   }
 ];
 
-export const voucherApi = {
-  getVouchers: async (params = {}) => {
-    if (USE_MOCK) {
-      await delay(800);
-      let data = [...MOCK_VOUCHERS];
-      
-      if (params.provider) {
-        data = data.filter(v => v.provider === params.provider);
-      }
-      if (params.status) {
-        data = data.filter(v => v.status === params.status);
-      }
+const MOCK_REDEMPTIONS = [
+  {
+    code: 'APPLE300K',
+    scope: 'SHOP',
+    shop_id: 'shop-01912f31',
+    shop_name: 'Apple Flagship Store',
+    order_id: 'TC-20260827-0001',
+    discount_amount: 300000,
+    redeemed_at: '2026-08-27T10:30:00Z'
+  },
+  {
+    code: 'FREESHIP50K',
+    scope: 'FREESHIP',
+    shop_id: null,
+    shop_name: 'Taca Sàn',
+    order_id: 'TC-20260827-0001',
+    discount_amount: 50000,
+    redeemed_at: '2026-08-27T10:30:00Z'
+  },
+  {
+    code: 'TACA10',
+    scope: 'PLATFORM',
+    shop_id: null,
+    shop_name: 'Taca Sàn',
+    order_id: 'TC-20260820-0012',
+    discount_amount: 100000,
+    redeemed_at: '2026-08-20T14:15:00Z'
+  }
+];
 
+export const voucherApi = {
+  /**
+   * Lấy danh sách voucher khả dụng: GET /vouchers
+   * Spec: order-commerce-docs §3.2a
+   * @param {Object} params - { scope, shop_id, product_id, cart_id, status, page, size }
+   */
+  getVouchers: async (params = {}) => {
+    if (!isMockMode()) {
+      try {
+        const response = await apiClient.get('/vouchers', { params });
+        const items = response?.data?.data || response?.data || [];
+        return {
+          data: {
+            data: Array.isArray(items) ? items : [],
+            total: response?.meta?.total || (Array.isArray(items) ? items.length : 0),
+            page: response?.meta?.page || params.page || 1,
+            size: response?.meta?.size || params.size || 20
+          },
+          meta: response?.meta
+        };
+      } catch (err) {
+        console.warn('API Gateway GET /vouchers failed, falling back to mock vouchers', err);
+      }
+    }
+
+    await delay(300);
+    let data = [...MOCK_VOUCHERS];
+    
+    if (params.provider) {
+      data = data.filter(v => v.provider === params.provider);
+    }
+    if (params.status) {
+      data = data.filter(v => v.status === params.status);
+    }
+
+    return {
+      data: {
+        data,
+        total: data.length,
+        page: params.page || 1,
+        size: params.size || 10
+      }
+    };
+  },
+
+  /**
+   * Kiểm tra tính hợp lệ của voucher: GET /vouchers/validate?code=&cart_id=
+   * Spec: order-commerce-docs §3.2
+   * @param {string} code - Mã voucher cần kiểm tra
+   * @param {string} cartId - ID giỏ hàng hiện tại của người mua
+   */
+  validateVoucher: async (code, cartId = '') => {
+    const normalizedCode = String(code || '').trim().toUpperCase();
+
+    if (!isMockMode()) {
+      try {
+        const response = await apiClient.get('/vouchers/validate', {
+          params: { code: normalizedCode, cart_id: cartId || 'cart-default' }
+        });
+        return response?.data || response;
+      } catch (err) {
+        console.warn('API Gateway GET /vouchers/validate failed', err);
+      }
+    }
+
+    // Mock validation logic
+    await delay(400);
+    const found = MOCK_VOUCHERS.find(v => v.code.toUpperCase() === normalizedCode);
+    if (!found) {
       return {
         data: {
-          data,
-          total: data.length,
-          page: params.page || 1,
-          size: params.size || 10
+          valid: false,
+          code: normalizedCode,
+          reason: 'NOT_FOUND',
+          message: 'Mã voucher không tồn tại trong hệ thống'
         }
       };
     }
-    return apiClient.get('/vouchers', { params });
+
+    if (found.status === 'EXPIRED') {
+      return {
+        data: {
+          valid: false,
+          code: normalizedCode,
+          reason: 'EXPIRED',
+          message: 'Mã voucher đã hết hạn sử dụng'
+        }
+      };
+    }
+
+    return {
+      data: {
+        valid: true,
+        code: found.code,
+        scope: found.provider === 'SHOP' ? 'SHOP' : 'PLATFORM',
+        shop_id: found.provider === 'SHOP' ? 'shop-01912f31' : null,
+        discount_type: found.discount_percent ? 'PERCENT' : 'FIXED',
+        value: found.discount_percent || found.discount_amount,
+        discount_amount: found.discount_amount || 50000,
+        min_order: found.min_order_value || 0,
+        expires_at: found.valid_until,
+        warnings: []
+      }
+    };
   },
 
-  saveVoucher: async (code) => {
-    if (USE_MOCK) {
-      await delay(500);
-      if (code === 'ERROR') throw new Error('Mã voucher không hợp lệ');
-      return { data: { success: true } };
+  /**
+   * Lấy lịch sử voucher đã dùng của Buyer: GET /vouchers/redemptions
+   * Spec: order-commerce-docs §3.2b
+   * @param {Object} params - { page, size, from, to }
+   */
+  getVoucherRedemptions: async (params = {}) => {
+    if (!isMockMode()) {
+      try {
+        const response = await apiClient.get('/vouchers/redemptions', { params });
+        const items = response?.data?.data || response?.data || [];
+        return {
+          data: {
+            data: Array.isArray(items) ? items : [],
+            total: response?.meta?.total || (Array.isArray(items) ? items.length : 0),
+            page: response?.meta?.page || params.page || 1,
+            size: response?.meta?.size || params.size || 20
+          },
+          meta: response?.meta || { total_saved: 450000, currency: 'VND' }
+        };
+      } catch (err) {
+        console.warn('API Gateway GET /vouchers/redemptions failed', err);
+      }
     }
-    return apiClient.post('/vouchers/save', { code });
+
+    await delay(300);
+    const totalSaved = MOCK_REDEMPTIONS.reduce((sum, r) => sum + (r.discount_amount || 0), 0);
+
+    return {
+      data: {
+        data: MOCK_REDEMPTIONS,
+        total: MOCK_REDEMPTIONS.length,
+        page: params.page || 1,
+        size: params.size || 10
+      },
+      meta: {
+        page: 1,
+        size: 10,
+        total: MOCK_REDEMPTIONS.length,
+        total_pages: 1,
+        total_saved: totalSaved,
+        currency: 'VND'
+      }
+    };
   }
 };
+
+export default voucherApi;

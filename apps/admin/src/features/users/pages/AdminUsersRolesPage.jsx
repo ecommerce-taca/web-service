@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Check } from 'lucide-react';
 import { updateUserRole, updateUserStatus } from '../../../services/admin-kyc.api';
+import StepUpMfaModal from '../../../components/common/StepUpMfaModal';
 
 const INITIAL_USERS = [
   {
@@ -36,54 +37,85 @@ export default function AdminUsersRolesPage() {
   const [users, setUsers] = useState(INITIAL_USERS);
   const [loading, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [mfaModalConfig, setMfaModalConfig] = useState({
+    isOpen: false,
+    title: '',
+    description: '',
+    onConfirm: null,
+  });
 
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3000);
   };
 
-  const handleToggleStatus = async (user) => {
+  const handleToggleStatus = (user) => {
     const newStatus = user.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
-    const reason = newStatus === 'SUSPENDED' ? 'Khóa tạm thời do nghi vấn bảo mật' : 'Mở khóa tài khoản';
-    setLoading(true);
-    try {
-      await updateUserStatus(user.id, { status: newStatus, reason });
-      setUsers((prev) =>
-        prev.map((u) => (u.id === user.id ? { ...u, status: newStatus } : u))
-      );
-      showToast(`Đã cập nhật trạng thái user thành ${newStatus}`);
-    } catch (err) {
-      alert(err.message || 'Cập nhật trạng thái thất bại');
-    } finally {
-      setLoading(false);
-    }
+    const isSuspending = newStatus === 'SUSPENDED';
+
+    setMfaModalConfig({
+      isOpen: true,
+      title: isSuspending
+        ? `Xác thực Đình chỉ Tài khoản ${user.full_name}`
+        : `Xác thực Mở khóa Tài khoản ${user.full_name}`,
+      description: `Thao tác ${isSuspending ? 'đình chỉ' : 'khôi phục'} người dùng yêu cầu mã xác thực OTP 2FA để đính kèm header X-MFA-Step-Up (§2.34 auth-user.md).`,
+      onConfirm: async (stepUpToken) => {
+        const reason = isSuspending
+          ? 'Khóa tài khoản theo chính sách nền tảng'
+          : 'Mở khóa tài khoản người dùng';
+        setLoading(true);
+        try {
+          await updateUserStatus(user.id, { status: newStatus, reason }, stepUpToken);
+          setUsers((prev) =>
+            prev.map((u) => (u.id === user.id ? { ...u, status: newStatus } : u))
+          );
+          showToast(`Đã cập nhật trạng thái user thành ${newStatus}`);
+        } catch (err) {
+          alert(err.message || 'Cập nhật trạng thái thất bại');
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
   };
 
-  const handleToggleRole = async (user, roleToToggle) => {
+  const handleToggleRole = (user, roleToToggle) => {
     const hasRole = user.roles.includes(roleToToggle);
     const action = hasRole ? 'REVOKE' : 'GRANT';
-    setLoading(true);
-    try {
-      await updateUserRole(user.id, {
-        action,
-        role: roleToToggle,
-        reason: `${action === 'GRANT' ? 'Cấp' : 'Thu hồi'} quyền ${roleToToggle}`,
-      });
-      setUsers((prev) =>
-        prev.map((u) => {
-          if (u.id !== user.id) return u;
-          const updatedRoles = hasRole
-            ? u.roles.filter((r) => r !== roleToToggle)
-            : [...u.roles, roleToToggle];
-          return { ...u, roles: updatedRoles };
-        })
-      );
-      showToast(`Đã ${action === 'GRANT' ? 'cấp' : 'thu hồi'} role ${roleToToggle}`);
-    } catch (err) {
-      alert(err.message || 'Cập nhật role thất bại');
-    } finally {
-      setLoading(false);
-    }
+
+    setMfaModalConfig({
+      isOpen: true,
+      title: `Xác thực ${action === 'GRANT' ? 'Cấp' : 'Thu hồi'} Role ${roleToToggle}`,
+      description: `Thao tác thay đổi thẩm quyền quản trị yêu cầu mã xác thực OTP 2FA để đính kèm header X-MFA-Step-Up (§2.33 auth-user.md).`,
+      onConfirm: async (stepUpToken) => {
+        setLoading(true);
+        try {
+          await updateUserRole(
+            user.id,
+            {
+              action,
+              role: roleToToggle,
+              reason: `${action === 'GRANT' ? 'Cấp' : 'Thu hồi'} quyền ${roleToToggle}`,
+            },
+            stepUpToken
+          );
+          setUsers((prev) =>
+            prev.map((u) => {
+              if (u.id !== user.id) return u;
+              const updatedRoles = hasRole
+                ? u.roles.filter((r) => r !== roleToToggle)
+                : [...u.roles, roleToToggle];
+              return { ...u, roles: updatedRoles };
+            })
+          );
+          showToast(`Đã ${action === 'GRANT' ? 'cấp' : 'thu hồi'} role ${roleToToggle}`);
+        } catch (err) {
+          alert(err.message || 'Cập nhật role thất bại');
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
   };
 
   return (
@@ -186,6 +218,18 @@ export default function AdminUsersRolesPage() {
           </table>
         </div>
       </div>
+
+      <StepUpMfaModal
+        isOpen={mfaModalConfig.isOpen}
+        title={mfaModalConfig.title}
+        description={mfaModalConfig.description}
+        onClose={() => setMfaModalConfig((prev) => ({ ...prev, isOpen: false }))}
+        onSuccess={(stepUpToken) => {
+          if (mfaModalConfig.onConfirm) {
+            mfaModalConfig.onConfirm(stepUpToken);
+          }
+        }}
+      />
     </div>
   );
 }

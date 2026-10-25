@@ -7,13 +7,9 @@ import { Check, FileText, Trash2 } from 'lucide-react';
 export default function KycStep({
   kycStatus,
   kycDocs,
-  newDocType,
-  setNewDocType,
   uploadingDoc,
   saving,
   hasBusinessReg,
-  hasIdFront,
-  hasIdBack,
   isKycComplete,
   onUploadKycDoc,
   onDeleteKycDoc,
@@ -36,79 +32,48 @@ export default function KycStep({
                 : 'bg-slate-100 text-slate-700 border border-slate-200'
             }`}
           >
-            Trạng thái: {kycStatus}
+      
           </span>
         </div>
         <p className="text-[12px] text-slate-500 mt-1">
-          Tải lên tài liệu pháp lý kinh doanh (Giấy chứng nhận ĐKKD / Hộ kinh doanh) theo quy định của sàn (khớp đặc tả API §2.23–§2.25).
+          Tải lên tài liệu pháp lý kinh doanh (Giấy chứng nhận ĐKKD / Hộ kinh doanh) theo quy định của sàn.
         </p>
       </div>
 
       {/* Tài liệu Checklist */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="max-w-xl">
         <div className={`p-4 rounded-xl border transition-all ${hasBusinessReg ? 'bg-emerald-50/70 border-emerald-300' : 'bg-amber-50/60 border-amber-200'}`}>
           <div className="flex items-center justify-between mb-1.5">
-            <span className="font-bold text-[12px] text-slate-800">1. Giấy phép ĐKKD *</span>
+            <span className="font-bold text-[13px] text-slate-800">Giấy chứng nhận ĐKKD / Hộ kinh doanh *</span>
             <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded flex items-center gap-1 ${hasBusinessReg ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
               {hasBusinessReg ? (
                 <>
                   <Check className="w-3 h-3" aria-hidden="true" />
-                  <span>ĐÃ TẢI</span>
+                  <span>ĐÃ TẢI LÊN</span>
                 </>
               ) : 'BẮT BUỘC'}
             </span>
           </div>
-          <p className="text-[11px] text-slate-500">Giấy ĐKKD hoặc Giấy chứng nhận hộ kinh doanh (Backend API hỗ trợ)</p>
-        </div>
-
-        <div className={`p-4 rounded-xl border transition-all ${hasIdFront ? 'bg-emerald-50/70 border-emerald-300' : 'bg-slate-50 border-slate-200'}`}>
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="font-bold text-[12px] text-slate-800">2. CCCD Mặt trước</span>
-            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded flex items-center gap-1 ${hasIdFront ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
-              {hasIdFront ? (
-                <>
-                  <Check className="w-3 h-3" aria-hidden="true" />
-                  <span>ĐÃ TẢI</span>
-                </>
-              ) : 'TÙY CHỌN'}
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-500">Ảnh chụp rõ mặt trước CCCD người đại diện</p>
-        </div>
-
-        <div className={`p-4 rounded-xl border transition-all ${hasIdBack ? 'bg-emerald-50/70 border-emerald-300' : 'bg-slate-50 border-slate-200'}`}>
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="font-bold text-[12px] text-slate-800">3. CCCD Mặt sau</span>
-            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded flex items-center gap-1 ${hasIdBack ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
-              {hasIdBack ? (
-                <>
-                  <Check className="w-3 h-3" aria-hidden="true" />
-                  <span>ĐÃ TẢI</span>
-                </>
-              ) : 'TÙY CHỌN'}
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-500">Ảnh chụp rõ mặt sau có chip CCCD</p>
+          <p className="text-[11px] text-slate-500">
+            Giấy chứng nhận đăng ký kinh doanh doanh nghiệp hoặc Giấy chứng nhận đăng ký hộ kinh doanh cá thể (khớp mã số thuế đã khai báo ở Bước 1).
+          </p>
         </div>
       </div>
 
       {/* Upload box */}
       <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
-        <h3 className="font-bold text-slate-800 text-[14px]">Tải lên tài liệu mới</h3>
+        <h3 className="font-bold text-slate-800 text-[14px]">Tải lên tài liệu pháp lý</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
           <div>
             <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-              Chọn loại tài liệu cần tải *
+              Loại tài liệu quy định *
             </label>
-            <select
-              value={newDocType}
-              onChange={(e) => setNewDocType(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:outline-none focus:border-[#4F46E5]"
-            >
-              <option value="BUSINESS_REGISTRATION">1. Giấy chứng nhận ĐKKD / Đăng ký hộ kinh doanh (Hỗ trợ Backend)</option>
-              <option value="CITIZEN_ID_FRONT">2. CCCD / Hộ chiếu đại diện (Mặt trước)</option>
-              <option value="CITIZEN_ID_BACK">3. CCCD / Hộ chiếu đại diện (Mặt sau)</option>
-            </select>
+            <div className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white text-slate-800 text-[13px] font-medium flex items-center justify-between shadow-2xs">
+              <span className="truncate">Giấy chứng nhận ĐKKD / Hộ kinh doanh</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0 ml-2">
+                Hợp lệ (§2.23)
+              </span>
+            </div>
           </div>
 
           <div>
@@ -149,18 +114,14 @@ export default function KycStep({
 
         {kycDocs.length === 0 ? (
           <div className="py-8 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-            Chưa có tài liệu nào. Vui lòng tải lên ĐKKD, CCCD mặt trước và CCCD mặt sau.
+            Chưa có tài liệu nào. Vui lòng tải lên Giấy chứng nhận ĐKKD / Hộ kinh doanh hợp lệ.
           </div>
         ) : (
           <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-200">
             {kycDocs.map((doc) => {
               const typeLabel =
                 doc.document_type === 'BUSINESS_REGISTRATION'
-                  ? 'Giấy phép ĐKKD'
-                  : doc.document_type === 'CITIZEN_ID_FRONT' || doc.document_type === 'CITIZEN_ID'
-                  ? 'CCCD Mặt trước'
-                  : doc.document_type === 'CITIZEN_ID_BACK'
-                  ? 'CCCD Mặt sau'
+                  ? 'Giấy phép ĐKKD / Hộ kinh doanh'
                   : doc.document_type;
 
               return (
@@ -231,13 +192,9 @@ export default function KycStep({
 KycStep.propTypes = {
   kycStatus: PropTypes.string.isRequired,
   kycDocs: PropTypes.arrayOf(PropTypes.object).isRequired,
-  newDocType: PropTypes.string.isRequired,
-  setNewDocType: PropTypes.func.isRequired,
   uploadingDoc: PropTypes.bool.isRequired,
   saving: PropTypes.bool.isRequired,
   hasBusinessReg: PropTypes.bool.isRequired,
-  hasIdFront: PropTypes.bool.isRequired,
-  hasIdBack: PropTypes.bool.isRequired,
   isKycComplete: PropTypes.bool.isRequired,
   onUploadKycDoc: PropTypes.func.isRequired,
   onDeleteKycDoc: PropTypes.func.isRequired,

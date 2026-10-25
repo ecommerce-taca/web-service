@@ -76,10 +76,10 @@ export default function SellerPolicyModal({ isOpen, onClose }) {
               1.2. Mọi gian hàng mới đều bắt buộc hoàn thành quy trình <strong>Định danh Người bán (KYC) 4 bước</strong>:
             </p>
             <ul className="list-disc pl-6 space-y-1 text-slate-700">
-              <li><strong>Bước 1 (Hồ sơ)</strong>: Cung cấp Tên gian hàng, Tên doanh nghiệp/Chủ sở hữu, Mã số thuế (MST) và Giấy phép kinh doanh nếu là tổ chức.</li>
-              <li><strong>Bước 2 (Định danh CCCD)</strong>: Tải lên hình ảnh rõ nét 2 mặt CCCD/Hộ chiếu người đại diện theo pháp luật. Hệ thống áp dụng chính sách che mờ bảo mật (Masked PII) theo chuẩn an toàn thông tin.</li>
-              <li><strong>Bước 3 (Tài khoản Ngân hàng)</strong>: Thiết lập thông tin ngân hàng thụ hưởng chính chủ để nhận dòng tiền rút ví (Payout).</li>
-              <li><strong>Bước 4 (Địa chỉ Kho lấy hàng)</strong>: Khai báo địa chỉ kho hàng chính xác để đơn vị vận chuyển đến tiếp nhận bưu kiện.</li>
+              <li><strong>Bước 1 (Hồ sơ)</strong>: Cung cấp Tên gian hàng, Tên doanh nghiệp/Hộ kinh doanh và Mã số thuế (MST) 10–14 số.</li>
+              <li><strong>Bước 2 (Giấy tờ pháp lý ĐKKD)</strong>: Tải lên tệp tài liệu Giấy chứng nhận đăng ký kinh doanh doanh nghiệp hoặc Giấy chứng nhận đăng ký hộ kinh doanh cá thể (định dạng PDF/JPG/PNG, tối đa 10MB) có mã băm SHA-256 xác thực.</li>
+              <li><strong>Bước 3 (Địa chỉ Kho lấy hàng)</strong>: Khai báo địa chỉ kho hàng và thông tin người liên hệ để đơn vị vận chuyển tiếp nhận kiện hàng.</li>
+              <li><strong>Bước 4 (Tài khoản Ngân hàng)</strong>: Thiết lập thông tin ngân hàng thụ hưởng chính chủ để nhận dòng tiền rút ví (Payout).</li>
             </ul>
             <p>
               1.3. Ban quản trị sàn Taca sẽ thẩm định và phản hồi trạng thái hồ sơ trong vòng 24 giờ làm việc. Chỉ gian hàng đạt trạng thái <code>APPROVED</code> mới được phép mở bán công khai sản phẩm.

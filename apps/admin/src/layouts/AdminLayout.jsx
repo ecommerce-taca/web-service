@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { ShieldAlert } from 'lucide-react';
 import AdminSidebar from '../components/layout/AdminSidebar';
 import AdminHeader from '../components/layout/AdminHeader';
 import AdminLoginModal from '../components/common/AdminLoginModal';
@@ -147,7 +148,26 @@ export default function AdminLayout() {
         />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          <Outlet />
+          {adminUser ? (
+            <Outlet />
+          ) : (
+            <div className="min-h-[50vh] flex flex-col items-center justify-center p-8 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 mb-4 shadow-xs">
+                <ShieldAlert className="w-7 h-7" aria-hidden="true" />
+              </div>
+              <h2 className="text-lg font-bold text-slate-900">Yêu cầu xác thực Quản trị viên</h2>
+              <p className="text-xs text-slate-500 max-w-md mt-1 mb-5">
+                Khu vực này yêu cầu tài khoản có thẩm quyền Quản trị (ADMIN/SUPER_ADMIN) và phiên làm việc hợp lệ.
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsLoginModalOpen(true)}
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-colors shadow-xs cursor-pointer"
+              >
+                Đăng nhập Quản trị
+              </button>
+            </div>
+          )}
         </main>
       </div>
 

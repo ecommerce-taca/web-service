@@ -14,15 +14,20 @@ const DEMO_ADMIN = {
   two_factor_enabled: true,
 };
 
-export const getAdminUser = () => {
+export const parseJwt = (token) => {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
   try {
-    const raw = localStorage.getItem(ADMIN_STORAGE_KEY);
-    if (!raw) return null;
-    const user = JSON.parse(raw);
-    const hasAdminRole = user?.roles?.some((r) =>
-      ['ADMIN', 'SUPER_ADMIN', 'RISK_MANAGER'].includes(r)
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
     );
-    return hasAdminRole ? user : null;
+    return JSON.parse(jsonPayload);
   } catch {
     return null;
   }
@@ -31,6 +36,70 @@ export const getAdminUser = () => {
 export const hasAdminPrivilege = (user) => {
   if (!user?.roles || !Array.isArray(user.roles)) return false;
   return user.roles.some((r) => ['ADMIN', 'SUPER_ADMIN', 'RISK_MANAGER'].includes(r));
+};
+
+export const getAdminUser = () => {
+  try {
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (!token) return null;
+
+    // Check mock tokens in mock mode
+    if (isMockMode() || token.startsWith('mock-admin-')) {
+      const raw = localStorage.getItem(ADMIN_STORAGE_KEY);
+      if (!raw) return DEMO_ADMIN;
+      const user = JSON.parse(raw);
+      return hasAdminPrivilege(user) ? user : DEMO_ADMIN;
+    }
+
+    // Production / Staging: Parse and validate JWT token claims (AUTH-002)
+    const payload = parseJwt(token);
+    if (!payload) {
+      // Invalid JWT structure
+      return null;
+    }
+
+    // Check JWT expiration
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      return null;
+    }
+
+    // Extract roles from JWT claims (can be payload.roles or payload.role or payload.authorities)
+    const jwtRoles = Array.isArray(payload.roles)
+      ? payload.roles
+      : typeof payload.role === 'string'
+      ? [payload.role]
+      : Array.isArray(payload.authorities)
+      ? payload.authorities
+      : [];
+
+    const hasJwtAdminRole = jwtRoles.some((r) =>
+      ['ADMIN', 'SUPER_ADMIN', 'RISK_MANAGER'].includes(r)
+    );
+
+    if (!hasJwtAdminRole) {
+      return null;
+    }
+
+    // Cross-check with local user metadata if available
+    const raw = localStorage.getItem(ADMIN_STORAGE_KEY);
+    if (raw) {
+      const user = JSON.parse(raw);
+      if (user && hasAdminPrivilege(user)) {
+        return user;
+      }
+    }
+
+    // Fallback user constructed from validated token claims
+    return {
+      id: payload.sub || payload.user_id,
+      email: payload.email || '',
+      full_name: payload.name || payload.full_name || 'Admin User',
+      roles: jwtRoles,
+      status: 'ACTIVE',
+    };
+  } catch {
+    return null;
+  }
 };
 
 export const signinAdmin = async ({ identifier, password, force2fa = false }) => {

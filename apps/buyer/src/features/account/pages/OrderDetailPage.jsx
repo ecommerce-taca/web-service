@@ -13,10 +13,10 @@ import {
   ShieldCheck, 
   MessageSquare, 
   Package, 
-  RotateCcw,
-  Check
+  RotateCcw
 } from 'lucide-react';
 import { orderApi } from '../services/order.api';
+import { shipmentApi } from '../services/shipment.api';
 import { Button } from '@taca/ui-components';
 import { formatPhoneDisplay } from '../../../../../../shared/utils/phone';
 import { getOrderStatusInfo } from '../utils/orderStatus';
@@ -28,6 +28,7 @@ const OrderDetailPage = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const [order, setOrder] = useState(null);
+  const [shipment, setShipment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [reordering, setReordering] = useState(false);
@@ -36,8 +37,20 @@ const OrderDetailPage = () => {
   const fetchOrderDetail = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await orderApi.getOrderDetail(id);
-      setOrder(response?.data?.data || response?.data);
+      const [orderRes, shipmentRes] = await Promise.allSettled([
+        orderApi.getOrderDetail(id),
+        shipmentApi.getOrderShipment(id)
+      ]);
+
+      if (orderRes.status === 'fulfilled') {
+        setOrder(orderRes.value?.data?.data || orderRes.value?.data);
+      } else {
+        throw new Error(orderRes.reason?.message || 'Không thể tải chi tiết đơn hàng');
+      }
+
+      if (shipmentRes.status === 'fulfilled') {
+        setShipment(shipmentRes.value?.data?.data || null);
+      }
     } catch (err) {
       setError(err.message || 'Không thể tải chi tiết đơn hàng');
     } finally {
@@ -272,24 +285,66 @@ const OrderDetailPage = () => {
                 </div>
               </div>
 
-              {/* Thông tin vận chuyển */}
-              <div className="border border-slate-200/90 rounded-2xl p-5 bg-white space-y-3">
-                <div className="flex items-center gap-2 text-slate-900 font-bold text-[13px] uppercase">
-                  <Truck className="w-4 h-4 text-blue-600" />
-                  <span>Hình thức vận chuyển</span>
+              {/* Thông tin vận chuyển & Tracking timeline */}
+              <div className="border border-slate-200/90 rounded-2xl p-5 bg-white space-y-4">
+                <div className="flex items-center justify-between text-slate-900 font-bold text-[13px] uppercase pb-2 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-blue-600" />
+                    <span>Thông tin vận chuyển</span>
+                  </div>
+                  {shipment?.status && (
+                    <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full lowercase first-letter:uppercase">
+                      {shipment.status}
+                    </span>
+                  )}
                 </div>
-                <div className="text-[13px] text-slate-600 leading-relaxed">
-                  <p className="font-bold text-slate-900 m-0">
-                    Giao Hàng Nhanh (GHN Express)
-                  </p>
-                  <p className="text-slate-500 mt-0.5 mb-1 font-mono text-[12px]">
-                    Mã vận đơn: GHN240827881
-                  </p>
-                  <p className="text-emerald-600 font-medium m-0 flex items-center gap-1">
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Miễn phí vận chuyển tiêu chuẩn</span>
-                  </p>
-                </div>
+
+                {shipment ? (
+                  <div className="text-[13px] text-slate-600 space-y-3">
+                    <div>
+                      <p className="font-bold text-slate-900 m-0">
+                        {shipment.carrier_name || (shipment.carrier === 'GHN' ? 'Giao Hàng Nhanh (GHN Express)' : shipment.carrier)}
+                      </p>
+                      {shipment.tracking_code && (
+                        <p className="text-slate-500 mt-0.5 mb-1 font-mono text-[12px]">
+                          Mã vận đơn: <span className="text-indigo-600 font-bold">{shipment.tracking_code}</span>
+                        </p>
+                      )}
+                      {shipment.estimated_delivery && (
+                        <p className="text-emerald-700 text-[12px] bg-emerald-50 px-2 py-1 rounded-md font-medium mt-1">
+                          Dự kiến giao: {shipment.estimated_delivery.min_date} — {shipment.estimated_delivery.max_date}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Timeline các mốc vận chuyển */}
+                    {shipment.timeline && shipment.timeline.length > 0 && (
+                      <div className="pt-2 border-t border-slate-100 space-y-2.5">
+                        <p className="text-[12px] font-bold text-slate-800 m-0">Tiến trình giao hàng:</p>
+                        <div className="space-y-2">
+                          {shipment.timeline.map((step, idx) => (
+                            <div key={idx} className="flex items-start gap-2.5 text-[12px]">
+                              <div className="w-2 h-2 rounded-full bg-indigo-600 mt-1.5 shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-slate-800 m-0">{step.note || step.status}</p>
+                                {step.occurred_at && (
+                                  <p className="text-[11px] text-slate-400 m-0">
+                                    {new Date(step.occurred_at).toLocaleString('vi-VN')}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-[13px] text-slate-500 py-2">
+                    <p className="m-0 font-medium text-slate-700">Người bán đang chuẩn bị hàng</p>
+                    <p className="m-0 text-[12px] text-slate-400 mt-0.5">Mã vận đơn sẽ được cập nhật ngay khi bàn giao cho đơn vị vận chuyển.</p>
+                  </div>
+                )}
               </div>
             </div>
 

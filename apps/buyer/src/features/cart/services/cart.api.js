@@ -55,13 +55,16 @@ export const cartApi = {
   addItem: async (payload) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('taca_access_token') : null;
 
+    // Strict contract: POST /cart/items { product_id, sku_id, quantity } (không gửi shop_id)
+    const sanitizedBody = {
+      product_id: String(payload.product_id || payload.productId || ''),
+      sku_id: String(payload.sku_id || payload.sku || 'DEFAULT'),
+      quantity: Math.max(1, Math.min(999, Number(payload.quantity) || 1)),
+    };
+
     if (!isMockMode() && token) {
       try {
-        return await apiClient.post('/cart/items', {
-          product_id: String(payload.productId || payload.product_id),
-          sku_id: String(payload.sku || payload.sku_id || 'DEFAULT'),
-          quantity: payload.quantity || 1,
-        });
+        return await apiClient.post('/cart/items', sanitizedBody);
       } catch (err) {
         console.warn('API Gateway POST /cart/items failed, falling back to local update', err);
       }

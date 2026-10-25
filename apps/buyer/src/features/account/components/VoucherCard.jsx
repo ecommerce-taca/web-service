@@ -1,8 +1,21 @@
+import { useState } from 'react';
 import PropTypes from 'prop-types';
+import { Copy, Check } from 'lucide-react';
 
-const VoucherCard = ({ voucher, onSave }) => {
+const VoucherCard = ({ voucher, onCopy }) => {
+  const [copied, setCopied] = useState(false);
   const isExpired = voucher.status === 'EXPIRED';
   const isShop = voucher.provider === 'SHOP';
+
+  const handleCopy = () => {
+    if (isExpired) return;
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(voucher.code).catch(() => {});
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+    if (onCopy) onCopy(voucher.code);
+  };
 
   return (
     <div className={`flex bg-white border ${isExpired ? 'border-gray-200 opacity-60' : 'border-[#00cba9] shadow-sm'} rounded-[8px] overflow-hidden relative`}>
@@ -26,7 +39,7 @@ const VoucherCard = ({ voucher, onSave }) => {
             {isShop && <span className="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-sm">{voucher.shop_name}</span>}
           </div>
           <p className="text-[12px] text-taca-text-main font-semibold m-0 mb-1">{voucher.description}</p>
-          <p className="text-[11px] text-gray-500 m-0 mb-3">Mã: <span className="font-bold">{voucher.code}</span></p>
+          <p className="text-[11px] text-gray-500 m-0 mb-3">Mã: <span className="font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">{voucher.code}</span></p>
         </div>
         
         <div className="flex justify-between items-end mt-2">
@@ -41,11 +54,30 @@ const VoucherCard = ({ voucher, onSave }) => {
             </span>
           </div>
           <button 
+            type="button"
             disabled={isExpired}
-            onClick={() => onSave && onSave(voucher.code)}
-            className={`${isExpired ? 'bg-gray-300' : 'bg-taca-primary hover:bg-taca-primary-hover'} text-white text-[12px] font-bold px-4 py-1.5 rounded transition-colors`}
+            onClick={handleCopy}
+            className={`${
+              isExpired
+                ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                : copied
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-taca-primary hover:bg-taca-primary-hover text-white'
+            } text-[12px] font-bold px-3.5 py-1.5 rounded transition-all flex items-center gap-1.5 cursor-pointer`}
           >
-            {isExpired ? 'Đã hết hạn' : 'Sử dụng'}
+            {isExpired ? (
+              'Đã hết hạn'
+            ) : copied ? (
+              <>
+                <Check className="w-3.5 h-3.5" />
+                <span>Đã chép!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3.5 h-3.5" />
+                <span>Sao chép</span>
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -69,7 +101,7 @@ VoucherCard.propTypes = {
     valid_until: PropTypes.string.isRequired,
     discount_percent: PropTypes.number
   }).isRequired,
-  onSave: PropTypes.func
+  onCopy: PropTypes.func
 };
 
 export default VoucherCard;

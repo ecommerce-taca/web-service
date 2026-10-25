@@ -14,17 +14,23 @@ const ReviewFormModal = ({ isOpen, onClose, reviewItem, onSuccess }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await reviewApi.submitReview({
-        order_item_id: reviewItem?.id,
-        product_id: reviewItem?.product_id,
+      const productId = reviewItem?.product_id || reviewItem?.productId || reviewItem?.id;
+      await reviewApi.submitReview(productId, {
+        order_id: reviewItem?.order_id || reviewItem?.orderId || '',
+        sku_id: reviewItem?.sku_id || reviewItem?.sku || 'DEFAULT',
         rating,
-        content
+        comment: content,
+        media_ids: [],
+        variant_label: reviewItem?.variant || reviewItem?.variant_name || '',
+        product_name: reviewItem?.name || reviewItem?.product_name || '',
+        product_image: reviewItem?.image || reviewItem?.product_image || '',
+        shop_name: reviewItem?.shop_name || reviewItem?.shop?.name || 'Gian hàng Taca'
       });
       alert('Gửi đánh giá thành công!');
       onSuccess && onSuccess();
       onClose();
     } catch (error) {
-      alert('Có lỗi xảy ra: ' + error.message);
+      alert('Có lỗi xảy ra: ' + (error?.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }

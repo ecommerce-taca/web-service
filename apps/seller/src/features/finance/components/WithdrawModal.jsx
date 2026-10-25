@@ -17,6 +17,11 @@ export default function WithdrawModal({ isOpen, onClose, onConfirm, balance = '4
   const handleConfirm = async () => {
     if (isSubmitting) return;
 
+    if (!stepUpToken || stepUpToken.trim().length < 6) {
+      setNotification('Vui lòng nhập mã OTP 2FA (6 chữ số) để xác thực rút tiền.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       await sellerFinanceApi.requestPayout(

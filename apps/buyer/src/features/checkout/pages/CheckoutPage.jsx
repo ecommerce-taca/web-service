@@ -35,7 +35,7 @@ export default function CheckoutPage() {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shippingFee = subtotal >= 5000000 || subtotal === 0 ? 0 : 30000;
 
-  // Quản lý voucher linh hoạt (có thể bỏ chọn / xóa dấu tick)
+  // Quản lý voucher linh hoạt theo chuẩn 3-slot: SHOP, PLATFORM, FREESHIP
   const [selectedShopVoucher, setSelectedShopVoucher] = useState(() => {
     if (subtotal >= 10000000) {
       return {
@@ -62,6 +62,20 @@ export default function CheckoutPage() {
     return null;
   });
 
+  const [selectedFreeshipVoucher, setSelectedFreeshipVoucher] = useState(() => {
+    if (subtotal >= 150000 && shippingFee > 0) {
+      return {
+        id: 'TACA_FREESHIP_1',
+        code: 'FREESHIP50K',
+        title: 'Miễn phí vận chuyển',
+        discount_amount: 50000,
+        type: 'SHIPPING',
+        provider: 'TACA'
+      };
+    }
+    return null;
+  });
+
   // Tải danh sách địa chỉ đã lưu trong account (gọi ngay khi mount)
   const fetchAddresses = useCallback(async () => {
     try {
@@ -80,10 +94,14 @@ export default function CheckoutPage() {
     fetchAddresses();
   }, [fetchAddresses]);
 
-  // Giảm giá tính động dựa trên voucher đang được chọn thực tế
+  // Giảm giá tính động dựa trên voucher đang được chọn thực tế (tối đa 3 slots)
   const shopDiscount = selectedShopVoucher ? (selectedShopVoucher.discount_amount || 0) : 0;
   const tacaDiscount = selectedTacaVoucher ? (selectedTacaVoucher.discount_amount || 0) : 0;
-  const total = Math.max(0, subtotal + shippingFee - shopDiscount - tacaDiscount);
+  const freeshipDiscount = selectedFreeshipVoucher 
+    ? Math.min(shippingFee, selectedFreeshipVoucher.discount_amount || 0) 
+    : 0;
+  const effectiveShippingFee = Math.max(0, shippingFee - freeshipDiscount);
+  const total = Math.max(0, subtotal + effectiveShippingFee - shopDiscount - tacaDiscount);
 
   const [pendingPayment, setPendingPayment] = useState(null);
   const [checkoutError, setCheckoutError] = useState('');
@@ -94,19 +112,21 @@ export default function CheckoutPage() {
     const runPreview = async () => {
       if (items.length === 0) return;
       try {
+        const voucherCodes = [selectedShopVoucher?.code, selectedTacaVoucher?.code, selectedFreeshipVoucher?.code].filter(Boolean);
         const res = await orderApi.previewCheckout({
           selected_item_ids: items.map(i => i.id || i.product_id),
           address_id: selectedAddress?.id,
-          voucher_codes: [selectedShopVoucher?.code, selectedTacaVoucher?.code].filter(Boolean),
+          voucher_codes: voucherCodes,
           subtotal,
           shipping_fee: shippingFee,
-          discount: shopDiscount + tacaDiscount,
+          discount: shopDiscount + tacaDiscount + freeshipDiscount,
           total
         });
         if (!isMounted) return;
         const previewData = res?.data?.data;
         if (previewData?.warnings && previewData.warnings.length > 0) {
-          setCheckoutError(previewData.warnings.join('. '));
+          const warningMsgs = previewData.warnings.map(w => typeof w === 'string' ? w : (w.message || w.code));
+          setCheckoutError(warningMsgs.join('. '));
         }
       } catch (err) {
         console.warn('Checkout preview error', err);
@@ -118,7 +138,7 @@ export default function CheckoutPage() {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [items, selectedAddress, selectedShopVoucher, selectedTacaVoucher, subtotal, shippingFee, shopDiscount, tacaDiscount, total]);
+  }, [items, selectedAddress, selectedShopVoucher, selectedTacaVoucher, selectedFreeshipVoucher, subtotal, shippingFee, shopDiscount, tacaDiscount, freeshipDiscount, total]);
 
   const handlePlaceOrder = async () => {
     if (items.length === 0) {
@@ -133,24 +153,26 @@ export default function CheckoutPage() {
       setIsSubmitting(true);
       setCheckoutError('');
 
+      const voucherCodes = [selectedShopVoucher?.code, selectedTacaVoucher?.code, selectedFreeshipVoucher?.code].filter(Boolean);
+
       const res = await orderApi.createOrder({
         items,
         total,
-        shipping_fee: shippingFee,
-        discount_amount: shopDiscount + tacaDiscount,
-        voucher_codes: [selectedShopVoucher?.code, selectedTacaVoucher?.code].filter(Boolean),
-        payment_method: paymentMethod === 'VNPAY QR' ? 'VNPAY QR' : 'COD',
+        shipping_fee: effectiveShippingFee,
+        discount_amount: shopDiscount + tacaDiscount + freeshipDiscount,
+        voucher_codes: voucherCodes,
+        payment_method: paymentMethod === 'VNPAY QR' ? 'VNPAY' : 'COD',
         shipping_address: selectedAddress,
         note: orderNote
       });
 
-      const responseData = res?.data || {};
+      const responseData = res?.data?.data || res?.data || {};
       const orders = responseData?.orders || (responseData?.data ? [responseData.data] : []);
       const primaryOrder = orders[0] || {};
       const orderId = primaryOrder?.order_id || primaryOrder?.id || `TACA-${Date.now().toString().slice(-6)}`;
       const nextAction = responseData?.payment_next_action;
 
-      if (paymentMethod === 'VNPAY QR') {
+      if (paymentMethod === 'VNPAY QR' || nextAction?.type === 'VNPAY_QR') {
         const paymentId = nextAction?.payment_id || primaryOrder?.payment_id || `pay-${Date.now()}`;
         const expiresAt = responseData?.reservation_expires_at || new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
@@ -167,10 +189,17 @@ export default function CheckoutPage() {
       }
     } catch (e) {
       console.error('Failed to create order', e);
-      if (e?.response?.status === 409) {
+      const errCode = e?.response?.data?.error?.code || e?.response?.data?.code;
+      const errMsg = e?.response?.data?.error?.message || e?.response?.data?.message;
+
+      if (errCode === 'ORDER_VOUCHER_SLOT_CONFLICT') {
+        setCheckoutError('Xung đột loại voucher: Mỗi đơn hàng chỉ được dùng tối đa 1 voucher sàn, 1 voucher shop và 1 mã freeship.');
+      } else if (errCode === 'ORDER_VOUCHER_INVALID') {
+        setCheckoutError('Mã voucher áp dụng không hợp lệ hoặc đã hết hạn sử dụng.');
+      } else if (e?.response?.status === 409) {
         setCheckoutError('Giá sản phẩm hoặc tồn kho đã thay đổi trong giỏ hàng. Vui lòng kiểm tra lại đơn hàng.');
       } else {
-        setCheckoutError('Không thể tạo đơn hàng, vui lòng thử lại sau giây lát.');
+        setCheckoutError(errMsg || 'Không thể tạo đơn hàng, vui lòng thử lại sau giây lát.');
       }
     } finally {
       setIsSubmitting(false);
@@ -342,7 +371,7 @@ export default function CheckoutPage() {
                 onClick={() => setIsVoucherModalOpen(true)}
                 className="text-taca-primary border border-taca-border rounded-lg px-3 py-1 text-[11px] font-bold hover:bg-indigo-50 transition-colors cursor-pointer bg-transparent"
               >
-                {(selectedShopVoucher || selectedTacaVoucher) ? 'Đổi voucher' : 'Chọn voucher'}
+                {(selectedShopVoucher || selectedTacaVoucher || selectedFreeshipVoucher) ? 'Đổi voucher' : 'Chọn voucher'}
               </button>
             </div>
             
@@ -356,7 +385,16 @@ export default function CheckoutPage() {
               <div className="flex justify-between">
                 <span className="text-taca-text-muted">Phí vận chuyển</span>
                 <span className="font-bold text-taca-text-main">
-                  {shippingFee === 0 ? 'Miễn phí' : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(shippingFee)}
+                  {shippingFee === 0 ? (
+                    'Miễn phí'
+                  ) : freeshipDiscount > 0 ? (
+                    <span>
+                      <span className="line-through text-slate-400 mr-1.5">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(shippingFee)}</span>
+                      <span className="text-emerald-600">{effectiveShippingFee === 0 ? 'Miễn phí' : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(effectiveShippingFee)}</span>
+                    </span>
+                  ) : (
+                    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(shippingFee)
+                  )}
                 </span>
               </div>
               {shopDiscount > 0 && selectedShopVoucher && (
@@ -369,6 +407,12 @@ export default function CheckoutPage() {
                 <div className="flex justify-between text-taca-primary">
                   <span>Taca • {selectedTacaVoucher.code}</span>
                   <span className="font-bold">- {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(tacaDiscount)}</span>
+                </div>
+              )}
+              {freeshipDiscount > 0 && selectedFreeshipVoucher && (
+                <div className="flex justify-between text-emerald-600">
+                  <span>Freeship • {selectedFreeshipVoucher.code}</span>
+                  <span className="font-bold">- {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(freeshipDiscount)}</span>
                 </div>
               )}
             </div>
@@ -415,16 +459,19 @@ export default function CheckoutPage() {
       />
 
 
-      {/* Modal chọn voucher (duy nhất 1 thanh cuộn, cho phép bỏ tick / chọn lại) */}
+      {/* Modal chọn voucher (hỗ trợ 3 slots: Shop, Sàn, Freeship) */}
       <ApplyVoucherModal 
         isOpen={isVoucherModalOpen} 
         onClose={() => setIsVoucherModalOpen(false)}
         selectedShopVoucher={selectedShopVoucher}
         selectedTacaVoucher={selectedTacaVoucher}
+        selectedFreeshipVoucher={selectedFreeshipVoucher}
         subtotal={subtotal}
-        onApplyVouchers={({ shopVoucher, tacaVoucher }) => {
+        shippingFee={shippingFee}
+        onApplyVouchers={({ shopVoucher, tacaVoucher, freeshipVoucher }) => {
           setSelectedShopVoucher(shopVoucher);
           setSelectedTacaVoucher(tacaVoucher);
+          setSelectedFreeshipVoucher(freeshipVoucher);
         }}
       />
 

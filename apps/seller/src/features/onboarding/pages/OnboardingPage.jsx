@@ -1,6 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { X, PartyPopper, AlertTriangle, ClipboardList } from 'lucide-react';
+import { X, PartyPopper, AlertTriangle, ClipboardList, FileText } from 'lucide-react';
+import SellerPolicyModal from '../../../components/common/SellerPolicyModal';
 import {
   getOnboardingProgress,
   updateOnboardingProfile,
@@ -40,6 +41,7 @@ export default function OnboardingPage() {
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isPolicyOpen, setIsPolicyOpen] = useState(false);
 
   // Onboarding metadata
   const [currentStep, setCurrentStep] = useState('PROFILE'); // 'PROFILE' | 'KYC' | 'WAREHOUSE' | 'BANK'
@@ -63,16 +65,14 @@ export default function OnboardingPage() {
     description: '',
   });
 
-  // Step 2: KYC Documents State
+  // Step 2: KYC Documents State (Chỉ hỗ trợ BUSINESS_REGISTRATION theo Backend §2.23-§2.25)
   const [kycDocs, setKycDocs] = useState([]);
   const [uploadingDoc, setUploadingDoc] = useState(false);
-  const [newDocType, setNewDocType] = useState('BUSINESS_REGISTRATION');
+  const newDocType = 'BUSINESS_REGISTRATION';
 
   // Kiểm tra tài liệu KYC theo đặc tả docs/api/auth-user.md §2.25 & Backend user-auth-service
   const hasBusinessReg = kycDocs.some((d) => d.document_type === 'BUSINESS_REGISTRATION');
-  const hasIdFront = kycDocs.some((d) => d.document_type === 'CITIZEN_ID_FRONT' || d.document_type === 'CITIZEN_ID');
-  const hasIdBack = kycDocs.some((d) => d.document_type === 'CITIZEN_ID_BACK');
-  const isKycComplete = hasBusinessReg || kycDocs.length >= 1;
+  const isKycComplete = hasBusinessReg;
 
   // Step 3: Warehouse State
   const [warehouseForm, setWarehouseForm] = useState({
@@ -588,6 +588,14 @@ export default function OnboardingPage() {
               {successMessage}
             </span>
           )}
+          <button
+            type="button"
+            onClick={() => setIsPolicyOpen(true)}
+            className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-[#4F46E5] border border-indigo-200 rounded-lg font-semibold text-[13px] transition-colors shadow-2xs flex items-center gap-1.5 cursor-pointer"
+          >
+            <FileText className="w-4 h-4" aria-hidden="true" />
+            <span>Quy chế người bán</span>
+          </button>
           <Link
             to={`${basePath}/`}
             className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg font-semibold text-[13px] transition-colors shadow-2xs"
@@ -637,13 +645,9 @@ export default function OnboardingPage() {
             <KycStep
               kycStatus={kycStatus}
               kycDocs={kycDocs}
-              newDocType={newDocType}
-              setNewDocType={setNewDocType}
               uploadingDoc={uploadingDoc}
               saving={saving}
               hasBusinessReg={hasBusinessReg}
-              hasIdFront={hasIdFront}
-              hasIdBack={hasIdBack}
               isKycComplete={isKycComplete}
               onUploadKycDoc={handleUploadKycDoc}
               onDeleteKycDoc={handleDeleteKycDoc}
@@ -685,6 +689,12 @@ export default function OnboardingPage() {
           )}
         </Suspense>
       </div>
+
+      {/* Modal Toàn văn Quy chế hoạt động Người Bán */}
+      <SellerPolicyModal
+        isOpen={isPolicyOpen}
+        onClose={() => setIsPolicyOpen(false)}
+      />
     </div>
   );
 }
