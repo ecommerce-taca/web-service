@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ChevronDown, Search } from 'lucide-react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { SECTION_IDS } from '../constants/landingContent';
-import tacaLogo from '../assets/taca-logo.png';
+import { tacaLogoUrl as tacaLogo } from '../assets/tacaLogo';
 
 const SHOP_LINKS = [
   { to: '/category/dien-thoai', title: 'Điện thoại & Máy tính bảng', hint: 'Chính hãng từ shop xác minh' },
