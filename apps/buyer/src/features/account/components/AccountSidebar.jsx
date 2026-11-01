@@ -29,14 +29,14 @@ const AccountSidebar = () => {
   ];
 
   return (
-    <div className="w-full lg:w-[250px] bg-white rounded-xl shadow-sm py-4 lg:py-6 flex-shrink-0 flex flex-col gap-3 lg:gap-6 border border-taca-border">
+    <div className="w-full lg:w-[250px] bg-white rounded-card shadow-brand py-4 lg:py-6 flex-shrink-0 flex flex-col gap-3 lg:gap-6 border border-taca-border">
       {/* User Info */}
       <div className="flex items-center justify-between lg:flex-col lg:items-start px-4 lg:px-6 mb-1 lg:mb-2">
         <div>
           <div className="font-bold text-taca-text-main text-[15px] lg:text-[16px] truncate">
             {user?.full_name || 'Người dùng'}
           </div>
-          <div className="text-orange-500 text-[12px] lg:text-[13px] font-medium mt-0.5 lg:mt-1">
+          <div className="text-taca-warning text-[12px] lg:text-[13px] font-medium mt-0.5 lg:mt-1">
             Thành viên Taca Gold
           </div>
         </div>
@@ -51,10 +51,10 @@ const AccountSidebar = () => {
               key={item.path}
               to={item.path}
               className={({ isActive }) =>
-                `relative flex items-center gap-2 lg:gap-4 px-3.5 lg:px-6 py-2 lg:py-3 text-[13px] lg:text-[14px] font-medium transition-colors whitespace-nowrap rounded-xl lg:rounded-none shrink-0 ${
+                `relative flex items-center gap-2 lg:gap-4 px-3.5 lg:px-6 py-2 lg:py-3 text-[13px] lg:text-[14px] font-medium transition-colors whitespace-nowrap rounded-control lg:rounded-none shrink-0 ${
                   isActive
-                    ? 'bg-gray-50 text-taca-primary font-bold'
-                    : 'text-taca-text-main hover:bg-gray-50 hover:text-taca-primary'
+                    ? 'bg-taca-primary-light text-taca-primary font-bold'
+                    : 'text-taca-text-main hover:bg-taca-primary-light hover:text-taca-primary'
                 }`
               }
             >
@@ -63,12 +63,12 @@ const AccountSidebar = () => {
                   {/* Active Indicator: Desktop left bar, Mobile bottom bar */}
                   {isActive && (
                     <>
-                      <div className="hidden lg:block absolute left-0 top-0 bottom-0 w-[6px] rounded-r-sm bg-[#00a69c]" />
-                      <div className="lg:hidden absolute bottom-0 left-2 right-2 h-[2.5px] rounded-full bg-[#00a69c]" />
+                      <div className="hidden lg:block absolute left-0 top-0 bottom-0 w-[4px] rounded-r-sm bg-taca-primary" />
+                        <div className="lg:hidden absolute bottom-0 left-2 right-2 h-[2.5px] rounded-full bg-taca-primary" />
                     </>
                   )}
                   {/* Icon */}
-                  <div className={`w-7 h-7 lg:w-8 lg:h-8 rounded flex items-center justify-center shrink-0 ${isActive ? 'bg-[#00a69c] text-white' : 'text-gray-400'}`}>
+                  <div className={`w-7 h-7 lg:w-8 lg:h-8 rounded-control flex items-center justify-center shrink-0 ${isActive ? 'bg-taca-primary text-white' : 'text-taca-text-muted'}`}>
                     <IconComponent className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                   </div>
                   <span>{item.name}</span>
@@ -78,12 +78,12 @@ const AccountSidebar = () => {
           );
         })}
 
-        <div className="lg:pt-2 lg:mt-1 lg:border-t lg:border-slate-100 flex items-center shrink-0">
+        <div className="lg:pt-2 lg:mt-1 lg:border-t lg:border-taca-border flex items-center shrink-0">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 lg:gap-4 px-3.5 lg:px-6 py-2 lg:py-3 text-[13px] lg:text-[14px] font-medium text-taca-text-main hover:bg-gray-50 hover:text-rose-600 text-left transition-colors cursor-pointer group whitespace-nowrap rounded-xl lg:rounded-none w-full"
+            className="flex items-center gap-2 lg:gap-4 px-3.5 lg:px-6 py-2 lg:py-3 text-[13px] lg:text-[14px] font-medium text-taca-text-main hover:bg-taca-primary-light hover:text-taca-primary text-left transition-colors cursor-pointer group whitespace-nowrap rounded-control lg:rounded-none w-full"
           >
-            <div className="w-7 h-7 lg:w-8 lg:h-8 rounded flex items-center justify-center text-gray-400 group-hover:text-rose-600 transition-colors shrink-0">
+            <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-control flex items-center justify-center text-taca-text-muted group-hover:text-taca-primary transition-colors shrink-0">
               <LogOut className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
             </div>
             <span>Đăng xuất</span>

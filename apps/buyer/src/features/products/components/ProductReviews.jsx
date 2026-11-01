@@ -63,7 +63,7 @@ const ProductReviews = ({ productId, rating, reviewCount }) => {
   });
 
   return (
-    <div className="bg-white p-6 md:p-8 rounded-[12px] border border-taca-border flex flex-col gap-8">
+    <div className="bg-white p-4 sm:p-6 md:p-8 rounded-card border border-taca-border shadow-brand flex flex-col gap-6 sm:gap-8">
       <div className="flex justify-between items-center border-b border-taca-border pb-4">
         <h2 className="text-[16px] font-bold text-taca-text-main uppercase tracking-wide">
           ĐÁNH GIÁ & NHẬN XÉT ({aggregate.count || reviewCount || 0})
@@ -71,7 +71,7 @@ const ProductReviews = ({ productId, rating, reviewCount }) => {
       </div>
 
       {/* Overview & Filters */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-slate-50/60 p-6 rounded-2xl border border-slate-100">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 sm:gap-8 bg-taca-surface p-4 sm:p-6 rounded-card border border-taca-border">
         <div className="flex flex-col sm:flex-row sm:items-center gap-6 sm:gap-8">
           <div className="flex flex-col items-center min-w-[120px] text-center">
             <span className="text-[44px] font-extrabold text-taca-sale leading-none">
@@ -127,7 +127,7 @@ const ProductReviews = ({ productId, rating, reviewCount }) => {
               }}
               className={`px-3.5 py-1.5 border text-[13px] rounded-lg transition-colors cursor-pointer ${
                 selectedRating === null && !withMediaOnly
-                  ? 'border-taca-primary text-taca-primary font-bold bg-indigo-50/70'
+                  ? 'border-taca-primary text-taca-primary font-bold bg-taca-primary-light'
                   : 'border-slate-200 text-slate-700 bg-white hover:border-slate-300'
               }`}
             >
@@ -145,7 +145,7 @@ const ProductReviews = ({ productId, rating, reviewCount }) => {
                 }}
                 className={`px-3 py-1.5 border text-[13px] rounded-lg transition-colors flex items-center gap-1 cursor-pointer ${
                   selectedRating === star
-                    ? 'border-taca-primary text-taca-primary font-bold bg-indigo-50/70'
+                    ? 'border-taca-primary text-taca-primary font-bold bg-taca-primary-light'
                     : 'border-slate-200 text-slate-700 bg-white hover:border-slate-300'
                 }`}
               >
@@ -162,7 +162,7 @@ const ProductReviews = ({ productId, rating, reviewCount }) => {
               }}
               className={`px-3 py-1.5 border text-[13px] rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
                 withMediaOnly
-                  ? 'border-taca-primary text-taca-primary font-bold bg-indigo-50/70'
+                  ? 'border-taca-primary text-taca-primary font-bold bg-taca-primary-light'
                   : 'border-slate-200 text-slate-700 bg-white hover:border-slate-300'
               }`}
             >

@@ -5,11 +5,11 @@ const ProductContentTabs = ({ description, reviewCount }) => {
   const [activeTab, setActiveTab] = useState('description');
 
   return (
-    <div className="bg-white rounded-[12px] border border-taca-border overflow-hidden">
+    <div className="bg-white rounded-card border border-taca-border overflow-hidden shadow-brand">
       {/* Tab Navigation */}
-      <div className="flex border-b border-taca-border">
+      <div className="flex border-b border-taca-border overflow-x-auto" role="tablist">
         <button
-          className={`flex-1 py-4 text-[16px] border-b-[3px] bg-white transition-colors cursor-pointer ${
+          className={`flex-1 min-w-[120px] px-3 py-4 text-[14px] sm:text-[16px] border-b-[3px] bg-white transition-colors cursor-pointer ${
             activeTab === 'description'
               ? 'font-bold text-taca-primary border-taca-primary'
               : 'font-semibold text-taca-text-main border-transparent hover:text-taca-primary'
@@ -19,7 +19,7 @@ const ProductContentTabs = ({ description, reviewCount }) => {
           Mô tả
         </button>
         <button
-          className={`flex-1 py-4 text-[16px] border-b-[3px] bg-white transition-colors cursor-pointer ${
+          className={`flex-1 min-w-[150px] px-3 py-4 text-[14px] sm:text-[16px] border-b-[3px] bg-white transition-colors cursor-pointer ${
             activeTab === 'specs'
               ? 'font-bold text-taca-primary border-taca-primary'
               : 'font-semibold text-taca-text-main border-transparent hover:text-taca-primary'
@@ -29,7 +29,7 @@ const ProductContentTabs = ({ description, reviewCount }) => {
           Thông số kỹ thuật
         </button>
         <button
-          className={`flex-1 py-4 text-[16px] border-b-[3px] bg-white transition-colors cursor-pointer ${
+          className={`flex-1 min-w-[130px] px-3 py-4 text-[14px] sm:text-[16px] border-b-[3px] bg-white transition-colors cursor-pointer ${
             activeTab === 'reviews'
               ? 'font-bold text-taca-primary border-taca-primary'
               : 'font-semibold text-taca-text-main border-transparent hover:text-taca-primary'
@@ -41,9 +41,9 @@ const ProductContentTabs = ({ description, reviewCount }) => {
       </div>
 
       {/* Tab Content */}
-      <div className="p-6 text-[14px] leading-relaxed text-taca-text-main">
+      <div className="p-4 sm:p-6 text-[14px] leading-relaxed text-taca-text-main">
         {activeTab === 'description' && (
-          <div className="whitespace-pre-line text-justify text-[15px]">
+          <div className="whitespace-pre-line text-[15px] leading-7">
             {description || 'Không có mô tả cho sản phẩm này.'}
           </div>
         )}

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router
 import { ShoppingBag, Store, Settings, X, Check, Pin, ChevronUp, ChevronDown } from 'lucide-react';
 import ScrollToTop from '../components/common/ScrollToTop';
 import RemoteErrorBoundary from '../components/common/RemoteErrorBoundary';
+import BrandLogo from '../../../../shared/ui-components/src/components/BrandLogo';
 
 const BuyerApp = lazy(() => import('buyer/App'));
 const SellerApp = lazy(() => import('seller/App'));
@@ -10,7 +11,7 @@ const AdminApp = lazy(() => import('admin/App'));
 
 const Loading = () => (
   <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3 p-8">
-    <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+    <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
     <span className="text-[13px] font-medium text-slate-500">Đang tải Micro-App...</span>
   </div>
 );
@@ -49,7 +50,12 @@ function ShellContent() {
       {isDevNavVisible ? (
         <nav className="bg-slate-950 text-white px-3 sm:px-6 py-2 flex items-center justify-between sticky top-0 z-[100] border-b border-slate-800 text-[12px] shadow-sm animate-in slide-in-from-top-2 duration-150 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden gap-2 sm:gap-3">
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <span className="font-extrabold text-[#0A68FF] text-[13px] tracking-tight">TACA HOST</span>
+            <BrandLogo
+              className="h-7 w-auto max-w-[115px]"
+              alt="TACA"
+              width={204}
+              height={46}
+            />
             <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 hidden xs:inline">Micro-Frontends</span>
             <span className="text-[11px] text-amber-400 font-medium hidden md:inline">
               (Thanh công cụ QA / Developer)

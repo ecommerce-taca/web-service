@@ -98,70 +98,70 @@ const SearchPage = () => {
   };
 
   return (
-    <div className="py-2 flex flex-col gap-6">
+    <div className="py-4 sm:py-5 flex flex-col gap-5 sm:gap-6">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-500">
-        <Link to="/" className="text-slate-500 no-underline hover:text-indigo-600 transition-colors">
+      <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-[12px] font-semibold text-taca-text-muted">
+        <Link to="/" className="text-taca-text-muted no-underline hover:text-taca-primary transition-colors">
           Trang chủ
         </Link>
         <span>/</span>
-        <span className="text-slate-900 font-bold">Tìm kiếm sản phẩm</span>
+        <span className="text-taca-text-main font-bold">Tìm kiếm sản phẩm</span>
         {query && (
           <>
             <span>/</span>
-            <span className="text-indigo-600 font-bold">"{query}"</span>
+            <span className="text-taca-primary font-bold break-all">"{query}"</span>
           </>
         )}
-      </div>
+      </nav>
 
       {/* Page Title & Stats */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-4 sm:p-5 rounded-[12px] border border-taca-border shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[22px] font-black text-slate-900 m-0 mb-1 tracking-tight">
+          <h1 className="text-[20px] sm:text-[22px] font-black text-taca-text-main m-0 mb-1 tracking-tight">
             {query ? (
-              <>Kết quả tìm kiếm cho: <span className="text-indigo-600 font-extrabold">"{query}"</span></>
+              <>Kết quả tìm kiếm cho: <span className="text-taca-primary font-extrabold break-all">"{query}"</span></>
             ) : (
               'Tất cả sản phẩm trên Taca'
             )}
           </h1>
-          <div className="text-[13px] text-slate-500 font-medium">
-            Tìm thấy <span className="font-extrabold text-slate-900">{totalCount}</span> sản phẩm phù hợp
+          <div className="text-[13px] text-taca-text-muted font-medium">
+            Tìm thấy <span className="font-extrabold text-taca-text-main">{totalCount}</span> sản phẩm phù hợp
           </div>
         </div>
 
         {/* Active Filters Pills */}
         {(brand || category !== 'all' || priceRange !== 'all' || isOfficial || minRating > 0) && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[12px] font-bold text-slate-500">Đang lọc:</span>
+            <span className="text-[12px] font-bold text-taca-text-muted">Đang lọc:</span>
             {category !== 'all' && (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-full shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-taca-primary/5 text-taca-primary border border-taca-primary/20 px-3 py-1 rounded-full">
                 <span>Danh mục: {category}</span>
-                <button type="button" onClick={() => updateParam('category', 'all')} className="hover:text-rose-600 cursor-pointer flex items-center">
+                <button type="button" aria-label={`Bỏ filter danh mục ${category}`} onClick={() => updateParam('category', 'all')} className="hover:text-taca-sale cursor-pointer flex items-center">
                   <X className="w-3 h-3" />
                 </button>
               </span>
             )}
             {brand && (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-taca-primary/5 text-taca-primary border border-taca-primary/20 px-3 py-1 rounded-full">
                 <span>Hãng: {brand}</span>
-                <button type="button" onClick={() => updateParam('brand', '')} className="hover:text-rose-600 cursor-pointer flex items-center">
+                <button type="button" aria-label={`Bỏ filter thương hiệu ${brand}`} onClick={() => updateParam('brand', '')} className="hover:text-taca-sale cursor-pointer flex items-center">
                   <X className="w-3 h-3" />
                 </button>
               </span>
             )}
             {priceRange !== 'all' && (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1 rounded-full shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1 rounded-full">
                 <span>Giá: {priceRange}</span>
-                <button type="button" onClick={() => updateParam('priceRange', 'all')} className="hover:text-rose-600 cursor-pointer flex items-center">
+                <button type="button" aria-label={`Bỏ filter giá ${priceRange}`} onClick={() => updateParam('priceRange', 'all')} className="hover:text-taca-sale cursor-pointer flex items-center">
                   <X className="w-3 h-3" />
                 </button>
               </span>
             )}
             {isOfficial && (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 px-3 py-1 rounded-full shadow-2xs">
-                <ShieldCheck className="w-3.5 h-3.5 text-rose-600" />
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-rose-50 text-taca-sale border border-rose-200 px-3 py-1 rounded-full">
+                <ShieldCheck className="w-3.5 h-3.5 text-taca-sale" />
                 <span>Mall Chính hãng</span>
-                <button type="button" onClick={() => updateParam('official', false)} className="hover:text-rose-600 cursor-pointer flex items-center">
+                <button type="button" aria-label="Bỏ filter Mall chính hãng" onClick={() => updateParam('official', false)} className="hover:text-taca-sale cursor-pointer flex items-center">
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -170,7 +170,7 @@ const SearchPage = () => {
               <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1 rounded-full shadow-2xs">
                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                 <span>Từ {minRating} sao</span>
-                <button type="button" onClick={() => updateParam('rating', 0)} className="hover:text-rose-600 cursor-pointer flex items-center">
+                <button type="button" aria-label={`Bỏ filter từ ${minRating} sao`} onClick={() => updateParam('rating', 0)} className="hover:text-taca-sale cursor-pointer flex items-center">
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -178,7 +178,7 @@ const SearchPage = () => {
             <button
               type="button"
               onClick={handleResetFilters}
-              className="text-[12px] font-bold text-rose-600 hover:text-rose-700 hover:underline ml-1 cursor-pointer transition-colors"
+              className="text-[12px] font-bold text-taca-sale hover:underline ml-1 cursor-pointer transition-colors"
             >
               Xóa tất cả
             </button>
@@ -187,9 +187,9 @@ const SearchPage = () => {
       </div>
 
       {/* Main Layout */}
-      <div className="flex flex-col lg:flex-row gap-6 items-start">
+      <div className="flex flex-col lg:flex-row gap-5 lg:gap-6 items-start">
         {/* Left Sidebar Filters */}
-        <div className="w-full lg:w-[250px] flex-shrink-0">
+        <div className="w-full lg:w-[260px] flex-shrink-0">
           <FilterSidebar
             selectedCategory={category}
             onCategoryChange={(val) => updateParam('category', val)}
@@ -216,18 +216,18 @@ const SearchPage = () => {
           
           {/* Loading Skeleton */}
           {loading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 animate-pulse">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 animate-pulse">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col gap-3 shadow-2xs">
-                  <div className="w-full aspect-square bg-slate-100 rounded-xl"></div>
-                  <div className="h-4 bg-slate-100 rounded w-3/4"></div>
-                  <div className="h-4 bg-slate-100 rounded w-1/2"></div>
+                <div key={i} className="bg-white border border-taca-border rounded-[12px] p-3 sm:p-4 flex flex-col gap-3">
+                  <div className="w-full aspect-square bg-taca-surface rounded-xl"></div>
+                  <div className="h-4 bg-taca-surface rounded w-3/4"></div>
+                  <div className="h-4 bg-taca-surface rounded w-1/2"></div>
                 </div>
               ))}
             </div>
           ) : products.length > 0 ? (
             /* Products Grid */
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
               {products.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -248,20 +248,20 @@ const SearchPage = () => {
             </div>
           ) : (
             /* Empty State */
-            <div className="bg-white border border-dashed border-slate-300 rounded-3xl p-12 text-center flex flex-col items-center justify-center my-2 shadow-2xs">
-              <div className="w-16 h-16 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 mb-4 shadow-2xs">
-                <Search className="w-8 h-8 text-indigo-500" strokeWidth={1.5} />
+            <div className="bg-white border border-dashed border-taca-border rounded-[16px] px-4 py-10 sm:p-12 text-center flex flex-col items-center justify-center my-2">
+              <div className="w-16 h-16 bg-taca-primary/5 border border-taca-primary/20 rounded-[12px] flex items-center justify-center text-taca-primary mb-4">
+                <Search className="w-8 h-8 text-taca-primary" strokeWidth={1.5} />
               </div>
-              <h3 className="text-[18px] font-black text-slate-900 mb-1">
+              <h3 className="text-[18px] font-black text-taca-text-main mb-1">
                 Không tìm thấy sản phẩm phù hợp
               </h3>
-              <p className="text-[13px] text-slate-500 max-w-md mb-6 leading-relaxed">
+              <p className="text-[13px] text-taca-text-muted max-w-md mb-6 leading-relaxed">
                 Rất tiếc, không có sản phẩm nào khớp với tiêu chí tìm kiếm hoặc bộ lọc hiện tại của bạn.
               </p>
 
               {/* Suggested keywords */}
               <div className="space-y-3 mb-6">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-taca-text-muted">
                   Gợi ý từ khóa tìm kiếm:
                 </span>
                 <div className="flex flex-wrap justify-center gap-2">
@@ -270,7 +270,7 @@ const SearchPage = () => {
                       key={kw}
                       type="button"
                       onClick={() => updateParam('q', kw)}
-                      className="px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-[12px] font-semibold text-slate-700 transition-colors cursor-pointer border border-slate-200"
+                      className="px-3.5 py-1.5 rounded-full bg-taca-surface hover:bg-taca-primary/5 hover:text-taca-primary text-[12px] font-semibold text-taca-text-main transition-colors cursor-pointer border border-taca-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary/30"
                     >
                       {kw}
                     </button>

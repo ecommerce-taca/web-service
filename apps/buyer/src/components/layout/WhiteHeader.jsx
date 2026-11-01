@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu } from 'lucide-react';
+import { Menu, Search, ShoppingCart } from 'lucide-react';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 import searchApi from '../../features/search/services/search.api';
 import SearchSuggestDropdown from '../../features/search/components/SearchSuggestDropdown';
+import { BrandLogo } from '@taca/ui-components';
 
 const WhiteHeader = () => {
   const { user, openAuthModal } = useAuth();
@@ -86,9 +87,9 @@ const WhiteHeader = () => {
   return (
     <header className="sticky top-0 z-50 flex flex-col shadow-sm">
       {/* Trust Strip - Top Blue Banner */}
-      <div className="bg-taca-primary h-[32px] flex items-center">
-        <div className="max-w-[1440px] mx-auto w-full flex justify-between items-center px-[80px]">
-          <span className="text-white text-[11px] font-bold uppercase tracking-wider">
+      <div className="hidden bg-taca-primary h-[32px] items-center md:flex">
+        <div className="max-w-[1440px] mx-auto w-full flex justify-between items-center px-4 sm:px-6 lg:px-[80px]">
+          <span className="truncate text-white text-[11px] font-bold uppercase tracking-wider">
             100% HÀNG THẬT · FREESHIP MỌI ĐƠN · HOÀN 200% NẾU HÀNG GIẢ · ĐỔI TRẢ 30 NGÀY
           </span>
           <span className="text-white text-[11px] font-semibold flex items-center gap-4">
@@ -98,15 +99,25 @@ const WhiteHeader = () => {
       </div>
 
       {/* Main Header Bar - White background */}
-      <div className="bg-white h-[78px] border-b border-taca-border">
-        <div className="max-w-[1440px] mx-auto h-full flex items-center px-[80px] gap-6">
+      <div className="bg-white min-h-[64px] sm:h-[78px] border-b border-taca-border">
+        <div className="max-w-[1440px] mx-auto h-full flex items-center px-4 sm:px-6 lg:px-[80px] gap-2.5 sm:gap-5 lg:gap-6">
           {/* Logo */}
-          <Link to="/" className="text-taca-primary text-[30px] font-extrabold leading-none m-0 flex-shrink-0 no-underline">
-            taca
+          <Link
+            to="/"
+            aria-label="Taca - Trang chủ"
+            className="flex-shrink-0 rounded-lg no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary/30"
+          >
+            <BrandLogo
+              alt=""
+              decorative
+              width={204}
+              height={46}
+              className="w-[88px] sm:w-[112px] lg:w-[128px] max-h-[36px] object-contain"
+            />
           </Link>
 
           {/* Search Bar - 620px wide with auto-suggest dropdown */}
-          <div className="relative w-[620px] h-[44px] flex-shrink-0 ml-8" ref={searchContainerRef}>
+          <div className="relative flex-1 min-w-0 max-w-[620px] h-[40px] sm:h-[44px] sm:ml-3 lg:ml-8" ref={searchContainerRef}>
             <form onSubmit={handleSearch} className="flex items-center bg-white h-full w-full border-2 border-taca-primary rounded-[8px] overflow-hidden focus-within:ring-2 focus-within:ring-taca-primary/20 transition-shadow">
               <input
                 type="text"
@@ -117,12 +128,13 @@ const WhiteHeader = () => {
                     setIsSuggestOpen(true);
                   }
                 }}
-                placeholder="⌕  Tìm sản phẩm, thương hiệu và cửa hàng"
+                placeholder="Tìm sản phẩm, thương hiệu và cửa hàng"
                 autoComplete="off"
-                className="flex-1 h-full px-4 border-none outline-none text-[12px] font-normal text-taca-text-main placeholder:text-gray-400"
+                className="flex-1 min-w-0 h-full px-3 sm:px-4 border-none outline-none text-[12px] sm:text-[13px] font-normal text-taca-text-main placeholder:text-gray-400"
               />
-              <button type="submit" className="h-[36px] px-6 mx-1 bg-taca-primary text-white border-none text-[12px] font-extrabold cursor-pointer hover:bg-taca-primary-hover transition-colors rounded-[6px]">
-                Tìm kiếm
+              <button type="submit" aria-label="Tìm kiếm" className="h-[32px] sm:h-[36px] px-3 sm:px-6 mx-1 bg-taca-primary text-white border-none text-[11px] sm:text-[12px] font-extrabold cursor-pointer hover:bg-taca-primary-hover transition-colors rounded-[6px] flex items-center justify-center shrink-0">
+                <span className="hidden sm:inline">Tìm kiếm</span>
+                <Search className="w-4 h-4 sm:hidden" />
               </button>
             </form>
 
@@ -148,7 +160,7 @@ const WhiteHeader = () => {
           </div>
 
           {/* Delivery Location */}
-          <div className="flex items-center cursor-pointer text-taca-text-main flex-shrink-0 ml-auto">
+          <div className="hidden xl:flex items-center cursor-pointer text-taca-text-main flex-shrink-0 ml-auto">
             <div className="flex flex-col text-[11px] font-semibold leading-snug">
               <span className="text-taca-text-muted">Giao đến</span>
               <span className="font-bold">Quận 1, TP.HCM</span>
@@ -156,8 +168,10 @@ const WhiteHeader = () => {
           </div>
 
           {/* User */}
-          <div
-            className="flex flex-col cursor-pointer text-taca-text-main flex-shrink-0"
+          <button
+            type="button"
+            aria-label={user ? 'Tài khoản' : 'Đăng nhập'}
+            className="hidden md:flex flex-col cursor-pointer text-taca-text-main flex-shrink-0 bg-transparent border-none p-1.5 rounded-lg hover:bg-taca-primary-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary/30"
             onClick={() => user ? navigate('/account/overview') : openAuthModal()}
           >
             <span className="text-[11px] font-semibold text-taca-text-muted leading-snug">
@@ -166,18 +180,19 @@ const WhiteHeader = () => {
             <span className="text-[12px] font-bold leading-snug">
               {user ? `${user.full_name || 'Người dùng'} ▾` : 'Đăng nhập'}
             </span>
-          </div>
+          </button>
 
           {/* Cart */}
-          <Link to="/cart" className="flex items-center h-[40px] px-4 border border-taca-border rounded-lg text-taca-primary hover:border-taca-primary transition-colors no-underline flex-shrink-0">
-            <span className="text-[13px] font-bold">Giỏ hàng 2</span>
+          <Link to="/cart" aria-label="Giỏ hàng 2" className="flex items-center justify-center h-[40px] px-2 sm:px-3 border border-taca-border rounded-lg text-taca-primary hover:border-taca-primary hover:bg-taca-primary-light transition-colors no-underline flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary/30">
+            <ShoppingCart className="w-4 h-4 sm:hidden" />
+            <span className="hidden sm:inline text-[13px] font-bold">Giỏ hàng 2</span>
           </Link>
         </div>
       </div>
 
       {/* Category Navigation Bar - White background */}
       <div className="bg-white border-b border-taca-border h-[42px]">
-        <div className="max-w-[1440px] mx-auto h-full flex items-center px-[80px] gap-0">
+        <div className="max-w-[1440px] mx-auto h-full flex items-center px-4 sm:px-6 lg:px-[80px] gap-0">
           <button className="bg-transparent border-none text-[12px] font-bold text-taca-text-main cursor-pointer hover:text-taca-primary transition-colors py-2 mr-12 flex items-center gap-2">
             <Menu className="w-4 h-4 text-taca-text-muted" />
             <span>Danh mục</span>

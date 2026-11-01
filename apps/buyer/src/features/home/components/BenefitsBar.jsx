@@ -5,7 +5,7 @@ const BENEFITS = [
     icon: Truck,
     title: 'Freeship 0Đ Toàn Quốc',
     desc: 'Áp dụng cho mọi đơn hàng',
-    color: 'text-indigo-600 bg-indigo-50 border-indigo-100',
+    color: 'text-taca-primary bg-taca-primary-light border-taca-border',
   },
   {
     icon: ShieldCheck,
@@ -29,7 +29,7 @@ const BENEFITS = [
 
 const BenefitsBar = () => {
   return (
-    <div className="bg-white rounded-2xl py-3.5 sm:py-4 px-4 sm:px-6 border border-slate-200/80 shadow-xs grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 gap-3 rounded-panel border border-taca-border bg-white px-3 py-3.5 shadow-brand sm:px-5 md:grid-cols-4 md:px-6 md:py-4">
       {BENEFITS.map((b, i) => {
         const IconComponent = b.icon;
         return (

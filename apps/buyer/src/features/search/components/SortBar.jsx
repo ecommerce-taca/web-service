@@ -11,12 +11,12 @@ const SORT_OPTIONS = [
 
 const SortBar = ({ currentSort = 'popular', onSortChange, totalCount = 0 }) => {
   return (
-    <div className="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-2xs mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-      <div className="flex items-center gap-2">
-        <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider pl-1">
+    <div className="bg-white rounded-[12px] p-3 border border-taca-border mb-4 sm:mb-6 flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
+        <span className="text-[12px] font-bold text-taca-text-muted uppercase tracking-wider shrink-0">
           Ưu tiên xem:
         </span>
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
           {SORT_OPTIONS.map((opt) => {
             const isActive = currentSort === opt.id;
             const IconComponent = opt.icon;
@@ -25,13 +25,13 @@ const SortBar = ({ currentSort = 'popular', onSortChange, totalCount = 0 }) => {
                 key={opt.id}
                 type="button"
                 onClick={() => onSortChange && onSortChange(opt.id)}
-                className={`px-3 py-1.5 text-[12px] font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                className={`px-2.5 sm:px-3 py-1.5 text-[12px] font-bold rounded-[8px] transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary/30 ${
                   isActive
-                    ? 'bg-taca-primary text-white shadow-xs scale-102'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900'
+                    ? 'bg-taca-primary text-white shadow-xs'
+                    : 'bg-taca-surface text-taca-text-main hover:bg-taca-primary/5 hover:text-taca-primary border border-taca-border'
                 }`}
               >
-                <IconComponent className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
+                <IconComponent className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-taca-text-muted'}`} />
                 <span>{opt.label}</span>
               </button>
             );
@@ -40,8 +40,8 @@ const SortBar = ({ currentSort = 'popular', onSortChange, totalCount = 0 }) => {
       </div>
 
       {totalCount > 0 && (
-        <div className="text-[12px] text-slate-400 font-medium pr-1 text-right hidden md:block">
-          Hiển thị <span className="font-bold text-slate-700">{totalCount}</span> sản phẩm
+        <div className="text-[12px] text-taca-text-muted font-medium pr-1 md:text-right whitespace-nowrap">
+          Hiển thị <span className="font-bold text-taca-text-main">{totalCount}</span> sản phẩm
         </div>
       )}
     </div>

@@ -6,19 +6,19 @@ const ShopVouchers = () => {
   ];
 
   return (
-    <div className="bg-[#f0f5ff] p-6 border border-[#d6e4ff] rounded-[12px] flex flex-col gap-4 mb-6">
+    <div className="bg-white p-4 sm:p-6 border border-taca-border rounded-card flex flex-col gap-brand-4 mb-6 shadow-brand">
       <h2 className="text-[16px] font-bold text-taca-text-main uppercase m-0">VOUCHER CỬA HÀNG</h2>
       
-      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+      <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 scrollbar-hide">
         {vouchers.map(voucher => (
           <div 
             key={voucher.id} 
-            className="flex-shrink-0 flex items-center justify-between border border-taca-border rounded-[8px] bg-taca-surface w-[300px] h-[60px] px-4"
+            className="flex-shrink-0 flex items-center justify-between border border-taca-border rounded-control bg-taca-primary-light/40 w-[280px] sm:w-[300px] min-h-[64px] px-4"
           >
             <span className="text-[14px] font-bold text-taca-text-main truncate pr-2">
               {voucher.title}
             </span>
-            <button className="text-[12px] font-bold text-taca-primary hover:underline px-3 py-1 bg-white border border-taca-primary rounded-[4px]">
+            <button type="button" className="text-[12px] font-bold text-white hover:bg-taca-primary-hover px-3 py-2 bg-taca-primary border border-taca-primary rounded-control cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary/30 shrink-0">
               Lưu
             </button>
           </div>

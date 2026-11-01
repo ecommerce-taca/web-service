@@ -4,9 +4,9 @@ import Footer from '../components/layout/Footer';
 
 const BuyerLayout = () => {
   return (
-    <div className="flex flex-col min-h-screen bg-taca-surface">
+    <div className="flex min-h-screen flex-col bg-taca-surface">
       <Header />
-      <main className="flex-1 py-7">
+      <main className="flex-1 py-4 sm:py-6 lg:py-7">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-[80px]">
           <Outlet />
         </div>

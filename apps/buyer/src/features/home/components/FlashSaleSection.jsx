@@ -55,7 +55,7 @@ const FlashSaleSection = () => {
   const pad = (n) => String(n).padStart(2, '0');
 
   return (
-    <section className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs relative">
+    <section className="relative rounded-panel border border-taca-border bg-white p-4 shadow-brand sm:p-6">
       {/* Header Row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
         <div className="flex items-center gap-4 flex-wrap">
@@ -89,7 +89,7 @@ const FlashSaleSection = () => {
 
         <Link
           to="/search?q=flashsale"
-          className="inline-flex items-center gap-1.5 text-[12px] font-bold text-[#0A68FF] hover:text-[#0855D2] transition-colors no-underline group"
+          className="group inline-flex items-center gap-1.5 text-[12px] font-bold text-taca-primary no-underline transition-colors hover:text-taca-primary-hover"
         >
           <span>Xem tất cả Deal Sốc</span>
           <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />

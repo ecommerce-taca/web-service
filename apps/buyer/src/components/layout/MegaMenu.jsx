@@ -39,10 +39,10 @@ const MegaMenu = ({ isOpen, onClose }) => {
     <div
       role="region"
       aria-label="Danh mục sản phẩm mở rộng"
-      className="absolute top-[42px] left-0 w-[min(820px,calc(100vw-32px))] min-h-[440px] max-h-[560px] bg-white rounded-2xl shadow-2xl flex z-50 border border-slate-200/90 overflow-hidden cursor-default transition-all"
+      className="absolute top-[42px] left-0 z-50 flex max-h-[min(560px,calc(100vh-120px))] min-h-[440px] w-[min(820px,calc(100vw-32px))] cursor-default flex-col overflow-hidden rounded-card border border-taca-border bg-white shadow-brand-lg transition-all sm:flex-row"
     >
       {/* Left Sidebar (Category Rail) */}
-      <div className="w-[210px] sm:w-[250px] bg-slate-50/70 border-r border-slate-200/70 py-3 flex flex-col shrink-0 overflow-y-auto">
+      <div className="flex w-full shrink-0 overflow-x-auto border-b border-taca-border bg-taca-surface py-2 sm:w-[210px] sm:flex-col sm:overflow-y-auto sm:border-b-0 sm:border-r lg:w-[250px]">
         {MEGA_MENU_DATA.map((cat) => {
           const isActive = cat.id === activeCategoryId;
           const IconComponent = CATEGORY_ICONS[cat.id] || Sparkles;
@@ -51,10 +51,10 @@ const MegaMenu = ({ isOpen, onClose }) => {
               key={cat.id}
               role="button"
               tabIndex={0}
-              className={`relative flex items-center justify-between px-3.5 sm:px-5 py-2.5 cursor-pointer transition-colors select-none ${
+              className={`relative flex min-w-[150px] items-center justify-between px-3 py-2.5 cursor-pointer transition-colors select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-taca-primary/30 sm:min-w-0 sm:px-3.5 lg:px-5 ${
                 isActive
-                  ? 'bg-white text-taca-primary font-bold shadow-xs'
-                  : 'text-slate-700 hover:bg-slate-100/80 hover:text-slate-900'
+                  ? 'bg-white text-taca-primary font-bold shadow-brand'
+                  : 'text-taca-text-main hover:bg-white/80 hover:text-taca-primary'
               }`}
               onMouseEnter={() => setActiveCategoryId(cat.id)}
               onClick={() => setActiveCategoryId(cat.id)}
@@ -71,7 +71,7 @@ const MegaMenu = ({ isOpen, onClose }) => {
               )}
 
               <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                <IconComponent className={`w-4 h-4 shrink-0 ${isActive ? 'text-taca-primary' : 'text-slate-400'}`} />
+                <IconComponent className={`w-4 h-4 shrink-0 ${isActive ? 'text-taca-primary' : 'text-taca-text-muted'}`} />
                 <span className="text-[13px] truncate">
                   {cat.title}
                 </span>
@@ -88,7 +88,7 @@ const MegaMenu = ({ isOpen, onClose }) => {
           <div className="p-5 sm:p-7 h-full flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
-                <h3 className="text-[15px] sm:text-[16px] font-bold text-slate-900 flex items-center gap-2.5 m-0">
+                <h3 className="text-[15px] sm:text-[16px] font-bold text-taca-text-main flex items-center gap-2.5 m-0">
                   <ActiveIcon className="w-4 h-4 text-taca-primary shrink-0" />
                   <span>{activeCategory.title}</span>
                 </h3>
@@ -106,14 +106,14 @@ const MegaMenu = ({ isOpen, onClose }) => {
                 {activeCategory.subCategories && activeCategory.subCategories.length > 0 ? (
                   activeCategory.subCategories.map((sub, idx) => (
                     <div key={idx} className="flex flex-col gap-2">
-                      <h4 className="text-[13px] sm:text-[14px] font-bold text-slate-900 m-0">{sub.title}</h4>
+                      <h4 className="text-[13px] sm:text-[14px] font-bold text-taca-text-main m-0">{sub.title}</h4>
                       <ul className="flex flex-col gap-1.5 m-0 p-0 list-none">
                         {sub.items.map((item, i) => (
                           <li key={i}>
                             <Link
                               to={item.path}
                               onClick={onClose}
-                              className="text-[12px] sm:text-[13px] text-slate-600 no-underline hover:text-taca-primary transition-colors block py-0.5"
+                              className="text-[12px] sm:text-[13px] text-taca-text-muted no-underline hover:text-taca-primary transition-colors block py-0.5"
                             >
                               {item.name}
                             </Link>
@@ -123,7 +123,7 @@ const MegaMenu = ({ isOpen, onClose }) => {
                     </div>
                   ))
                 ) : (
-                  <div className="col-span-3 text-[13px] text-slate-400 italic py-4">
+                  <div className="col-span-3 text-[13px] text-taca-text-muted italic py-4">
                     Danh mục này đang được cập nhật thêm...
                   </div>
                 )}
@@ -131,10 +131,10 @@ const MegaMenu = ({ isOpen, onClose }) => {
             </div>
 
             {/* Trust Strip */}
-            <div className="mt-6 bg-[#f4f7ff] rounded-xl p-3.5 flex flex-col gap-1.5 border border-indigo-100/60">
-              <div className="flex flex-wrap items-center gap-4 text-[11px] sm:text-[12px] font-bold text-slate-800">
-                <span className="flex items-center gap-1.5 text-indigo-700">
-                  <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" />
+            <div className="mt-6 bg-taca-primary-light rounded-card p-3.5 flex flex-col gap-1.5 border border-taca-border">
+              <div className="flex flex-wrap items-center gap-4 text-[11px] sm:text-[12px] font-bold text-taca-text-main">
+                <span className="flex items-center gap-1.5 text-taca-primary">
+                  <ShieldCheck className="w-4 h-4 text-taca-primary shrink-0" />
                   Chính hãng 100%
                 </span>
                 <span className="flex items-center gap-1.5 text-amber-700">
