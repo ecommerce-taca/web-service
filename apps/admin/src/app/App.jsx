@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, useInRouterContext, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, useInRouterContext, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import AdminLayout from '../layouts/AdminLayout';
 import { ErrorBoundary } from '@taca/ui-components';
 
@@ -22,6 +22,12 @@ function PageLoadingFallback() {
   );
 }
 
+function SafeAdminFallback() {
+  const location = useLocation();
+  const target = location.pathname.startsWith('/admin') ? '/admin/shops/kyc' : '/shops/kyc';
+  return <Navigate to={target} replace />;
+}
+
 function AppRoutes() {
   return (
     <Suspense fallback={<PageLoadingFallback />}>
@@ -36,8 +42,8 @@ function AppRoutes() {
           <Route path="finance" element={<AdminFinancePage />} />
           <Route path="fees" element={<AdminFeesTaxesPage />} />
           <Route path="vouchers" element={<AdminVouchersPage />} />
-          <Route path="dashboard" element={<AdminKycPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="dashboard" element={<SafeAdminFallback />} />
+          <Route path="*" element={<SafeAdminFallback />} />
         </Route>
       </Routes>
     </Suspense>

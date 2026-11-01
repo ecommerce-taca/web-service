@@ -115,7 +115,8 @@ export const sellerFinanceApi = {
         const response = await apiClient.post('/seller/payouts', payoutData, { headers });
         return response?.data;
       } catch (err) {
-        console.warn('API Gateway POST /seller/payouts failed, falling back to mock', err);
+        console.error('API Gateway POST /seller/payouts failed:', err);
+        throw err;
       }
     }
 
@@ -145,11 +146,10 @@ export const sellerFinanceApi = {
       try {
         const response = await apiClient.get('/seller/wallet/ledger', { params });
         const data = unwrapApiResponse(response);
-        if (data) {
-          return createResponseEnvelope(data, response?.meta);
-        }
+        return createResponseEnvelope(data || [], response?.meta);
       } catch (err) {
-        console.warn('API Gateway GET /seller/wallet/ledger failed, using mock data', err);
+        console.error('API Gateway GET /seller/wallet/ledger failed:', err);
+        throw err;
       }
     }
 
@@ -177,7 +177,8 @@ export const sellerFinanceApi = {
         const response = await apiClient.get('/seller/revenue/export', { params });
         return response?.data || response;
       } catch (err) {
-        console.warn('API Gateway GET /seller/revenue/export failed, using fallback', err);
+        console.error('API Gateway GET /seller/revenue/export failed:', err);
+        throw err;
       }
     }
 
@@ -200,11 +201,10 @@ export const sellerFinanceApi = {
       try {
         const response = await apiClient.get('/seller/payouts', { params });
         const data = unwrapApiResponse(response);
-        if (data) {
-          return createResponseEnvelope(data, response?.meta);
-        }
+        return createResponseEnvelope(data || [], response?.meta);
       } catch (err) {
-        console.warn('API Gateway GET /seller/payouts failed, using mock data', err);
+        console.error('API Gateway GET /seller/payouts failed:', err);
+        throw err;
       }
     }
 

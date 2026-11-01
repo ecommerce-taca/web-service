@@ -72,16 +72,24 @@ const Header = () => {
       return {
         title: 'Kênh Người Bán',
         subText: 'Bán hàng cùng Taca',
-        url: '/account/seller-register',
+        url: '/seller',
         badge: null
+      };
+    }
+    if (user?.role === 'SELLER' || user?.role === 'MERCHANT') {
+      return {
+        title: 'Kênh Người Bán',
+        subText: 'Truy cập Kênh Quản Trị Gian Hàng',
+        url: '/seller',
+        badge: 'Đang bán'
       };
     }
     const { hasShop, kycStatus } = sellerStatus;
     if (!hasShop || kycStatus === 'NOT_REGISTERED') {
       return {
         title: 'Kênh Người Bán',
-        subText: 'Đăng ký mở gian hàng',
-        url: '/account/seller-register',
+        subText: 'Đăng ký & Onboarding gian hàng',
+        url: '/seller/onboarding',
         badge: 'Đăng ký'
       };
     }

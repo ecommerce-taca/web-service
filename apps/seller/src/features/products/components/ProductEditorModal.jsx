@@ -12,6 +12,33 @@ import SkuMatrixStep from './editor/steps/SkuMatrixStep';
 import ShippingStep from './editor/steps/ShippingStep';
 import AddAttributeModal from './editor/components/AddAttributeModal';
 
+const COMMON_ATTR_KEYS = {
+  'màu sắc': 'color',
+  'màu': 'color',
+  'dung lượng': 'storage',
+  'kích thước': 'size',
+  'size': 'size',
+  'kích cỡ': 'size',
+  'bộ nhớ': 'memory',
+  'ram': 'ram',
+  'ssd': 'ssd',
+  'kết nối': 'connectivity',
+  'chất liệu': 'material',
+  'phiên bản': 'version'
+};
+
+const getAttrKey = (name, idx) => {
+  if (!name) return `attr_${idx + 1}`;
+  const normalized = name.toLowerCase().trim();
+  if (COMMON_ATTR_KEYS[normalized]) return COMMON_ATTR_KEYS[normalized];
+  const slug = normalized
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return slug || `attr_${idx + 1}`;
+};
+
 /**
  * Inner Form: Quản lý toàn bộ state và điều phối các step của modal soạn thảo sản phẩm.
  * Được mount với key duy nhất để khởi tạo state mà không cần gọi setState trong useEffect.
@@ -82,15 +109,21 @@ function ProductEditorForm({ product, onClose, onSave }) {
   // Khởi tạo danh sách SKU trực tiếp từ tổ hợp hoặc sản phẩm
   const [skus, setSkus] = useState(() => {
     if (product?.skus && product.skus.length > 0) {
-      return product.skus.map((s, idx) => ({
-        id: s.id || `sku-${idx + 1}`,
-        code: s.sku_code || `SKU-${idx + 1}`,
-        name: Object.values(s.attributes || {}).join(' / ') || s.name || `Biến thể ${idx + 1}`,
-        price: s.price?.sale_price ? Number(s.price.sale_price).toLocaleString('vi-VN') : '29.490.000',
-        stock: s.stock_display ?? 20,
-        enabled: s.status !== 'INACTIVE',
-        attributes: s.attributes || {}
-      }));
+      return product.skus.map((s, idx) => {
+        const customCode = s.seller_sku || s.sku_code || `SKU-${idx + 1}`;
+        return {
+          id: s.id || s.sku_id || `sku-${idx + 1}`,
+          code: customCode,
+          seller_sku: customCode,
+          name: s.name || Object.values(s.attributes || {}).join(' / ') || `Biến thể ${idx + 1}`,
+          price: s.price?.sale_price
+            ? Number(s.price.sale_price).toLocaleString('vi-VN')
+            : (s.price_override ? Number(s.price_override).toLocaleString('vi-VN') : '29.490.000'),
+          stock: s.stock_display ?? s.stock ?? 20,
+          enabled: s.status !== 'INACTIVE',
+          attributes: s.attributes || {}
+        };
+      });
     }
     // Khởi tạo trực tiếp từ Cartesian Product ban đầu thay vì hardcode 4 dòng
     const initialCombos = generateCartesianCombinations([
@@ -107,7 +140,7 @@ function ProductEditorForm({ product, onClose, onSave }) {
 
   // Callbacks tối ưu kết hợp với SkuMatrixRow memoization
   const handleUpdateSkuCode = useCallback((skuId, val) => {
-    setSkus(prev => prev.map(s => s.id === skuId ? { ...s, code: val } : s));
+    setSkus(prev => prev.map(s => s.id === skuId ? { ...s, code: val, seller_sku: val } : s));
   }, []);
 
   const handleUpdateSkuPrice = useCallback((skuId, val) => {
@@ -124,10 +157,12 @@ function ProductEditorForm({ product, onClose, onSave }) {
 
   const handleRegenerateSkus = () => {
     if (!isMultiVariant) {
+      const code = singleSkuCode || `${spuCode}-DEFAULT`;
       const single = [
         {
           id: 'sku-single',
-          code: singleSkuCode || `${spuCode}-DEFAULT`,
+          code,
+          seller_sku: code,
           name: 'Tiêu chuẩn',
           price: singleSkuPrice,
           stock: Number(singleSkuStock) || 0,
@@ -140,16 +175,20 @@ function ProductEditorForm({ product, onClose, onSave }) {
     } else {
       const newSkus = generateSkusFromCombos(generatedCombinations, skus, skuPrefix || spuCode);
       setSkus(newSkus);
-      setNotification(`Đã sinh lại ${newSkus.length} SKU từ ${generatedCombinations.length} tổ hợp thuộc tính!`);
+      setNotification(`Đã sinh lại ${newSkus.length} biến thể SKU từ ${generatedCombinations.length} tổ hợp thuộc tính!`);
     }
     setTimeout(() => setNotification(null), 3000);
   };
 
   const handleFormatAllSkuCodes = () => {
-    const formatted = skus.map((s, idx) => ({
-      ...s,
-      code: generateSkuCode(skuPrefix || spuCode, s.attributes, idx)
-    }));
+    const formatted = skus.map((s, idx) => {
+      const code = generateSkuCode(skuPrefix || spuCode, s.attributes, idx);
+      return {
+        ...s,
+        code,
+        seller_sku: code
+      };
+    });
     setSkus(formatted);
     setNotification('Đã tự động chuẩn hóa toàn bộ mã SKU theo tiền tố!');
     setTimeout(() => setNotification(null), 2500);
@@ -236,6 +275,18 @@ function ProductEditorForm({ product, onClose, onSave }) {
     }
   };
 
+  const handleRemoveAttribute = (attrId) => {
+    const updatedAttrs = attributes.filter(a => a.id !== attrId);
+    setAttributes(updatedAttrs);
+
+    // Reactive: Tự động cập nhật ma trận SKU ngay lập tức
+    if (isMultiVariant) {
+      const newCombos = generateCartesianCombinations(updatedAttrs);
+      const synched = generateSkusFromCombos(newCombos, skus, skuPrefix || spuCode);
+      setSkus(synched);
+    }
+  };
+
   const handleAddNewAttribute = ({ name, display_as, values }) => {
     const newId = attributes.length + 1;
     const updatedAttrs = [
@@ -311,48 +362,81 @@ function ProductEditorForm({ product, onClose, onSave }) {
       setLoading(true);
       const targetId = product?.id || product?.productId || `spu-${Date.now()}`;
 
-      const formattedSkus = skus.map(s => ({
-        sku_code: s.code?.trim() || `SKU-${s.id}`,
-        seller_sku: s.code?.trim() || `SKU-${s.id}`,
-        name: s.name,
-        attributes: s.attributes || {},
-        price: {
-          base_price: Number(String(s.price).replace(/\D/g, '')) || 0,
-          sale_price: Number(String(s.price).replace(/\D/g, '')) || 0,
-          currency: 'VND'
-        },
-        stock_display: Number(s.stock) || 0,
-        tax_rate_bps: 1000,
-        status: s.enabled ? 'ACTIVE' : 'INACTIVE'
-      }));
+      // 1. Chuẩn hóa Attribute Definitions theo đặc tả BE (§2.2 & §3.2)
+      const attrDefs = attributes.map((a, idx) => {
+        const key = a.key || getAttrKey(a.name, idx);
+        return {
+          key,
+          label: a.name,
+          name: a.name,
+          type: a.display_as === 'COLOR_SWATCH' ? 'ENUM' : (a.type || 'ENUM'),
+          is_variant_dimension: true,
+          allowed_values: a.values || [],
+          values: a.values || [],
+          display_as: a.display_as || 'PLAIN',
+          ...(a.value_meta ? { value_meta: a.value_meta } : {})
+        };
+      });
 
-      const prices = formattedSkus.map(s => s.price.sale_price).filter(p => p > 0);
+      // 2. Chuẩn hóa SKUs với seller_sku và attributes mapping chuẩn Backend DTO
+      const formattedSkus = skus.map((s, idx) => {
+        const skuCode = (s.seller_sku || s.code || '').trim() || `SKU-${idx + 1}`;
+        const priceNum = Number(String(s.price).replace(/\D/g, '')) || 0;
+
+        const mappedAttrs = {};
+        if (s.attributes) {
+          Object.entries(s.attributes).forEach(([k, v]) => {
+            mappedAttrs[k] = v;
+            const matchedDef = attrDefs.find(d => d.label === k || d.name === k);
+            if (matchedDef && matchedDef.key) {
+              mappedAttrs[matchedDef.key] = v;
+            }
+          });
+        }
+
+        return {
+          ...(s.id && !s.id.startsWith('sku-gen') ? { sku_id: s.id } : {}),
+          seller_sku: skuCode,
+          sku_code: skuCode,
+          name: s.name,
+          attributes: mappedAttrs,
+          price_override: priceNum > 0 ? priceNum : null,
+          price: {
+            base_price: priceNum,
+            sale_price: priceNum,
+            currency: 'VND'
+          },
+          stock_display: Number(s.stock) || 0,
+          status: s.enabled ? 'ACTIVE' : 'INACTIVE'
+        };
+      });
+
+      const activeSkus = formattedSkus.filter(s => s.status === 'ACTIVE');
+      const prices = (activeSkus.length > 0 ? activeSkus : formattedSkus)
+        .map(s => s.price.sale_price)
+        .filter(p => p > 0);
       const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
       const maxPrice = prices.length > 0 ? Math.max(...prices) : minPrice;
-
-      const attrDefs = attributes.map(a => ({
-        name: a.name,
-        display_as: a.display_as || 'PLAIN',
-        values: a.values || []
-      }));
+      const priceSummary = {
+        base_price: minPrice,
+        sale_price: minPrice,
+        min_price: minPrice,
+        max_price: maxPrice,
+        currency: 'VND'
+      };
 
       if (product) {
+        // Cập nhật SPU cơ bản theo DTO (§3.2 PATCH /seller/products/{id})
         await sellerProductApi.updateProduct(targetId, {
+          version: product.version || 1,
           title: spuName.trim(),
-          spu_code: spuCode.trim(),
           slug: spuCode.toLowerCase().replace(/[^a-z0-9]/g, '-'),
           brand: brand.trim(),
-          primary_category_id: category,
           description: description.trim(),
-          images,
-          price_summary: { min_price: minPrice, max_price: maxPrice, currency: 'VND' },
-          version: product.version || 1
+          price_summary: priceSummary
         });
-        await sellerProductApi.replaceSkus(targetId, {
-          attribute_definitions: attrDefs,
-          skus: formattedSkus,
-          version: product.version || 1
-        });
+
+        // Gán danh mục (§3.2 PUT /seller/products/{id}/categories)
         if (category) {
           await sellerProductApi.assignCategories(targetId, {
             primary_category_id: category,
@@ -360,33 +444,38 @@ function ProductEditorForm({ product, onClose, onSave }) {
             version: (product.version || 1) + 1
           });
         }
+
+        // Cập nhật ma trận SKU (§3.2 PUT /seller/products/{id}/skus)
+        await sellerProductApi.replaceSkus(targetId, {
+          attribute_definitions: attrDefs,
+          skus: formattedSkus,
+          version: (product.version || 1) + 2
+        });
       } else {
+        // Tạo mới SPU Draft theo DTO thuần túy BE (§3.2 POST /seller/products)
         const createRes = await sellerProductApi.createProductDraft({
           title: spuName.trim(),
-          spu_code: spuCode.trim() || `SPU-${Date.now()}`,
           slug: (spuCode || spuName).toLowerCase().replace(/[^a-z0-9]/g, '-'),
           brand: brand.trim(),
-          primary_category_id: category,
           description: description.trim(),
-          images,
-          price_summary: { min_price: minPrice, max_price: maxPrice, currency: 'VND' },
-          attribute_definitions: attrDefs,
-          skus: formattedSkus
+          price_summary: priceSummary
         });
-        const newId = createRes?.data?.id || createRes?.data?.productId;
+
+        const newId = createRes?.data?.product_id || createRes?.data?.id || createRes?.data?.productId;
         if (newId) {
-          await sellerProductApi.replaceSkus(newId, {
-            attribute_definitions: attrDefs,
-            skus: formattedSkus,
-            version: 1
-          });
           if (category) {
             await sellerProductApi.assignCategories(newId, {
               primary_category_id: category,
               secondary_category_ids: [],
-              version: 2
+              version: 1
             });
           }
+
+          await sellerProductApi.replaceSkus(newId, {
+            attribute_definitions: attrDefs,
+            skus: formattedSkus,
+            version: 2
+          });
         }
       }
       setNotification('Đã lưu bản nháp thành công!');
@@ -416,49 +505,81 @@ function ProductEditorForm({ product, onClose, onSave }) {
       setLoading(true);
       const targetId = product?.id || product?.productId || `spu-${Date.now()}`;
 
-      const formattedSkus = skus.map(s => ({
-        sku_code: s.code?.trim() || `SKU-${s.id}`,
-        seller_sku: s.code?.trim() || `SKU-${s.id}`,
-        name: s.name,
-        attributes: s.attributes || {},
-        price: {
-          base_price: Number(String(s.price).replace(/\D/g, '')) || 0,
-          sale_price: Number(String(s.price).replace(/\D/g, '')) || 0,
-          currency: 'VND'
-        },
-        stock_display: Number(s.stock) || 0,
-        tax_rate_bps: 1000,
-        status: s.enabled ? 'ACTIVE' : 'INACTIVE'
-      }));
+      // 1. Chuẩn hóa Attribute Definitions theo đặc tả BE (§2.2 & §3.2)
+      const attrDefs = attributes.map((a, idx) => {
+        const key = a.key || getAttrKey(a.name, idx);
+        return {
+          key,
+          label: a.name,
+          name: a.name,
+          type: a.display_as === 'COLOR_SWATCH' ? 'ENUM' : (a.type || 'ENUM'),
+          is_variant_dimension: true,
+          allowed_values: a.values || [],
+          values: a.values || [],
+          display_as: a.display_as || 'PLAIN',
+          ...(a.value_meta ? { value_meta: a.value_meta } : {})
+        };
+      });
+
+      // 2. Chuẩn hóa SKUs với seller_sku và attributes mapping chuẩn Backend DTO
+      const formattedSkus = skus.map((s, idx) => {
+        const skuCode = (s.seller_sku || s.code || '').trim() || `SKU-${idx + 1}`;
+        const priceNum = Number(String(s.price).replace(/\D/g, '')) || 0;
+
+        const mappedAttrs = {};
+        if (s.attributes) {
+          Object.entries(s.attributes).forEach(([k, v]) => {
+            mappedAttrs[k] = v;
+            const matchedDef = attrDefs.find(d => d.label === k || d.name === k);
+            if (matchedDef && matchedDef.key) {
+              mappedAttrs[matchedDef.key] = v;
+            }
+          });
+        }
+
+        return {
+          ...(s.id && !s.id.startsWith('sku-gen') ? { sku_id: s.id } : {}),
+          seller_sku: skuCode,
+          sku_code: skuCode,
+          name: s.name,
+          attributes: mappedAttrs,
+          price_override: priceNum > 0 ? priceNum : null,
+          price: {
+            base_price: priceNum,
+            sale_price: priceNum,
+            currency: 'VND'
+          },
+          stock_display: Number(s.stock) || 0,
+          status: s.enabled ? 'ACTIVE' : 'INACTIVE'
+        };
+      });
 
       const activeSkus = formattedSkus.filter(s => s.status === 'ACTIVE');
-      const prices = (activeSkus.length > 0 ? activeSkus : formattedSkus).map(s => s.price.sale_price).filter(p => p > 0);
+      const prices = (activeSkus.length > 0 ? activeSkus : formattedSkus)
+        .map(s => s.price.sale_price)
+        .filter(p => p > 0);
       const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
       const maxPrice = prices.length > 0 ? Math.max(...prices) : minPrice;
-
-      const attrDefs = attributes.map(a => ({
-        name: a.name,
-        display_as: a.display_as || 'PLAIN',
-        values: a.values || []
-      }));
+      const priceSummary = {
+        base_price: minPrice,
+        sale_price: minPrice,
+        min_price: minPrice,
+        max_price: maxPrice,
+        currency: 'VND'
+      };
 
       if (product) {
+        // Cập nhật SPU cơ bản theo DTO (§3.2 PATCH /seller/products/{id})
         await sellerProductApi.updateProduct(targetId, {
+          version: product.version || 1,
           title: spuName.trim(),
-          spu_code: spuCode.trim(),
           slug: spuCode.toLowerCase().replace(/[^a-z0-9]/g, '-'),
           brand: brand.trim(),
-          primary_category_id: category,
           description: description.trim(),
-          images,
-          price_summary: { min_price: minPrice, max_price: maxPrice, currency: 'VND' },
-          version: product.version || 1
+          price_summary: priceSummary
         });
-        await sellerProductApi.replaceSkus(targetId, {
-          attribute_definitions: attrDefs,
-          skus: formattedSkus,
-          version: product.version || 1
-        });
+
+        // Gán danh mục (§3.2 PUT /seller/products/{id}/categories)
         if (category) {
           await sellerProductApi.assignCategories(targetId, {
             primary_category_id: category,
@@ -466,34 +587,42 @@ function ProductEditorForm({ product, onClose, onSave }) {
             version: (product.version || 1) + 1
           });
         }
-        await sellerProductApi.publishProduct(targetId, (product.version || 1) + 2);
+
+        // Cập nhật ma trận SKU (§3.2 PUT /seller/products/{id}/skus)
+        await sellerProductApi.replaceSkus(targetId, {
+          attribute_definitions: attrDefs,
+          skus: formattedSkus,
+          version: (product.version || 1) + 2
+        });
+
+        // Xuất bản sản phẩm (§3.2 POST /seller/products/{id}/publish)
+        await sellerProductApi.publishProduct(targetId, (product.version || 1) + 3);
       } else {
+        // Tạo mới SPU Draft theo DTO thuần túy BE (§3.2 POST /seller/products)
         const createRes = await sellerProductApi.createProductDraft({
           title: spuName.trim(),
-          spu_code: spuCode.trim() || `SPU-${Date.now()}`,
           slug: (spuCode || spuName).toLowerCase().replace(/[^a-z0-9]/g, '-'),
           brand: brand.trim(),
-          primary_category_id: category,
           description: description.trim(),
-          images,
-          price_summary: { min_price: minPrice, max_price: maxPrice, currency: 'VND' },
-          attribute_definitions: attrDefs,
-          skus: formattedSkus
+          price_summary: priceSummary
         });
-        const newId = createRes?.data?.id || createRes?.data?.productId;
+
+        const newId = createRes?.data?.product_id || createRes?.data?.id || createRes?.data?.productId;
         if (newId) {
-          await sellerProductApi.replaceSkus(newId, {
-            attribute_definitions: attrDefs,
-            skus: formattedSkus,
-            version: 1
-          });
           if (category) {
             await sellerProductApi.assignCategories(newId, {
               primary_category_id: category,
               secondary_category_ids: [],
-              version: 2
+              version: 1
             });
           }
+
+          await sellerProductApi.replaceSkus(newId, {
+            attribute_definitions: attrDefs,
+            skus: formattedSkus,
+            version: 2
+          });
+
           await sellerProductApi.publishProduct(newId, 3);
         }
       }
@@ -620,9 +749,24 @@ function ProductEditorForm({ product, onClose, onSave }) {
             setNewValueInputs={setNewValueInputs}
             onAddValue={handleAddValue}
             onRemoveValue={handleRemoveValue}
+            onRemoveAttribute={handleRemoveAttribute}
             onOpenAddAttrModal={() => setIsAddAttrModalOpen(true)}
             onRegenerateSkus={handleRegenerateSkus}
             combosCount={generatedCombinations.length}
+            skus={skus}
+            skuPrefix={skuPrefix}
+            bulkPriceInput={bulkPriceInput}
+            setBulkPriceInput={setBulkPriceInput}
+            bulkStockInput={bulkStockInput}
+            setBulkStockInput={setBulkStockInput}
+            onApplyBulkPrice={handleApplyBulkPrice}
+            onApplyBulkStock={handleApplyBulkStock}
+            onToggleAllSkus={handleToggleAllSkus}
+            onFormatAllSkuCodes={handleFormatAllSkuCodes}
+            onUpdateSkuCode={handleUpdateSkuCode}
+            onUpdateSkuPrice={handleUpdateSkuPrice}
+            onUpdateSkuStock={handleUpdateSkuStock}
+            onToggleSku={handleToggleSku}
           />
         )}
 

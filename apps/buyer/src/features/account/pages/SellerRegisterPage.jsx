@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Store, Mail, FileText, AlertTriangle, XCircle, CheckCircle2, Rocket, Clock } from 'lucide-react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { registerSeller, getSellerRegistrationStatus, fetchSellerRegistrationStatus } from '../services/seller-register.api';
@@ -13,7 +12,6 @@ const getSellerUrl = (path = '/seller') => {
 };
 
 export default function SellerRegisterPage() {
-  const navigate = useNavigate();
   const { user, openAuthModal } = useAuth();
   const [form, setForm] = useState({
     name: '',
@@ -115,11 +113,7 @@ export default function SellerRegisterPage() {
 
       // Chuyển tiếp mượt mà (Seamless Handover) sang Seller Onboarding
       setTimeout(() => {
-        if (typeof window !== 'undefined' && window.location.port === '5174') {
-          window.location.href = getSellerUrl('/seller/onboarding');
-        } else {
-          navigate('/seller/onboarding');
-        }
+        window.location.href = getSellerUrl('/seller/onboarding');
       }, 1000);
     } catch (err) {
       setErrorMessage(
@@ -225,11 +219,7 @@ export default function SellerRegisterPage() {
           <button
             type="button"
             onClick={() => {
-              if (typeof window !== 'undefined' && window.location.port === '5174') {
-                window.location.href = getSellerUrl('/seller/onboarding');
-              } else {
-                navigate('/seller/onboarding');
-              }
+              window.location.href = getSellerUrl('/seller/onboarding');
             }}
             className="px-6 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl font-bold text-[13px] shadow-sm transition-colors cursor-pointer inline-flex items-center gap-1.5"
           >
@@ -344,9 +334,9 @@ export default function SellerRegisterPage() {
     );
   }
 
-  // 4.2. Trường hợp đã được phê duyệt (APPROVED)
-  if (registrationStatus.hasShop && registrationStatus.kycStatus === 'APPROVED') {
-    const shop = registrationStatus.shop;
+  // 4.2. Trường hợp đã được phê duyệt (APPROVED) hoặc tài khoản đã có quyền SELLER
+  if (user?.role === 'SELLER' || (registrationStatus.hasShop && registrationStatus.kycStatus === 'APPROVED')) {
+    const shop = registrationStatus.shop || { name: user?.full_name || 'của bạn' };
     return (
       <div className="p-8 space-y-6 text-center">
         <div className="p-8 rounded-3xl bg-emerald-50 border border-emerald-200 max-w-lg mx-auto space-y-4">
