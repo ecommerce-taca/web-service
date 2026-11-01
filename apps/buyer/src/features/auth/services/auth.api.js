@@ -201,9 +201,13 @@ export const authApi = {
    * Đăng nhập / Đăng ký nhanh qua Google: POST /auth/google (Section 3.49 auth-user.md)
    * Nhận Google id_token và trả về session chuẩn (tokens + user)
    */
-  loginWithGoogle: async (idToken = 'mock_google_id_token') => {
+  loginWithGoogle: async (idToken) => {
+    // ==========================================
+    // MOCK MODE
+    // ==========================================
     if (isMockMode()) {
       await delay(600);
+
       const mockGoogleUser = {
         id: '01912f31-7a1b-7c12-9c55-google000001',
         full_name: 'Nguyễn Văn Google (Demo)',
@@ -223,13 +227,14 @@ export const authApi = {
         expires_in: 900
       };
 
-      // Đồng bộ vào localStorage để duy trì session
+      // Đồng bộ session vào localStorage
       localStorage.setItem('taca_access_token', mockTokens.access_token);
       localStorage.setItem('taca_refresh_token', mockTokens.refresh_token);
       localStorage.setItem('taca_user', JSON.stringify(mockGoogleUser));
 
       // Lưu vào danh sách mockUsers nếu chưa có
       const users = getMockUsers();
+
       if (!users.some(u => u.email === mockGoogleUser.email)) {
         users.push(mockGoogleUser);
         saveMockUsers(users);
@@ -245,23 +250,48 @@ export const authApi = {
       };
     }
 
-    // Chế độ Live Backend: POST /auth/google
-    const response = await apiClient.post('/auth/google', { id_token: idToken });
+    // ==========================================
+    // LIVE BACKEND MODE
+    // ==========================================
+
+    // Không cho phép gửi request nếu thiếu Google ID Token
+    if (typeof idToken !== 'string' || !idToken.trim()) {
+      throw new Error(
+        'Không nhận được Google ID Token. Vui lòng thử đăng nhập lại.'
+      );
+    }
+
+    // Ngăn chặn việc gửi Mock Token lên Backend thật
+    if (idToken.startsWith('mock_google_id_token')) {
+      throw new Error(
+        'Không được sử dụng Mock Google Token khi kết nối Backend thật.'
+      );
+    }
+
+    // Gửi Google ID Token thật đến Backend
+    const response = await apiClient.post('/auth/google', {
+      id_token: idToken
+    });
+
     const payload = response?.data?.data || response?.data || response;
     const loggedUser = payload?.user || payload;
     const tokens = payload?.tokens;
 
+    // Đồng bộ session
     if (tokens?.access_token) {
       localStorage.setItem('taca_access_token', tokens.access_token);
     }
+
     if (tokens?.refresh_token) {
       localStorage.setItem('taca_refresh_token', tokens.refresh_token);
     }
+
     if (loggedUser && typeof loggedUser === 'object') {
       localStorage.setItem('taca_user', JSON.stringify(loggedUser));
     }
 
     window.dispatchEvent(new Event('auth:login'));
+
     return response;
   },
 
@@ -543,8 +573,8 @@ export const authApi = {
       const identifier = mockPendingResets[token];
       if (identifier) {
         const users = getMockUsers();
-        const user = users.find(u => 
-          (u.email || '').toLowerCase() === identifier.toLowerCase() || 
+        const user = users.find(u =>
+          (u.email || '').toLowerCase() === identifier.toLowerCase() ||
           (u.phone || '').replace(/\D/g, '') === identifier.replace(/\D/g, '')
         );
         if (user) {
@@ -578,10 +608,10 @@ export const authApi = {
       const mockUsers = getMockUsers();
       const userInMock = currentUser
         ? mockUsers.find(
-            (u) =>
-              u.id === currentUser.id ||
-              (u.email && u.email.toLowerCase() === (currentUser.email || '').toLowerCase())
-          )
+          (u) =>
+            u.id === currentUser.id ||
+            (u.email && u.email.toLowerCase() === (currentUser.email || '').toLowerCase())
+        )
         : null;
 
       const currentStoredPassword = userInMock?.password || currentUser?.password;
@@ -709,7 +739,7 @@ export const authApi = {
       const currentUser = savedUser ? JSON.parse(savedUser) : { id: '01912f31-7a1b-7c12-9c55-8b1c34a6d001', email_verified: true, phone_verified: true };
       const updatedUser = { ...currentUser, ...payload };
       localStorage.setItem('taca_user', JSON.stringify(updatedUser));
-      
+
       const mockUsers = getMockUsers();
       const uIdx = mockUsers.findIndex(u => u.id === updatedUser.id || (u.email && u.email.toLowerCase() === (updatedUser.email || '').toLowerCase()));
       if (uIdx !== -1) {

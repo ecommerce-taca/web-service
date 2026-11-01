@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Loader2, } from 'lucide-react';
 import { Modal, Input, Button } from '@taca/ui-components';
 import { authApi } from '../services/auth.api';
@@ -28,17 +28,17 @@ const GoogleIcon = () => (
 
 const AuthModal = () => {
   const { isAuthModalOpen, closeAuthModal, login } = useAuth();
-  
+
   // 'signin' | 'signup' | 'forgot' | 'waiting_email_link'
   const [mode, setMode] = useState('signin');
-  
+
   // Form state
   const [identifier, setIdentifier] = useState('');
   const [signupPhone, setSignupPhone] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  
+
   // Email verification link state
   const [pendingEmail, setPendingEmail] = useState('');
   const [countdown, setCountdown] = useState(60);
@@ -48,6 +48,7 @@ const AuthModal = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const googleInitializedRef = useRef(false);
 
   const isSignIn = mode === 'signin';
   const isForgot = mode === 'forgot';
@@ -167,7 +168,7 @@ const AuthModal = () => {
     e.preventDefault();
     setError('');
     setSuccessMessage('');
-    
+
     if (!identifier || !password) {
       setError('Vui lòng nhập Email/Số điện thoại và mật khẩu.');
       return;
@@ -192,7 +193,7 @@ const AuthModal = () => {
       }
 
       const response = await authApi.login({ identifier: finalIdentifier, password });
-      
+
       const userFromLogin = response.data?.user || response.user;
       const tokens = response.data?.tokens || response.tokens;
 
@@ -228,7 +229,7 @@ const AuthModal = () => {
     e.preventDefault();
     setError('');
     setSuccessMessage('');
-    
+
     if (!name || !identifier || !password || !confirmPassword) {
       setError('Vui lòng nhập đầy đủ thông tin bắt buộc.');
       return;
@@ -266,7 +267,7 @@ const AuthModal = () => {
     try {
       const email = identifier.trim();
       let finalPhone = null;
-      
+
       if (signupPhone.trim()) {
         const trimmedPhone = signupPhone.trim();
         finalPhone = trimmedPhone.startsWith('0') ? '+84' + trimmedPhone.slice(1) : trimmedPhone;
@@ -278,9 +279,9 @@ const AuthModal = () => {
         email: email,
         ...(finalPhone && { phone: finalPhone })
       };
-      
+
       await authApi.register(payload);
-      
+
       // Chuyển sang màn hình yêu cầu click link trong email để kích hoạt, CHƯA đăng nhập người dùng
       setPendingEmail(email);
       setCountdown(60);
@@ -318,7 +319,7 @@ const AuthModal = () => {
     e.preventDefault();
     setError('');
     setSuccessMessage('');
-    
+
     if (!identifier) {
       setError('Vui lòng nhập Email hoặc Số điện thoại.');
       return;
@@ -347,37 +348,100 @@ const AuthModal = () => {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setGoogleLoading(true);
-    setError('');
+  // Hoàn tất đăng nhập sau khi nhận được ID Token
+  const completeGoogleLogin = async (idToken) => {
     try {
-      if (typeof window !== 'undefined' && window.google?.accounts?.id && import.meta.env.VITE_GOOGLE_CLIENT_ID) {
-        window.google.accounts.id.prompt(async (notification) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            const res = await authApi.loginWithGoogle();
-            const payload = res?.data?.data || res?.data || res;
-            login(payload.user, payload.tokens);
-            handleClose();
-          }
-        });
-      } else {
-        const res = await authApi.loginWithGoogle(`mock_google_id_token_${Date.now()}`);
-        const payload = res?.data?.data || res?.data || res;
-        login(payload.user, payload.tokens);
-        handleClose();
+      const res = await authApi.loginWithGoogle(idToken);
+      const payload = res?.data?.data || res?.data || res;
+
+      if (!payload?.user || !payload?.tokens) {
+        throw new Error('Dữ liệu đăng nhập Google trả về không hợp lệ.');
       }
+
+      login(payload.user, payload.tokens);
+      handleClose();
     } catch (err) {
-      const errorMsg = getAuthErrorMessage(err, 'google') || 'Đăng nhập Google không thành công. Vui lòng thử lại.';
+      const errorMsg =
+        getAuthErrorMessage(err, 'google') ||
+        err.message ||
+        'Đăng nhập Google không thành công. Vui lòng thử lại.';
+
       setError(errorMsg);
     } finally {
       setGoogleLoading(false);
     }
   };
 
+  // Callback nhận Google ID Token
+  const handleGoogleCredential = (response) => {
+    const idToken = response?.credential;
+
+    if (!idToken) {
+      setError('Google không trả về ID Token. Vui lòng thử lại.');
+      setGoogleLoading(false);
+      return;
+    }
+
+    completeGoogleLogin(idToken);
+  };
+
+  // Xử lý khi người dùng nhấn nút Đăng nhập Google
+  const handleGoogleSignIn = () => {
+    setGoogleLoading(true);
+    setError('');
+
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+    // Kiểm tra Google SDK và Client ID
+    if (
+      !clientId ||
+      typeof window === 'undefined' ||
+      !window.google?.accounts?.id
+    ) {
+      setGoogleLoading(false);
+      setError(
+        'Google Sign-In chưa được cấu hình. Vui lòng kiểm tra Google Client ID và SDK.'
+      );
+      return;
+    }
+
+    try {
+      // Chỉ khởi tạo Google Identity Services một lần
+      if (!googleInitializedRef.current) {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleGoogleCredential,
+          auto_select: false
+        });
+
+        googleInitializedRef.current = true;
+      }
+
+      // Hiển thị Google One Tap
+      window.google.accounts.id.prompt((notification) => {
+        if (
+          notification.isNotDisplayed() ||
+          notification.isSkippedMoment() ||
+          notification.isDismissedMoment()
+        ) {
+          setGoogleLoading(false);
+          setError(
+            'Google Sign-In chưa hoàn tất. Vui lòng thử lại hoặc kiểm tra cấu hình Google.'
+          );
+        }
+      });
+    } catch (err) {
+      setGoogleLoading(false);
+      setError(
+        'Không thể khởi tạo Google Sign-In. Vui lòng tải lại trang.'
+      );
+    }
+  };
+
   return (
-    <Modal 
-      isOpen={isAuthModalOpen} 
-      onClose={handleClose} 
+    <Modal
+      isOpen={isAuthModalOpen}
+      onClose={handleClose}
       width="max-w-[500px]"
       hideHeader={true}
     >
@@ -410,7 +474,7 @@ const AuthModal = () => {
             <p className="text-[14px] text-taca-text-muted mt-2">
               Chúng tôi đã gửi một đường dẫn (link) xác nhận đến email:
             </p>
-            
+
             <div className="font-bold text-taca-text-main bg-gray-50 border border-taca-border px-4 py-2.5 rounded-lg my-3 text-[15px] break-all inline-block max-w-full">
               {pendingEmail}
             </div>
@@ -438,9 +502,9 @@ const AuthModal = () => {
                 {countdown > 0 ? (
                   <span className="font-medium text-taca-text-main">Gửi lại sau {countdown}s</span>
                 ) : (
-                  <button 
-                    type="button" 
-                    onClick={handleResendLink} 
+                  <button
+                    type="button"
+                    onClick={handleResendLink}
                     disabled={loading}
                     className="font-bold text-taca-primary hover:text-taca-primary-hover focus:outline-none cursor-pointer"
                   >
@@ -449,12 +513,12 @@ const AuthModal = () => {
                 )}
               </div>
 
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => {
                   setMode('signup');
                   setError('');
-                }} 
+                }}
                 className="text-[13px] text-taca-text-muted hover:text-taca-text-main underline cursor-pointer mt-1"
               >
                 Đổi email hoặc thông tin đăng ký
@@ -474,14 +538,14 @@ const AuthModal = () => {
                 {isForgot ? 'QUÊN MẬT KHẨU' : (isSignIn ? 'ĐĂNG NHẬP TACA' : 'ĐĂNG KÝ TACA')}
               </h2>
               <p className="text-[14px] text-taca-text-muted mt-2">
-                {isForgot 
-                  ? 'Nhập email hoặc số điện thoại để đặt lại mật khẩu.' 
-                  : (isSignIn 
-                    ? 'Theo dõi đơn hàng, lưu voucher và mua sắm nhanh hơn.' 
+                {isForgot
+                  ? 'Nhập email hoặc số điện thoại để đặt lại mật khẩu.'
+                  : (isSignIn
+                    ? 'Theo dõi đơn hàng, lưu voucher và mua sắm nhanh hơn.'
                     : 'Tạo tài khoản để mua sắm và nhận nhiều ưu đãi.')}
               </p>
             </div>
-            
+
             {/* Error Message tiếng Việt */}
             {error && (
               <div className="bg-taca-sale/10 text-taca-sale p-3 text-[14px] rounded-lg font-medium border border-taca-sale/20 mb-4">
@@ -508,9 +572,9 @@ const AuthModal = () => {
 
             {/* Form */}
             <form onSubmit={isForgot ? handleForgot : (isSignIn ? handleSignIn : handleSignUp)} className="flex flex-col gap-4">
-              
+
               {!isForgot && !isSignIn && (
-                <Input 
+                <Input
                   label="Họ và tên"
                   type="text"
                   value={name}
@@ -519,7 +583,7 @@ const AuthModal = () => {
                 />
               )}
 
-              <Input 
+              <Input
                 label={isSignIn || isForgot ? "Email hoặc số điện thoại" : "Email"}
                 type={isSignIn || isForgot ? "text" : "email"}
                 value={identifier}
@@ -528,16 +592,16 @@ const AuthModal = () => {
               />
 
               {!isForgot && !isSignIn && (
-                <Input 
+                <Input
                   label="Số điện thoại (Tuỳ chọn)"
                   type="tel"
                   value={signupPhone}
                   onChange={(e) => setSignupPhone(e.target.value)}
                 />
               )}
-              
+
               {!isForgot && (
-                <Input 
+                <Input
                   label="Mật khẩu"
                   type="password"
                   value={password}
@@ -547,7 +611,7 @@ const AuthModal = () => {
               )}
 
               {!isForgot && !isSignIn && (
-                <Input 
+                <Input
                   label="Nhập lại mật khẩu"
                   type="password"
                   value={confirmPassword}
@@ -556,8 +620,8 @@ const AuthModal = () => {
                 />
               )}
 
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full mt-4"
                 disabled={loading}
               >
@@ -583,7 +647,7 @@ const AuthModal = () => {
                   <div className="flex-grow border-t border-slate-200"></div>
                 </div>
 
-                <button 
+                <button
                   type="button"
                   id="google-signin-button"
                   onClick={handleGoogleSignIn}
@@ -597,8 +661,8 @@ const AuthModal = () => {
                     <GoogleIcon />
                   )}
                   <span className="font-semibold text-[13px] tracking-tight">
-                    {googleLoading 
-                      ? 'Đang kết nối Google...' 
+                    {googleLoading
+                      ? 'Đang kết nối Google...'
                       : (isSignIn ? 'Đăng nhập với Google' : 'Đăng ký với Google')}
                   </span>
                 </button>
