@@ -215,13 +215,18 @@ export const orderApi = {
     const orderNum = `TC-${new Date().getFullYear().toString().slice(-2)}${timestamp}`;
     const paymentMethodStandard = orderData.payment_method === 'VNPAY QR' ? 'VNPAY' : (orderData.payment_method || 'COD');
 
-    // Chuẩn hóa payload theo đúng hợp đồng Backend POST /checkout (order-commerce-docs §3.5)
+    // Chuẩn hóa payload theo đúng hợp đồng Backend POST /checkout (checkout-docs §3.3)
+    const voucherIds = (Array.isArray(orderData.voucher_ids) && orderData.voucher_ids.length > 0)
+      ? orderData.voucher_ids
+      : (Array.isArray(orderData.voucher_codes) ? orderData.voucher_codes : []);
+
     const checkoutPayload = {
       cart_id: orderData.cart_id || (typeof window !== 'undefined' ? localStorage.getItem('taca_cart_id') : null) || `cart-${Date.now()}`,
       selected_item_ids: (orderData.items || []).map(item => String(item.id || item.sku_id || item.item_id)),
-      address_id: orderData.shipping_address?.id || 'addr-default-01',
+      address_id: orderData.address_id || orderData.shipping_address?.id || 'addr-default-01',
       payment_method: paymentMethodStandard,
-      voucher_codes: orderData.voucher_codes || [],
+      voucher_ids: voucherIds,
+      note: orderData.note || '',
     };
 
     if (!isMockMode()) {
@@ -288,6 +293,24 @@ export const orderApi = {
   },
 
   /**
+   * Kiểm tra trạng thái thanh toán từ Backend Payment: GET /payments/{paymentId}/status
+   * @param {string} paymentId
+   */
+  getPaymentStatus: async (paymentId) => {
+    if (!isMockMode()) {
+      return apiClient.get(`/payments/${paymentId}/status`);
+    }
+    return {
+      data: {
+        payment_id: paymentId,
+        status: 'SUCCESS',
+        amount: 0,
+        transaction_id: `vnp-${Date.now()}`
+      }
+    };
+  },
+
+  /**
    * Hủy đơn hàng: PATCH /orders/{orderId}/cancel
    * @param {string} orderId
    * @param {number} version - Phiên bản đơn hàng (Optimistic Concurrency)
@@ -305,7 +328,7 @@ export const orderApi = {
           }
         });
       } catch (err) {
-        console.warn(`API Gateway PATCH /orders/${orderId}/cancel failed, updating locally`, err);
+        console.warn(`API Gateway PATCH /orders/${orderId}/cancel failed`, err);
       }
     }
 
@@ -316,11 +339,37 @@ export const orderApi = {
   },
 
   /**
-   * Cập nhật trạng thái đơn hàng khi thanh toán thành công được xác nhận từ backend Payment
+   * Cập nhật trạng thái đơn hàng khi thanh toán thành công (kiểm tra trạng thái qua Backend Payment API)
    * @param {string} orderId
    * @param {string} paymentId
    */
   markOrderPaid: async (orderId, paymentId) => {
+    if (!isMockMode() && paymentId) {
+      try {
+        const res = await apiClient.get(`/payments/${paymentId}/status`);
+        const statusData = res?.data?.data || res?.data || {};
+        if (statusData.status === 'SUCCESS') {
+          const stored = getStoredOrders();
+          const updated = stored.map(o => {
+            if (o.id === orderId || o.order_number === orderId) {
+              return {
+                ...o,
+                status: 'CONFIRMED',
+                payment_status: 'SUCCESS',
+                payment_id: paymentId,
+                paid_at: new Date().toISOString()
+              };
+            }
+            return o;
+          });
+          saveStoredOrders(updated);
+        }
+        return res?.data;
+      } catch (err) {
+        console.warn(`Payment status check failed for ${paymentId}:`, err);
+      }
+    }
+
     const stored = getStoredOrders();
     const updated = stored.map(o => {
       if (o.id === orderId || o.order_number === orderId) {

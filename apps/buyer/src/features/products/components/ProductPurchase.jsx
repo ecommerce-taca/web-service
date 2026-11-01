@@ -23,8 +23,17 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
   const [addedToast, setAddedToast] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  // 1. Chuẩn hóa Attribute Definitions từ API backend hoặc mock variants
+  // 1. Chuẩn hóa Attribute Definitions từ API backend (attributes) hoặc mock variants
   const attributeDefinitions = useMemo(() => {
+    if (product.attributes && product.attributes.length > 0) {
+      return product.attributes.map(a => ({
+        name: a.label || a.name || a.key,
+        key: a.key || a.name,
+        display_as: (a.type === 'color' || a.key === 'color') ? 'COLOR_SWATCH' : 'PLAIN',
+        values: Array.isArray(a.values) ? a.values : [],
+        value_meta: a.value_meta || {}
+      }));
+    }
     if (product.attribute_definitions && product.attribute_definitions.length > 0) {
       return product.attribute_definitions;
     }
@@ -62,14 +71,18 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
     }) || product.skus[0];
   }, [product.skus, selectedAttributes]);
 
-  // 4. Tính toán giá và tồn kho hiển thị
-  const currentPrice = activeSku?.price?.sale_price || activeSku?.price?.base_price || product.price;
-  const currentOriginalPrice = activeSku?.price?.base_price || product.originalPrice;
-  // stock_display: API thật trả { status, available_qty_snapshot?, as_of } (docs product-catalog §ProductDetail),
-  // mock trả số lượng. UNKNOWN = chưa có dữ liệu tồn kho → không chặn mua, service kiểm tra lại khi đặt hàng.
+  // 4. Tính toán giá và tồn kho hiển thị (hỗ trợ cả price số và price object { base_price, sale_price })
+  const rawPrice = activeSku?.price?.sale_price || activeSku?.price?.base_price || (typeof product.price === 'object' ? product.price?.sale_price || product.price?.base_price : product.price);
+  const currentPrice = typeof rawPrice === 'object' ? (rawPrice?.sale_price || rawPrice?.base_price || 0) : (rawPrice || 0);
+
+  const rawOriginal = activeSku?.price?.base_price || (typeof product.price === 'object' ? product.price?.base_price : product.originalPrice);
+  const currentOriginalPrice = typeof rawOriginal === 'object' ? (rawOriginal?.base_price || currentPrice) : rawOriginal;
+
+  // stock_display: API thật trả { status, available_qty_snapshot?, as_of } (docs product-catalog §ProductDetail)
   const stockInfo = toStockInfo(activeSku?.stock_display ?? product.stock_display ?? 38);
   const isOutOfStock = stockInfo.status === 'OUT_OF_STOCK';
-  const currentSkuCode = activeSku?.sku_code || product.sku || 'SPU-DEFAULT';
+  const currentSkuCode = activeSku?.sku_code || activeSku?.seller_sku || activeSku?.sku_id || product.sku || 'SPU-DEFAULT';
+  const targetSkuId = activeSku?.sku_id || activeSku?.id || currentSkuCode;
 
   // Tính % giảm giá nếu có
   const discountPercent = currentOriginalPrice && currentOriginalPrice > currentPrice
@@ -87,11 +100,12 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
     addToCart(
       {
         ...product,
+        sku_id: targetSkuId,
         price: currentPrice,
         sku: currentSkuCode
       },
       1,
-      { sku: currentSkuCode, selectedAttributes }
+      { sku: currentSkuCode, sku_id: targetSkuId, selectedAttributes }
     );
     setAddedToast(true);
     setTimeout(() => setAddedToast(false), 2500);
@@ -101,11 +115,12 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
     addToCart(
       {
         ...product,
+        sku_id: targetSkuId,
         price: currentPrice,
         sku: currentSkuCode
       },
       1,
-      { sku: currentSkuCode, selectedAttributes }
+      { sku: currentSkuCode, sku_id: targetSkuId, selectedAttributes }
     );
     navigate('/checkout');
   };

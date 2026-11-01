@@ -35,12 +35,12 @@ export const adminFinanceApi = {
    * Quyền: FINANCE_OPS + 2FA (header X-MFA-Step-Up)
    * Lưu ý: Đối soát thanh toán chạy theo lịch Cron tự động tại backend, không có endpoint thủ công (API-007).
    */
-  createSettlementBatch: async (payload, stepUpToken = '') => {
+  createSettlementBatch: async (...args) => {
     if (!isMockMode()) {
-      const headers = stepUpToken ? { 'X-MFA-Step-Up': stepUpToken } : {};
-      const response = await apiClient.post('/admin/settlements/batch', payload, { headers });
-      return response?.data;
+      console.warn('Quyết toán sàn chạy tự động theo lịch Cron tại backend, không có endpoint thủ công.');
+      throw new Error('Quyết toán sàn là tiến trình tự động định kỳ (Scheduled Job T+2), Backend không hỗ trợ tạo thủ công qua API.');
     }
+    const [payload = {}] = args;
     const newBatchId = `SET-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
     const newBatch = {
       batch_id: newBatchId,

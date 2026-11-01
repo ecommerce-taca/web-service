@@ -154,15 +154,23 @@ export default function CheckoutPage() {
       setCheckoutError('');
 
       const voucherCodes = [selectedShopVoucher?.code, selectedTacaVoucher?.code, selectedFreeshipVoucher?.code].filter(Boolean);
+      const voucherIds = [
+        selectedShopVoucher?.id || selectedShopVoucher?.voucher_id,
+        selectedTacaVoucher?.id || selectedTacaVoucher?.voucher_id,
+        selectedFreeshipVoucher?.id || selectedFreeshipVoucher?.voucher_id
+      ].filter(Boolean);
 
       const res = await orderApi.createOrder({
+        cart_id: (typeof window !== 'undefined' ? localStorage.getItem('taca_cart_id') : null) || 'cart-default',
         items,
         total,
         shipping_fee: effectiveShippingFee,
         discount_amount: shopDiscount + tacaDiscount + freeshipDiscount,
+        voucher_ids: voucherIds,
         voucher_codes: voucherCodes,
         payment_method: paymentMethod === 'VNPAY QR' ? 'VNPAY' : 'COD',
         shipping_address: selectedAddress,
+        address_id: selectedAddress?.id,
         note: orderNote
       });
 

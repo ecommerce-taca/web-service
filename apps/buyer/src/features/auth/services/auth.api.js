@@ -1,19 +1,5 @@
-import apiClient from '../../../../../../shared/utils/api-client';
+import apiClient, { isMockMode } from '../../../../../../shared/utils/api-client';
 import { toBackendPhone } from '../../../../../../shared/utils/phone';
-
-/**
- * Kiểm tra xem ứng dụng có đang chạy ở chế độ Mock hay không.
- * - Ưu tiên đọc biến môi trường VITE_USE_MOCK trong file .env
- * - Cho phép tester ép bật/tắt nhanh bằng localStorage.setItem('taca_force_mock', 'true' | 'false')
- */
-export const isMockMode = () => {
-  if (typeof window !== 'undefined') {
-    const forceMock = localStorage.getItem('taca_force_mock');
-    if (forceMock === 'true') return true;
-    if (forceMock === 'false') return false;
-  }
-  return import.meta.env.VITE_USE_MOCK === 'true';
-};
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -208,6 +194,74 @@ export const authApi = {
       };
       throw err;
     }
+    return response;
+  },
+
+  /**
+   * Đăng nhập / Đăng ký nhanh qua Google: POST /auth/google (Section 3.49 auth-user.md)
+   * Nhận Google id_token và trả về session chuẩn (tokens + user)
+   */
+  loginWithGoogle: async (idToken = 'mock_google_id_token') => {
+    if (isMockMode()) {
+      await delay(600);
+      const mockGoogleUser = {
+        id: '01912f31-7a1b-7c12-9c55-google000001',
+        full_name: 'Nguyễn Văn Google (Demo)',
+        email: 'taca.google.user@gmail.com',
+        phone: '+84909123456',
+        email_verified: true,
+        phone_verified: false,
+        roles: ['BUYER'],
+        status: 'ACTIVE',
+        avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
+      };
+
+      const mockTokens = {
+        token_type: 'Bearer',
+        access_token: `mock_jwt_google_${Date.now()}`,
+        refresh_token: `mock_refresh_google_${Date.now()}`,
+        expires_in: 900
+      };
+
+      // Đồng bộ vào localStorage để duy trì session
+      localStorage.setItem('taca_access_token', mockTokens.access_token);
+      localStorage.setItem('taca_refresh_token', mockTokens.refresh_token);
+      localStorage.setItem('taca_user', JSON.stringify(mockGoogleUser));
+
+      // Lưu vào danh sách mockUsers nếu chưa có
+      const users = getMockUsers();
+      if (!users.some(u => u.email === mockGoogleUser.email)) {
+        users.push(mockGoogleUser);
+        saveMockUsers(users);
+      }
+
+      window.dispatchEvent(new Event('auth:login'));
+
+      return {
+        data: {
+          user: mockGoogleUser,
+          tokens: mockTokens
+        }
+      };
+    }
+
+    // Chế độ Live Backend: POST /auth/google
+    const response = await apiClient.post('/auth/google', { id_token: idToken });
+    const payload = response?.data?.data || response?.data || response;
+    const loggedUser = payload?.user || payload;
+    const tokens = payload?.tokens;
+
+    if (tokens?.access_token) {
+      localStorage.setItem('taca_access_token', tokens.access_token);
+    }
+    if (tokens?.refresh_token) {
+      localStorage.setItem('taca_refresh_token', tokens.refresh_token);
+    }
+    if (loggedUser && typeof loggedUser === 'object') {
+      localStorage.setItem('taca_user', JSON.stringify(loggedUser));
+    }
+
+    window.dispatchEvent(new Event('auth:login'));
     return response;
   },
 

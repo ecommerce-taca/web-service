@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Loader2 } from 'lucide-react';
 import { Modal, Input, Button } from '@taca/ui-components';
 import { authApi } from '../services/auth.api';
 import { useAuth } from '../hooks/useAuth';
@@ -23,6 +24,7 @@ const AuthModal = () => {
   const [resendInfo, setResendInfo] = useState('');
 
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -324,6 +326,33 @@ const AuthModal = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    setError('');
+    try {
+      if (typeof window !== 'undefined' && window.google?.accounts?.id && import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+        window.google.accounts.id.prompt(async (notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            const res = await authApi.loginWithGoogle();
+            const payload = res?.data?.data || res?.data || res;
+            login(payload.user, payload.tokens);
+            handleClose();
+          }
+        });
+      } else {
+        const res = await authApi.loginWithGoogle(`mock_google_id_token_${Date.now()}`);
+        const payload = res?.data?.data || res?.data || res;
+        login(payload.user, payload.tokens);
+        handleClose();
+      }
+    } catch (err) {
+      const errorMsg = getAuthErrorMessage(err, 'google') || 'Đăng nhập Google không thành công. Vui lòng thử lại.';
+      setError(errorMsg);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   return (
     <Modal 
       isOpen={isAuthModalOpen} 
@@ -534,10 +563,19 @@ const AuthModal = () => {
             {!isForgot && (
               <button 
                 type="button"
-                className="flex items-center justify-center w-full bg-white border border-taca-border rounded-lg py-2 hover:bg-gray-50 transition-colors cursor-pointer"
+                id="google-signin-button"
+                onClick={handleGoogleSignIn}
+                disabled={loading || googleLoading}
+                className="flex items-center justify-center w-full bg-white border border-taca-border rounded-xl py-2.5 hover:bg-slate-50 transition-all cursor-pointer disabled:opacity-50 shadow-2xs gap-2.5 text-taca-text-main group"
               >
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5 mr-2" />
-                <span className="text-[14px] font-bold text-taca-text-main">Google</span>
+                {googleLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-slate-600" />
+                ) : (
+                  <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-4.5 h-4.5 shrink-0" />
+                )}
+                <span className="text-[13px] font-bold">
+                  {googleLoading ? 'Đang kết nối Google...' : 'Tiếp tục với Google'}
+                </span>
               </button>
             )}
 

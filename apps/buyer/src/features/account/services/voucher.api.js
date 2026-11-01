@@ -131,7 +131,8 @@ export const voucherApi = {
           meta: response?.meta
         };
       } catch (err) {
-        console.warn('API Gateway GET /vouchers failed, falling back to mock vouchers', err);
+        console.error('API Gateway GET /vouchers failed:', err);
+        throw err;
       }
     }
 

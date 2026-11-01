@@ -466,15 +466,47 @@ export const reviewKyc = async (shopId, { decision, reason = '' }, stepUpToken =
     if (stepUpToken) {
       headers['X-MFA-Step-Up'] = stepUpToken;
     }
-    const response = await apiClient.post(
-      `/admin/shops/${shopId}/kyc/review`,
-      {
-        decision,
-        reason: reason.trim(),
-      },
-      { headers }
-    );
-    return response?.data || response;
+
+    // Khớp contract Backend API: PUT /admin/shops/kyc/{id}/approve & PUT /admin/shops/kyc/{id}/reject
+    if (decision === 'APPROVED') {
+      try {
+        const response = await apiClient.put(
+          `/admin/shops/kyc/${shopId}/approve`,
+          {},
+          { headers }
+        );
+        return response?.data || response;
+      } catch (err) {
+        if (err?.response?.status === 404) {
+          const fallbackRes = await apiClient.post(
+            `/admin/shops/${shopId}/kyc/review`,
+            { decision, reason: reason.trim() },
+            { headers }
+          );
+          return fallbackRes?.data || fallbackRes;
+        }
+        throw err;
+      }
+    } else {
+      try {
+        const response = await apiClient.put(
+          `/admin/shops/kyc/${shopId}/reject`,
+          { reason: reason.trim() },
+          { headers }
+        );
+        return response?.data || response;
+      } catch (err) {
+        if (err?.response?.status === 404) {
+          const fallbackRes = await apiClient.post(
+            `/admin/shops/${shopId}/kyc/review`,
+            { decision, reason: reason.trim() },
+            { headers }
+          );
+          return fallbackRes?.data || fallbackRes;
+        }
+        throw err;
+      }
+    }
   } catch (err) {
     console.error('[AdminKycApi] reviewKyc failed:', err);
     throw err;

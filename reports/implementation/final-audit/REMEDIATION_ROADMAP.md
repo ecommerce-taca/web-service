@@ -25,18 +25,16 @@
 
 ### Nhóm P3 — Hoàn Thiện Spacing, Typography & Tự Động Hóa Kiểm Thử (Low)
 
-#### Task 1: `REM-P3-001` — Tinh chỉnh padding Filter Drawer trên mobile cực hẹp (<375px)
+#### Task 1: `REM-P3-001` — Tinh chỉnh padding Filter Drawer trên mobile cực hẹp (<375px) [COMPLETED]
 - **ID Task**: `REM-P3-001`
-- **Finding liên quan**: `AUDIT-UI-001`
-- **Mô tả**: Khoảng cách lề ngang trong Filter Drawer của trang tìm kiếm trên thiết bị màn hình hẹp (<375px) đang ở mức 12px (`px-3`), cần tinh chỉnh lên 16px (`px-4`) để khớp hoàn toàn với Penpot mobile frame.
-- **Root cause đã xác minh**: Đặt class tĩnh `px-3` thay vì `px-4 pb-6 sm:px-6`.
-- **Tệp / Component liên quan**: [SearchPage.jsx](file:///d:/di_hoc/taca_ecommerce/apps/buyer/src/features/search/pages/SearchPage.jsx).
-- **Phạm vi ảnh hưởng**: Giao diện Drawer lọc sản phẩm trên Buyer app khi mở trên màn hình nhỏ.
-- **Dependency**: Không có.
-- **Hướng khắc phục**: Cập nhật container class của Drawer thành `px-4 pb-6`.
-- **Acceptance Criteria**: Mở Drawer trên viewport 320px - 375px, lề đệm hiển thị chuẩn 16px, không tràn ngang.
-- **Test cần chạy lại**: `npm run lint`, `npm run build:remotes`.
-- **Rủi ro & Điều kiện**: Rủi ro cực thấp (0%). Không ảnh hưởng logic lọc dữ liệu.
+- **Finding liên quan**: `AUDIT-UI-001` & `AUDIT-UI-002`
+- **Trạng thái**: **HOÀN THÀNH (Đã kiểm chứng)**
+- **Mô tả**: Khoảng cách lề ngang trong Filter Drawer của trang tìm kiếm trên thiết bị màn hình hẹp (<375px) và vùng cuộn ma trận SKU trên Seller App.
+- **Tệp / Component liên quan**: [SearchPage.jsx](file:///d:/di_hoc/taca_ecommerce/apps/buyer/src/features/search/pages/SearchPage.jsx), [FilterSidebar.jsx](file:///d:/di_hoc/taca_ecommerce/apps/buyer/src/features/search/components/FilterSidebar.jsx), [SkuMatrixStep.jsx](file:///d:/di_hoc/taca_ecommerce/apps/seller/src/features/products/components/editor/steps/SkuMatrixStep.jsx).
+- **Kết quả nghiệm thu**: 
+  - `FilterSidebar.jsx` & `SearchPage.jsx` áp dụng `p-4 sm:p-5`, bảo đảm lề đệm 16px an toàn trên mobile.
+  - `SkuMatrixStep.jsx` áp dụng `max-h-[45vh] overflow-y-auto` kèm header cố định `sticky top-0 z-10`.
+- **Kiểm tra chất lượng**: `npm run lint` (0 error), `npm run build:remotes` (Pass), `npm run build -w @taca/shell` (Pass).
 
 #### Task 2: `REM-P3-002` — Tích hợp bộ công cụ kiểm thử tự động Vitest & React Testing Library
 - **ID Task**: `REM-P3-002`
