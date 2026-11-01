@@ -172,7 +172,8 @@ export const voucherApi = {
         });
         return response?.data || response;
       } catch (err) {
-        console.warn('API Gateway GET /vouchers/validate failed', err);
+        console.error('API Gateway GET /vouchers/validate failed:', err);
+        throw err;
       }
     }
 
@@ -234,10 +235,11 @@ export const voucherApi = {
             page: response?.meta?.page || params.page || 1,
             size: response?.meta?.size || params.size || 20
           },
-          meta: response?.meta || { total_saved: 450000, currency: 'VND' }
+          meta: response?.meta || { total_saved: 0, currency: 'VND' }
         };
       } catch (err) {
-        console.warn('API Gateway GET /vouchers/redemptions failed', err);
+        console.error('API Gateway GET /vouchers/redemptions failed:', err);
+        throw err;
       }
     }
 

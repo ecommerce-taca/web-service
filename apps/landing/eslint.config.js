@@ -11,7 +11,6 @@ export default defineConfig([
     files: ['**/*.{js,jsx}'],
     extends: [
       js.configs.recommended,
-      reactHooks.configs.flat.recommended,
       reactRefresh.configs.vite,
     ],
     languageOptions: {
@@ -26,9 +25,11 @@ export default defineConfig([
       },
     },
     plugins: {
+      'react-hooks': reactHooks,
       react,
     },
     rules: {
+      ...reactHooks.configs.recommended.rules,
       'react/jsx-uses-vars': 'error',
       'react/jsx-uses-react': 'off',
       'react-hooks/set-state-in-effect': 'off'

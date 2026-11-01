@@ -29,19 +29,17 @@ export const searchApi = {
           signal: options.signal
         });
         const unwrapped = unwrapApiResponse(response);
-        if (unwrapped && (unwrapped.keywords || unwrapped.topProducts || unwrapped.categories)) {
-          return createResponseEnvelope({
-            keywords: unwrapped.keywords || [],
-            categories: unwrapped.categories || [],
-            topProducts: unwrapped.topProducts || []
-          });
-        }
+        return createResponseEnvelope({
+          keywords: unwrapped?.keywords || [],
+          categories: unwrapped?.categories || [],
+          topProducts: unwrapped?.topProducts || []
+        });
       } catch (err) {
-        // Nếu bị hủy bởi new keystroke thì rethrow để caller bỏ qua
         if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') {
           throw err;
         }
-        console.warn('GET /search/suggest failed, falling back to client mock suggestion', err);
+        console.error('API Gateway GET /search/suggest failed:', err);
+        throw err;
       }
     }
 

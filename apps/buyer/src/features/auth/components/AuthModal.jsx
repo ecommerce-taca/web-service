@@ -127,6 +127,38 @@ const AuthModal = () => {
     };
   }, [isWaitingEmailLink, pendingEmail]);
 
+  // Khởi tạo Google Identity Services (GIS) khi mở AuthModal
+  useEffect(() => {
+    if (!isAuthModalOpen || typeof window === 'undefined') return;
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (window.google?.accounts?.id && clientId) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: async (credentialResponse) => {
+            if (!credentialResponse?.credential) return;
+            setGoogleLoading(true);
+            try {
+              const res = await authApi.loginWithGoogle(credentialResponse.credential);
+              const payload = res?.data?.data || res?.data || res;
+              login(payload.user, payload.tokens);
+              handleClose();
+            } catch (err) {
+              const errorMsg = getAuthErrorMessage(err, 'google') || 'Đăng nhập Google không thành công. Vui lòng thử lại.';
+              setError(errorMsg);
+            } finally {
+              setGoogleLoading(false);
+            }
+          },
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+      } catch {
+        // bỏ qua nếu SDK chưa sẵn sàng
+      }
+    }
+  }, [isAuthModalOpen, login, handleClose]);
+
   const validatePassword = (pwd) => {
     return pwd.length >= 12 && pwd.length <= 72;
   };
@@ -367,7 +399,6 @@ const AuthModal = () => {
         'Đăng nhập Google không thành công. Vui lòng thử lại.';
 
       setError(errorMsg);
-    } finally {
       setGoogleLoading(false);
     }
   };
@@ -431,6 +462,7 @@ const AuthModal = () => {
         }
       });
     } catch (err) {
+      console.error('Google Sign-In initialization failed:', err);
       setGoogleLoading(false);
       setError(
         'Không thể khởi tạo Google Sign-In. Vui lòng tải lại trang.'

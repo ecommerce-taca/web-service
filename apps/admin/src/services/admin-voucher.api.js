@@ -118,7 +118,8 @@ export const adminVoucherApi = {
         const response = await apiClient.get('/admin/vouchers', { params });
         return response?.data;
       } catch (err) {
-        console.warn('API Gateway GET /admin/vouchers failed, falling back to mock:', err);
+        console.error('API Gateway GET /admin/vouchers failed:', err);
+        throw err;
       }
     }
 

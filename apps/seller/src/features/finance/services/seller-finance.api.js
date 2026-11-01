@@ -18,11 +18,10 @@ export const sellerFinanceApi = {
       try {
         const response = await apiClient.get('/seller/wallet');
         const data = unwrapApiResponse(response);
-        if (data) {
-          return createResponseEnvelope(data);
-        }
+        return createResponseEnvelope(data);
       } catch (err) {
-        console.warn('API Gateway GET /seller/wallet failed, falling back to mock data', err);
+        console.error('API Gateway GET /seller/wallet failed:', err);
+        throw err;
       }
     }
 
@@ -54,11 +53,10 @@ export const sellerFinanceApi = {
       try {
         const response = await apiClient.get('/seller/revenue', { params });
         const data = unwrapApiResponse(response);
-        if (data) {
-          return createResponseEnvelope(data);
-        }
+        return createResponseEnvelope(data);
       } catch (err) {
-        console.warn('API Gateway GET /seller/revenue failed, falling back to mock data', err);
+        console.error('API Gateway GET /seller/revenue failed:', err);
+        throw err;
       }
     }
 

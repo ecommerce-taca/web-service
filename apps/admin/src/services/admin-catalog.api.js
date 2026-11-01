@@ -373,7 +373,8 @@ export const adminCatalogApi = {
         });
         return response?.data;
       } catch (err) {
-        console.warn('API Gateway GET /admin/catalog/products failed, using mock fallback', err);
+        console.error('API Gateway GET /admin/catalog/products failed:', err);
+        throw err;
       }
     }
 
@@ -427,7 +428,8 @@ export const adminCatalogApi = {
         const response = await apiClient.get(`/admin/catalog/products/${productId}`);
         return response?.data;
       } catch (err) {
-        console.warn(`API Gateway GET /admin/catalog/products/${productId} failed, using mock`, err);
+        console.error(`API Gateway GET /admin/catalog/products/${productId} failed:`, err);
+        throw err;
       }
     }
 
@@ -464,7 +466,8 @@ export const adminCatalogApi = {
         });
         return response?.data;
       } catch (err) {
-        console.warn(`API Gateway POST /admin/catalog/products/${productId}/block failed, using mock`, err);
+        console.error(`API Gateway POST /admin/catalog/products/${productId}/block failed:`, err);
+        throw err;
       }
     }
 
@@ -514,7 +517,8 @@ export const adminCatalogApi = {
         });
         return response?.data;
       } catch (err) {
-        console.warn(`API Gateway POST /admin/catalog/products/${productId}/unblock failed, using mock`, err);
+        console.error(`API Gateway POST /admin/catalog/products/${productId}/unblock failed:`, err);
+        throw err;
       }
     }
 
@@ -568,7 +572,8 @@ export const adminCatalogApi = {
         });
         return response?.data;
       } catch (err) {
-        console.warn('API Gateway GET /admin/catalog/categories failed, using mock fallback', err);
+        console.error('API Gateway GET /admin/catalog/categories failed:', err);
+        throw err;
       }
     }
 
@@ -622,7 +627,8 @@ export const adminCatalogApi = {
         });
         return response?.data;
       } catch (err) {
-        console.warn('API Gateway POST /admin/catalog/categories failed, using mock', err);
+        console.error('API Gateway POST /admin/catalog/categories failed:', err);
+        throw err;
       }
     }
 
@@ -675,7 +681,8 @@ export const adminCatalogApi = {
         const response = await apiClient.patch(`/admin/catalog/categories/${categoryId}`, payload);
         return response?.data;
       } catch (err) {
-        console.warn(`API Gateway PATCH /admin/catalog/categories/${categoryId} failed, using mock`, err);
+        console.error(`API Gateway PATCH /admin/catalog/categories/${categoryId} failed:`, err);
+        throw err;
       }
     }
 
@@ -721,7 +728,8 @@ export const adminCatalogApi = {
         });
         return response?.data;
       } catch (err) {
-        console.warn(`API Gateway POST /admin/catalog/categories/${categoryId}/archive failed, using mock`, err);
+        console.error(`API Gateway POST /admin/catalog/categories/${categoryId}/archive failed:`, err);
+        throw err;
       }
     }
 

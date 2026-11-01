@@ -11,15 +11,14 @@ export const shipmentApi = {
       try {
         const response = await apiClient.get(`/orders/${orderId}/shipment`);
         const data = unwrapApiResponse(response);
-        if (data) {
-          return createResponseEnvelope(data);
-        }
+        return createResponseEnvelope(data || { notCreated: true });
       } catch (err) {
         // 404 SHIPMENT_NOT_FOUND nghĩa là đơn hàng chưa tạo vận đơn
         if (err?.response?.status === 404) {
           return createResponseEnvelope({ notCreated: true });
         }
-        console.warn(`GET /orders/${orderId}/shipment failed`, err);
+        console.error(`API Gateway GET /orders/${orderId}/shipment failed:`, err);
+        throw err;
       }
     }
 

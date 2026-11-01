@@ -250,11 +250,8 @@ export const getKycQueue = async (params = {}) => {
     const response = await apiClient.get('/admin/shops/kyc', { params: queryParams });
     return response;
   } catch (err) {
-    console.warn('[AdminKycApi] getKycQueue remote error, returning mock fallback:', err);
-    return {
-      data: getStoredQueue(),
-      meta: { page: 1, size: 20, total: MOCK_KYC_QUEUE.length, total_pages: 1, metrics: MOCK_METRICS },
-    };
+    console.error('[AdminKycApi] getKycQueue remote error:', err);
+    throw err;
   }
 };
 
@@ -292,15 +289,8 @@ export const getKycDetail = async (shopId) => {
     const response = await apiClient.get(`/admin/shops/${shopId}/kyc`);
     return response;
   } catch (err) {
-    console.warn('[AdminKycApi] getKycDetail fallback:', err);
-    const queue = getStoredQueue();
-    const item = queue[0];
-    return {
-      data: {
-        shop: { id: shopId, name: item.shop_name, business_name: item.business_name, tax_code_masked: item.tax_code_masked },
-        kyc_case: { id: item.kyc_case_id, status: item.status, documents: item.documents, risk_signal: item.risk_signal },
-      },
-    };
+    console.error('[AdminKycApi] getKycDetail failed:', err);
+    throw err;
   }
 };
 
