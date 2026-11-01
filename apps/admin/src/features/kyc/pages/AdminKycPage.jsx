@@ -28,8 +28,14 @@ export default function AdminKycPage() {
       .then((res) => {
         if (!isMounted) return;
         setQueue(res.data || []);
-        if (res.meta?.metrics) {
-          setMetrics(res.meta.metrics);
+        const metaObj = res?.metadata || res?.meta;
+        if (metaObj?.metrics) {
+          setMetrics(metaObj.metrics);
+        } else if (metaObj?.total !== undefined) {
+          setMetrics((prev) => ({
+            ...prev,
+            pending_count: metaObj.total,
+          }));
         }
         setLoading(false);
       })

@@ -843,11 +843,18 @@ export const productApi = {
   },
 
   /**
-   * Lấy sản phẩm nổi bật / Flash Sale
+   * Lấy sản phẩm nổi bật / Flash Sale theo chuẩn NestJS Product Catalog
    */
-  getFlashSaleProducts: async () => {
+  getFlashSaleProducts: async (params = {}) => {
     if (!isMockMode()) {
-      return apiClient.get('/products', { params: { is_flash_sale: true, size: 8 } });
+      const res = await apiClient.get('/products', { params: { limit: params.limit || 8, page: 1, sort: 'popular' } });
+      const products = res?.data?.data || res?.data || [];
+      const discounted = Array.isArray(products) ? products.filter(p => {
+        const sale = p.price?.sale_price || p.sale_price;
+        const base = p.price?.base_price || p.price;
+        return sale && base && Number(sale) < Number(base);
+      }) : [];
+      return { data: discounted.length > 0 ? discounted : (Array.isArray(products) ? products.slice(0, 8) : []) };
     }
     const flashItems = PRODUCTS_CATALOG.filter(p => p.isFlashSale);
     return { data: flashItems.length > 0 ? flashItems : PRODUCTS_CATALOG.slice(0, 4) };

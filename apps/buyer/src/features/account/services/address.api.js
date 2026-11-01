@@ -1,13 +1,4 @@
-import apiClient from '../../../../../../shared/utils/api-client';
-
-const isMockMode = () => {
-  if (typeof window !== 'undefined') {
-    const forceMock = localStorage.getItem('taca_force_mock');
-    if (forceMock === 'true') return true;
-    if (forceMock === 'false') return false;
-  }
-  return import.meta.env.VITE_USE_MOCK === 'true';
-};
+import apiClient, { isMockMode } from '../../../../../../shared/utils/api-client';
 
 const resolveMockLocationNames = async (provinceCode, wardCode) => {
   try {

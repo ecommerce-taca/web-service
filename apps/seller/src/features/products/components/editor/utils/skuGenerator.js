@@ -103,10 +103,12 @@ export function generateSkusFromCombos(
   if (!combos || combos.length === 0) {
     // Trường hợp sản phẩm đơn không có biến thể
     const existingSingle = existingSkus.find(s => Object.keys(s.attributes || {}).length === 0);
+    const code = existingSingle?.seller_sku || existingSingle?.code || `${(currentSpuCode || 'SKU').replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}-DEFAULT`;
     return [
       {
         id: existingSingle?.id || 'sku-single',
-        code: existingSingle?.code || `${(currentSpuCode || 'SKU').replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}-DEFAULT`,
+        code,
+        seller_sku: code,
         name: 'Tiêu chuẩn',
         price: existingSingle?.price || basePrice,
         stock: existingSingle?.stock ?? baseStock,
@@ -127,10 +129,11 @@ export function generateSkusFromCombos(
     });
 
     if (matchOld) {
+      const code = matchOld.seller_sku || matchOld.code || generateSkuCode(currentSpuCode, combo, idx);
       return {
         ...matchOld,
-        // Nếu SKU cũ chưa có code hoặc rỗng thì gợi ý code
-        code: matchOld.code || generateSkuCode(currentSpuCode, combo, idx)
+        code,
+        seller_sku: code
       };
     }
 
@@ -141,6 +144,7 @@ export function generateSkusFromCombos(
     return {
       id: `sku-gen-${idx + 1}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
       code,
+      seller_sku: code,
       name,
       price: basePrice,
       stock: baseStock,

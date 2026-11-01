@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Download, Check, CheckCircle2, AlertTriangle, Eye, Plus, Calendar, Filter, RotateCcw } from 'lucide-react';
+import { Download, Check, CheckCircle2, AlertTriangle, Eye, Calendar, Filter, RotateCcw } from 'lucide-react';
 import { adminFinanceApi } from '../../../services/admin-finance.api';
 import SettlementBatchDetailModal from '../components/SettlementBatchDetailModal';
-import CreateSettlementBatchModal from '../components/CreateSettlementBatchModal';
 
 export default function AdminFinancePage() {
   const [summary, setSummary] = useState(null);
@@ -10,7 +9,6 @@ export default function AdminFinancePage() {
   const [settlements, setSettlements] = useState([]);
   const [selectedBatchDetail, setSelectedBatchDetail] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [isCreateBatchOpen, setIsCreateBatchOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportFormat, setExportFormat] = useState('xlsx');
   const [notice, setNotice] = useState('');
@@ -93,12 +91,6 @@ export default function AdminFinancePage() {
     } finally {
       setIsExporting(false);
     }
-  };
-
-  const handleCreateBatchSuccess = (newBatch) => {
-    setSettlements((prev) => [newBatch, ...prev]);
-    setNotice(`Đã tạo thành công đợt quyết toán #${newBatch.batch_id}!`);
-    setTimeout(() => setNotice(''), 4000);
   };
 
   const handleViewBatchDetail = async (batchId) => {
@@ -273,14 +265,10 @@ export default function AdminFinancePage() {
               Đợt chuyển tiền tự động từ số dư chờ đối soát sang số dư khả dụng sau chu kỳ T+2 (§3.8 payment-wallet.md)
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsCreateBatchOpen(true)}
-            className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[12px] font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Tạo đợt quyết toán</span>
-          </button>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-xl text-[12px] font-semibold text-indigo-700 shadow-xs">
+            <Calendar className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
+            <span>Chu kỳ tự động: 02:00 sáng Thứ Hai (T+2)</span>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -459,13 +447,6 @@ export default function AdminFinancePage() {
         onClose={() => setIsDetailModalOpen(false)}
         batchDetail={selectedBatchDetail}
         onRetry={handleRetrySettlement}
-      />
-
-      {/* Modal Tạo đợt quyết toán (MISS-009) */}
-      <CreateSettlementBatchModal
-        isOpen={isCreateBatchOpen}
-        onClose={() => setIsCreateBatchOpen(false)}
-        onSuccess={handleCreateBatchSuccess}
       />
     </div>
   );

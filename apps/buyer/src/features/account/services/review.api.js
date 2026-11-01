@@ -102,7 +102,8 @@ export const reviewApi = {
           };
         }
       } catch (err) {
-        console.warn(`API Gateway GET /products/${productId}/reviews failed, falling back to local reviews`, err);
+        console.error(`API Gateway GET /products/${productId}/reviews failed:`, err);
+        throw err;
       }
     }
 

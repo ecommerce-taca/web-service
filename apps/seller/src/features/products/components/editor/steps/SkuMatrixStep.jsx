@@ -136,12 +136,12 @@ export default function SkuMatrixStep({
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10">
                 <th className="py-2.5 px-4 bg-slate-50">BIẾN THỂ ĐA THUỘC TÍNH</th>
-                <th className="py-2.5 px-4 bg-slate-50">
-                  <span className="inline-flex items-center gap-1 text-slate-700">
-                    <Barcode className="w-3.5 h-3.5 text-[#4F46E5]" aria-hidden="true" />
-                    <span>MÃ SKU *</span>
-                  </span>
-                </th>
+                    <th className="py-2.5 px-4 bg-slate-50">
+                      <span className="inline-flex items-center gap-1 text-slate-700">
+                        <Barcode className="w-3.5 h-3.5 text-[#4F46E5]" aria-hidden="true" />
+                        <span>MÃ SKU (seller_sku) *</span>
+                      </span>
+                    </th>
                 <th className="py-2.5 px-4 bg-slate-50">GIÁ BÁN (₫)</th>
                 <th className="py-2.5 px-4 bg-slate-50">TỒN KHO</th>
                 <th className="py-2.5 px-4 text-center bg-slate-50">HIỂN THỊ</th>

@@ -19,9 +19,10 @@ function SkuMatrixRow({ sku, onUpdateCode, onUpdatePrice, onUpdateStock, onToggl
         <input
           type="text"
           required
-          value={sku.code || ''}
+          value={sku.seller_sku || sku.code || ''}
           onChange={(e) => onUpdateCode(sku.id, e.target.value.toUpperCase())}
           placeholder="Mã SKU (VD: IP16-256-NAT)"
+          aria-label={`Mã SKU biến thể ${sku.name || ''}`}
           className="w-full min-w-[140px] px-2.5 py-1.5 font-mono text-[11px] border border-slate-300 rounded-lg text-slate-900 font-semibold focus:outline-none focus:border-[#4F46E5] bg-white uppercase"
         />
       </td>
@@ -68,6 +69,7 @@ SkuMatrixRow.propTypes = {
   sku: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     code: PropTypes.string,
+    seller_sku: PropTypes.string,
     name: PropTypes.string,
     price: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     stock: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),

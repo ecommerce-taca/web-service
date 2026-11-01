@@ -14,7 +14,6 @@ import {
   ScrollText,
   Settings,
   X,
-  ShoppingBag,
   ExternalLink,
   KeyRound,
 } from 'lucide-react';
@@ -26,18 +25,18 @@ export default function AdminSidebar({ user, onSignOut, onOpen2FA, onClose }) {
   const basePath = isShell ? '/admin' : '';
 
   const navItems = [
-    { label: 'Dashboard', path: `${basePath}/dashboard`, icon: LayoutDashboard },
-    { label: 'Campaigns', path: `${basePath}/campaigns`, icon: Megaphone },
+    { label: 'Dashboard', path: `${basePath}/dashboard`, icon: LayoutDashboard, disabled: true },
+    { label: 'Campaigns', path: `${basePath}/campaigns`, icon: Megaphone, disabled: true },
     { label: 'Categories', path: `${basePath}/categories`, icon: Layers },
     { label: 'Shops / KYC', path: `${basePath}/shops/kyc`, icon: Store, exact: true },
     { label: 'Products / SKU', path: `${basePath}/products`, icon: Package },
     { label: 'Fees / Taxes', path: `${basePath}/fees`, icon: Receipt },
     { label: 'Finance', path: `${basePath}/finance`, icon: WalletCards },
-    { label: 'Orders / Disputes', path: `${basePath}/orders`, icon: ShoppingCart },
+    { label: 'Orders / Disputes', path: `${basePath}/orders`, icon: ShoppingCart, disabled: true },
     { label: 'Vouchers', path: `${basePath}/vouchers`, icon: Ticket },
     { label: 'Users / Roles', path: `${basePath}/users/roles`, icon: Users },
     { label: 'Audit Logs', path: `${basePath}/audit-logs`, icon: ScrollText },
-    { label: 'Settings', path: `${basePath}/settings`, icon: Settings },
+    { label: 'Settings', path: `${basePath}/settings`, icon: Settings, disabled: true },
   ];
 
   const isItemActive = (itemPath) => {
@@ -78,8 +77,28 @@ export default function AdminSidebar({ user, onSignOut, onOpen2FA, onClose }) {
       {/* Nav Links */}
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {navItems.map((item) => {
-          const active = isItemActive(item.path);
+          const active = !item.disabled && isItemActive(item.path);
           const IconComponent = item.icon;
+
+          if (item.disabled) {
+            return (
+              <div
+                key={item.label}
+                aria-disabled="true"
+                className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 opacity-60 cursor-not-allowed select-none"
+                title={`${item.label} - Tính năng đang phát triển`}
+              >
+                <div className="flex items-center gap-3">
+                  <IconComponent className="w-4 h-4 shrink-0 text-slate-500 opacity-60" aria-hidden="true" />
+                  <span>{item.label}</span>
+                </div>
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-400 border border-slate-700/50">
+                  Sắp có
+                </span>
+              </div>
+            );
+          }
+
           return (
             <Link
               key={item.label}
@@ -111,16 +130,6 @@ export default function AdminSidebar({ user, onSignOut, onOpen2FA, onClose }) {
         <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">
           CHUYỂN ĐỔI PHÂN HỆ
         </div>
-        <a
-          href="/"
-          className="flex items-center justify-between text-slate-400 hover:text-white transition-colors py-1 px-1 rounded-md hover:bg-slate-800/60 no-underline"
-        >
-          <span className="flex items-center gap-1.5">
-            <ShoppingBag className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
-            <span>Kênh Người Mua</span>
-          </span>
-          <ExternalLink className="w-3 h-3 opacity-60" aria-hidden="true" />
-        </a>
         <a
           href="/seller"
           className="flex items-center justify-between text-slate-400 hover:text-white transition-colors py-1 px-1 rounded-md hover:bg-slate-800/60 no-underline"

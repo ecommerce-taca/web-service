@@ -1,12 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import { X, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 import { reviewKyc, getKycDetail } from '../../../services/admin-kyc.api';
 import StepUpMfaModal from '../../../components/common/StepUpMfaModal';
 
+const QUICK_REASONS = [
+  'Ảnh CMND/CCCD hoặc ĐKKD bị mờ, không rõ nét.',
+  'Thông tin đại diện pháp luật không trùng khớp với giấy tờ.',
+  'Mã số thuế không hợp lệ hoặc đã ngừng hoạt động.',
+  'Tài khoản ngân hàng không chính chủ hoặc không khớp doanh nghiệp.',
+];
+
 export default function KycReviewModal({ isOpen, onClose, item, onDecisionSuccess }) {
   const [reason, setReason] = useState('');
+  const [reasonError, setReasonError] = useState('');
+  const reasonRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isMfaOpen, setIsMfaOpen] = useState(false);
@@ -57,12 +66,19 @@ export default function KycReviewModal({ isOpen, onClose, item, onDecisionSucces
   const executeDecision = async (decision, stepUpToken = '') => {
     setLoading(true);
     setErrorMessage('');
+    setReasonError('');
     try {
+      const effectiveReason = reason.trim() || (
+        decision === 'REJECTED'
+          ? 'Hồ sơ không đáp ứng đầy đủ tiêu chuẩn thẩm định của sàn Taca.'
+          : 'Hồ sơ và tài liệu đầy đủ, hợp lệ.'
+      );
+
       await reviewKyc(
         item.shop_id,
         {
           decision,
-          reason: reason.trim() || 'Hồ sơ và tài liệu hợp lệ.',
+          reason: effectiveReason,
         },
         stepUpToken
       );
@@ -80,10 +96,14 @@ export default function KycReviewModal({ isOpen, onClose, item, onDecisionSucces
   };
 
   const handleDecision = (decision) => {
-    if (['NEEDS_INFO', 'REJECTED'].includes(decision) && (!reason || reason.trim().length < 10)) {
-      setErrorMessage('Vui lòng nhập lý do tối thiểu 10 ký tự cho quyết định này.');
+    if (decision === 'NEEDS_INFO' && (!reason || !reason.trim())) {
+      const msg = 'Vui lòng nhập lý do để người bán biết cần bổ sung tài liệu gì.';
+      setReasonError(msg);
+      setErrorMessage('');
+      reasonRef.current?.focus();
       return;
     }
+    setReasonError('');
 
     if (decision === 'REJECTED') {
       setIsMfaOpen(true);
@@ -221,16 +241,62 @@ export default function KycReviewModal({ isOpen, onClose, item, onDecisionSucces
 
           {/* Reason Input Field */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5 tracking-wider">
-              Lý do hoặc ghi chú thẩm định (Bắt buộc nếu Từ chối / Yêu cầu bổ sung):
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label htmlFor="kyc-reason-textarea" className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                Lý do hoặc ghi chú thẩm định (Tùy chọn):
+              </label>
+              <span className="text-[11px] font-semibold text-slate-400">
+                {reason.trim().length} / 500 ký tự
+              </span>
+            </div>
             <textarea
+              id="kyc-reason-textarea"
+              ref={reasonRef}
               rows={3}
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
+              onChange={(e) => {
+                setReason(e.target.value);
+                if (reasonError) setReasonError('');
+                if (errorMessage) setErrorMessage('');
+              }}
               placeholder="Nhập ghi chú hoặc lý do cần bổ sung tài liệu..."
-              className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0A68FF] text-[12px]"
+              aria-invalid={Boolean(reasonError)}
+              className={`w-full px-3.5 py-2.5 border rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none text-[12px] transition-colors ${
+                reasonError
+                  ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-200 bg-rose-50/20'
+                  : 'border-slate-300 focus:border-[#0A68FF]'
+              }`}
             />
+            {reasonError && (
+              <p className="mt-1 text-[11px] font-semibold text-rose-600 flex items-center gap-1">
+                <span>⚠</span>
+                <span>{reasonError}</span>
+              </p>
+            )}
+
+            {/* Quick Reason Suggestion Chips */}
+            <div className="mt-2.5">
+              <span className="text-[11px] font-bold text-slate-500 block mb-1">
+                Gợi ý lý do chuẩn hóa (Click chọn nhanh):
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {QUICK_REASONS.map((chip, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setReason(chip);
+                      setReasonError('');
+                      if (errorMessage) setErrorMessage('');
+                      reasonRef.current?.focus();
+                    }}
+                    className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-medium rounded-lg border border-slate-200 hover:border-slate-300 transition-colors cursor-pointer text-left"
+                  >
+                    {chip.replace(/\.$/, '')}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 

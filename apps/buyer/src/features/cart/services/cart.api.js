@@ -111,19 +111,9 @@ export const cartApi = {
   },
 
   /**
-   * Xóa toàn bộ giỏ: DELETE /cart
+   * Dọn giỏ hàng local state (Backend tự động dọn giỏ qua Kafka event sau khi checkout)
    */
   clearCart: async () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('taca_access_token') : null;
-
-    if (!isMockMode() && token) {
-      try {
-        await apiClient.delete('/cart');
-      } catch (err) {
-        console.warn('API Gateway DELETE /cart failed', err);
-      }
-    }
-
     saveStoredLocalCart([]);
     return { data: { success: true } };
   }
