@@ -87,20 +87,18 @@ export const reviewApi = {
     if (!isMockMode()) {
       try {
         const response = await apiClient.get(`/products/${productId}/reviews`, { params });
-        const resData = response?.data?.data || response?.data;
-        if (resData) {
-          return {
-            data: {
-              aggregate: resData.aggregate || {
-                avg: 4.8,
-                count: (resData.reviews || []).length,
-                distribution: { '1': 0, '2': 0, '3': 1, '4': 2, '5': 10 }
-              },
-              reviews: resData.reviews || []
+        const resData = response?.data?.data || response?.data || {};
+        return {
+          data: {
+            aggregate: resData.aggregate || {
+              avg: 5.0,
+              count: (resData.reviews || []).length,
+              distribution: { '1': 0, '2': 0, '3': 0, '4': 0, '5': (resData.reviews || []).length }
             },
-            meta: response?.meta || { total: (resData.reviews || []).length }
-          };
-        }
+            reviews: resData.reviews || []
+          },
+          meta: response?.meta || { total: (resData.reviews || []).length }
+        };
       } catch (err) {
         console.error(`API Gateway GET /products/${productId}/reviews failed:`, err);
         throw err;

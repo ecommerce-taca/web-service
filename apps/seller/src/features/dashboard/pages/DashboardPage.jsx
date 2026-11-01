@@ -17,13 +17,16 @@ import OrderDetailModal from '../../orders/components/OrderDetailModal';
 import { SELLER_MOCK_DATA } from '../../../services/seller.mock';
 import { getOnboardingProgress } from '../../../services/seller-shop.api';
 import { useSellerRealtimeStatus } from '../../../hooks/useSellerRealtimeStatus';
+import { isMockMode } from '../../../../../../shared/utils/api-client';
+import { getSellerOrders } from '../../orders/services/seller-order.api';
+import { sellerFinanceApi } from '../../finance/services/seller-finance.api';
 
 export default function DashboardPage() {
   const location = useLocation();
   const isShell = location.pathname.startsWith('/seller');
   const basePath = isShell ? '/seller' : '';
 
-  const { dashboard } = SELLER_MOCK_DATA;
+  const [dashboard, setDashboard] = useState(SELLER_MOCK_DATA.dashboard);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [reportDownloaded, setReportDownloaded] = useState(false);
   const [onboardingProgress, setOnboardingProgress] = useState(null);
@@ -51,6 +54,70 @@ export default function DashboardPage() {
       window.removeEventListener('taca:kyc_updated', handleKycUpdated);
       window.removeEventListener('storage', handleKycUpdated);
     };
+  }, []);
+
+  useEffect(() => {
+    if (!isMockMode()) {
+      Promise.allSettled([
+        sellerFinanceApi.getRevenue({ granularity: 'DAY' }),
+        getSellerOrders({ page: 1, size: 5 })
+      ]).then(([revenueRes, ordersRes]) => {
+        setDashboard((prev) => {
+          const next = { ...prev };
+
+          if (revenueRes.status === 'fulfilled' && revenueRes.value?.data) {
+            const rev = revenueRes.value.data;
+            if (rev.total_gmv) {
+              const formattedGmv = new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+              }).format(rev.total_gmv);
+
+              next.revenue7Days = {
+                ...prev.revenue7Days,
+                total: formattedGmv,
+                growth: rev.monthly_growth ? `+${rev.monthly_growth}%` : prev.revenue7Days.growth
+              };
+
+              next.metrics = prev.metrics.map((m) => {
+                if (m.id === 'm1') {
+                  return { ...m, value: formattedGmv };
+                }
+                if (m.id === 'm2' && rev.summary?.order_count) {
+                  return { ...m, value: `${rev.summary.order_count} đơn` };
+                }
+                return m;
+              });
+            }
+          }
+
+          if (ordersRes.status === 'fulfilled' && ordersRes.value) {
+            const rawOrders = ordersRes.value?.items || ordersRes.value?.data?.items || ordersRes.value?.data || [];
+            if (Array.isArray(rawOrders) && rawOrders.length > 0) {
+              next.recentOrders = rawOrders.slice(0, 5).map((order) => {
+                const totalAmount = order.total_amount ?? order.total ?? 0;
+                const formattedAmount = typeof totalAmount === 'number'
+                  ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalAmount)
+                  : String(totalAmount);
+
+                return {
+                  id: order.id || order.order_id || 'TC-ORDER',
+                  customer: order.buyer_name || order.customer || order.buyer?.name || 'Khách hàng',
+                  product: order.product || order.items?.[0]?.product_name || 'Sản phẩm Taca',
+                  amount: formattedAmount,
+                  status: order.status_label || order.status || 'Chờ xử lý',
+                  statusType: order.status_type || (order.status === 'DELIVERED' || order.status === 'COMPLETED' ? 'success' : 'processing'),
+                };
+              });
+            }
+          }
+
+          return next;
+        });
+      }).catch((err) => {
+        console.warn('Lỗi nạp dữ liệu thật cho seller dashboard:', err);
+      });
+    }
   }, []);
 
   const handleDownloadReport = () => {

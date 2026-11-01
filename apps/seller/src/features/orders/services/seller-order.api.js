@@ -29,12 +29,8 @@ const saveStoredMockOrders = (ordersData) => {
  */
 export const getSellerOrders = async (params = {}) => {
   if (!isMockMode()) {
-    try {
-      const res = await apiClient.get('/seller/orders', { params });
-      return res?.data || res;
-    } catch (err) {
-      console.warn('Không thể gọi API /seller/orders từ backend, chuyển sang mock data:', err);
-    }
+    const res = await apiClient.get('/seller/orders', { params });
+    return res?.data || res;
   }
 
   // Giả lập độ trễ mạng trong môi trường Mock
@@ -74,12 +70,8 @@ export const getSellerOrders = async (params = {}) => {
  */
 export const getSellerOrderById = async (orderId) => {
   if (!isMockMode()) {
-    try {
-      const res = await apiClient.get(`/seller/orders/${orderId}`);
-      return res?.data || res;
-    } catch (err) {
-      console.warn(`Lỗi gọi API /seller/orders/${orderId}, chuyển sang mock fallback:`, err);
-    }
+    const res = await apiClient.get(`/seller/orders/${orderId}`);
+    return res?.data || res;
   }
 
   const currentOrders = getStoredMockOrders();
@@ -188,13 +180,8 @@ export const bulkAcceptSellerOrders = async (orderIds = []) => {
  */
 export const getShipmentCarriers = async (orderId) => {
   if (!isMockMode()) {
-    try {
-      const res = await apiClient.get(`/seller/orders/${orderId}/shipment/carriers`);
-      return res?.data || res;
-    } catch (err) {
-      console.warn(`Lỗi gọi API /seller/orders/${orderId}/shipment/carriers:`, err);
-      // Fallback mock nếu backend chưa khởi động
-    }
+    const res = await apiClient.get(`/seller/orders/${orderId}/shipment/carriers`);
+    return res?.data || res;
   }
 
   await new Promise((r) => setTimeout(r, 250));
@@ -238,17 +225,13 @@ export const getShipmentCarriers = async (orderId) => {
 export const exportSellerOrders = async (params = {}) => {
   const exportFormat = params.format || 'xlsx';
   if (!isMockMode()) {
-    try {
-      const res = await apiClient.get('/seller/orders/export', {
-        params: {
-          ...params,
-          format: exportFormat,
-        },
-      });
-      return res?.data || res;
-    } catch (err) {
-      console.warn('Lỗi gọi API /seller/orders/export:', err);
-    }
+    const res = await apiClient.get('/seller/orders/export', {
+      params: {
+        ...params,
+        format: exportFormat,
+      },
+    });
+    return res?.data || res;
   }
 
   await new Promise((r) => setTimeout(r, 500));

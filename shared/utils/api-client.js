@@ -193,10 +193,13 @@ if (typeof window !== 'undefined') {
 }
 
 export const isMockMode = () => {
+  if (typeof window !== 'undefined') {
+    if (localStorage.getItem('taca_mock_mode') === 'false') return false;
+    if (localStorage.getItem('taca_mock_mode') === 'true') return true;
+  }
   const flag = import.meta.env.VITE_USE_MOCK;
-  if (flag === 'true' || flag === true) return true;
   if (flag === 'false' || flag === false) return false;
-  if (typeof window !== 'undefined' && localStorage.getItem('taca_force_mock') === 'true') return true;
+  if (flag === 'true' || flag === true) return true;
   return false;
 };
 

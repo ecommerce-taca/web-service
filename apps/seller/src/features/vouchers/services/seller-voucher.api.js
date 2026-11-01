@@ -29,12 +29,8 @@ const saveStoredMockVouchers = (vouchersData) => {
  */
 export const getSellerVouchers = async (params = {}) => {
   if (!isMockMode()) {
-    try {
-      const res = await apiClient.get('/seller/vouchers', { params });
-      return res?.data || res;
-    } catch (err) {
-      console.warn('Không thể kết nối API /seller/vouchers, chuyển sang mock fallback:', err);
-    }
+    const res = await apiClient.get('/seller/vouchers', { params });
+    return res?.data || res;
   }
 
   await new Promise((r) => setTimeout(r, 200));

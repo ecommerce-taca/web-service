@@ -109,12 +109,8 @@ const saveStoredMockInventory = (items) => {
  */
 export const getSellerInventory = async (params = {}) => {
   if (!isMockMode()) {
-    try {
-      const res = await apiClient.get('/seller/inventory', { params });
-      return res?.data || res;
-    } catch (err) {
-      console.warn('Không thể kết nối API /seller/inventory, chuyển sang mock fallback:', err);
-    }
+    const res = await apiClient.get('/seller/inventory', { params });
+    return res?.data || res;
   }
 
   await new Promise((r) => setTimeout(r, 200));

@@ -11,7 +11,8 @@ export const adminFinanceApi = {
         const response = await apiClient.get('/admin/payments/reconciliation', { params });
         return response?.data;
       } catch (err) {
-        console.warn('API Gateway GET /admin/payments/reconciliation failed, using mock', err);
+        console.error('API Gateway GET /admin/payments/reconciliation failed:', err);
+        throw err;
       }
     }
     return {
@@ -71,7 +72,8 @@ export const adminFinanceApi = {
         const response = await apiClient.get('/admin/fees');
         return response?.data;
       } catch (err) {
-        console.warn('API Gateway GET /admin/fees failed, using mock', err);
+        console.error('API Gateway GET /admin/fees failed:', err);
+        throw err;
       }
     }
     return {
@@ -192,7 +194,8 @@ export const adminFinanceApi = {
         const response = await apiClient.get('/admin/taxes');
         return response?.data;
       } catch (err) {
-        console.warn('API Gateway GET /admin/taxes failed, using mock', err);
+        console.error('API Gateway GET /admin/taxes failed:', err);
+        throw err;
       }
     }
     return {
@@ -229,7 +232,8 @@ export const adminFinanceApi = {
         const response = await apiClient.get('/admin/settlements', { params });
         return response?.data;
       } catch (err) {
-        console.warn('API Gateway GET /admin/settlements failed, using mock', err);
+        console.error('API Gateway GET /admin/settlements failed:', err);
+        throw err;
       }
     }
     return {
@@ -279,7 +283,8 @@ export const adminFinanceApi = {
         const response = await apiClient.get(`/admin/settlements/${batchId}`);
         return response?.data;
       } catch (err) {
-        console.warn(`API Gateway GET /admin/settlements/${batchId} failed`, err);
+        console.error(`API Gateway GET /admin/settlements/${batchId} failed:`, err);
+        throw err;
       }
     }
     return {
@@ -354,7 +359,8 @@ export const adminFinanceApi = {
         const response = await apiClient.get('/admin/finance/summary', { params });
         return response?.data;
       } catch (err) {
-        console.warn('API Gateway GET /admin/finance/summary failed, using mock', err);
+        console.error('API Gateway GET /admin/finance/summary failed:', err);
+        throw err;
       }
     }
     return {
@@ -377,7 +383,8 @@ export const adminFinanceApi = {
         const response = await apiClient.get('/admin/finance/summary/export', { params });
         return response?.data;
       } catch (err) {
-        console.warn('API Gateway GET /admin/finance/summary/export failed', err);
+        console.error('API Gateway GET /admin/finance/summary/export failed:', err);
+        throw err;
       }
     }
     return {
