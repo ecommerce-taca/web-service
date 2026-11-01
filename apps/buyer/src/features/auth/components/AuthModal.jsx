@@ -126,6 +126,38 @@ const AuthModal = () => {
     };
   }, [isWaitingEmailLink, pendingEmail]);
 
+  // Khởi tạo Google Identity Services (GIS) khi mở AuthModal
+  useEffect(() => {
+    if (!isAuthModalOpen || typeof window === 'undefined') return;
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (window.google?.accounts?.id && clientId) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: async (credentialResponse) => {
+            if (!credentialResponse?.credential) return;
+            setGoogleLoading(true);
+            try {
+              const res = await authApi.loginWithGoogle(credentialResponse.credential);
+              const payload = res?.data?.data || res?.data || res;
+              login(payload.user, payload.tokens);
+              handleClose();
+            } catch (err) {
+              const errorMsg = getAuthErrorMessage(err, 'google') || 'Đăng nhập Google không thành công. Vui lòng thử lại.';
+              setError(errorMsg);
+            } finally {
+              setGoogleLoading(false);
+            }
+          },
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+      } catch {
+        // bỏ qua nếu SDK chưa sẵn sàng
+      }
+    }
+  }, [isAuthModalOpen, login, handleClose]);
+
   const validatePassword = (pwd) => {
     return pwd.length >= 12 && pwd.length <= 72;
   };
@@ -351,25 +383,35 @@ const AuthModal = () => {
     setGoogleLoading(true);
     setError('');
     try {
-      if (typeof window !== 'undefined' && window.google?.accounts?.id && import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      if (typeof window !== 'undefined' && window.google?.accounts?.id && clientId) {
         window.google.accounts.id.prompt(async (notification) => {
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            const res = await authApi.loginWithGoogle();
-            const payload = res?.data?.data || res?.data || res;
-            login(payload.user, payload.tokens);
-            handleClose();
+            if (import.meta.env.VITE_USE_MOCK === 'true') {
+              const res = await authApi.loginWithGoogle();
+              const payload = res?.data?.data || res?.data || res;
+              login(payload.user, payload.tokens);
+              handleClose();
+            } else {
+              setError('Cửa sổ đăng nhập Google bị chặn hoặc chưa được cấp quyền (Origin: ' + window.location.origin + '). Vui lòng kiểm tra cấu hình Google Cloud.');
+            }
+            setGoogleLoading(false);
           }
         });
       } else {
-        const res = await authApi.loginWithGoogle(`mock_google_id_token_${Date.now()}`);
-        const payload = res?.data?.data || res?.data || res;
-        login(payload.user, payload.tokens);
-        handleClose();
+        if (import.meta.env.VITE_USE_MOCK === 'true') {
+          const res = await authApi.loginWithGoogle(`mock_google_id_token_${Date.now()}`);
+          const payload = res?.data?.data || res?.data || res;
+          login(payload.user, payload.tokens);
+          handleClose();
+        } else {
+          setError('Không thể tải Google Identity Services (có thể do mạng hoặc trình duyệt chặn). Vui lòng thử lại.');
+          setGoogleLoading(false);
+        }
       }
     } catch (err) {
       const errorMsg = getAuthErrorMessage(err, 'google') || 'Đăng nhập Google không thành công. Vui lòng thử lại.';
       setError(errorMsg);
-    } finally {
       setGoogleLoading(false);
     }
   };
