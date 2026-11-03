@@ -496,8 +496,8 @@ const ProfilePage = () => {
 
         {/* Password & Security Section */}
         <section className="max-w-[500px]">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="min-w-0">
               <h2 className="text-[16px] font-bold text-taca-text-main">Mật khẩu & Bảo mật</h2>
               <p className="text-[13px] text-taca-text-muted mt-1">
                 Quản lý mật khẩu đăng nhập để bảo vệ an toàn cho tài khoản của bạn.
@@ -507,7 +507,7 @@ const ProfilePage = () => {
               type="button"
               variant="secondary"
               onClick={() => setIsPasswordModalOpen(true)}
-              className="!py-1.5 !px-4 text-[14px] !rounded-lg border-taca-border bg-white text-taca-text-main hover:border-taca-primary hover:text-taca-primary cursor-pointer whitespace-nowrap"
+              className="!w-full sm:!w-auto !py-2 !px-4 text-[14px] !rounded-lg border-taca-border bg-white text-taca-text-main hover:border-taca-primary hover:text-taca-primary cursor-pointer whitespace-nowrap"
             >
               Đổi mật khẩu
             </Button>

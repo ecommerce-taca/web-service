@@ -461,8 +461,7 @@ const AuthModal = () => {
           );
         }
       });
-    } catch (err) {
-      console.error('Google Sign-In initialization failed:', err);
+    } catch {
       setGoogleLoading(false);
       setError(
         'Không thể khởi tạo Google Sign-In. Vui lòng tải lại trang.'

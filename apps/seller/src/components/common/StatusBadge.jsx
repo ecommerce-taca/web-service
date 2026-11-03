@@ -25,7 +25,7 @@ export default function StatusBadge({ status, type }) {
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${getBadgeStyle()}`}
+      className={`inline-flex items-center max-w-full px-2 py-0.5 rounded-pill text-caption font-bold border whitespace-nowrap ${getBadgeStyle()}`}
     >
       {status}
     </span>

@@ -11,6 +11,24 @@ export default {
   theme: {
     extend: {
       colors: {
+        taca: {
+          primary: {
+            DEFAULT: '#4F46E5',
+            hover: '#4338CA',
+            light: '#EEF2FF',
+          },
+          info: '#2563EB',
+          sale: '#FF424E',
+          warning: '#FF9800',
+          success: '#00AB56',
+          error: '#E11D48',
+          surface: '#F5F5FA',
+          text: {
+            main: '#242424',
+            muted: '#787878',
+          },
+          border: '#EBEBF0',
+        },
         primary: {
           DEFAULT: '#4F46E5',
           hover: '#4338CA',

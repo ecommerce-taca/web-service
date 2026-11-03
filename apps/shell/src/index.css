@@ -8,6 +8,10 @@
   body {
     @apply font-sans bg-surface text-main antialiased;
   }
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 @layer utilities {

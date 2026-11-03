@@ -32,7 +32,7 @@ class RemoteErrorBoundary extends Component {
       return (
         <div className="min-h-[60vh] flex items-center justify-center p-6 bg-slate-50/50">
           <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 p-8 shadow-sm text-center space-y-5">
-            <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center mx-auto shadow-2xs">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-panel border border-taca-sale/20 bg-taca-sale/5 text-taca-sale shadow-brand">
               <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>

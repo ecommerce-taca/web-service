@@ -24,16 +24,20 @@ export default function SellerNav() {
   };
 
   return (
-    <nav className="bg-white h-[54px] px-6 lg:px-12 flex items-center overflow-x-auto no-scrollbar">
-      <div className="flex items-center gap-1 sm:gap-2 h-full">
+    <nav
+      className="bg-white h-[52px] px-4 sm:px-6 lg:px-12 border-t border-slate-100 flex items-center overflow-x-auto no-scrollbar"
+      aria-label="Điều hướng Kênh Người Bán"
+    >
+      <div className="flex items-center gap-0.5 sm:gap-1 h-full min-w-max">
         {navItems.map((item) => {
           const active = isActive(item);
           return (
             <Link
               key={item.label}
               to={item.path}
-              className={`relative h-full flex items-center px-4 text-[13px] md:text-[14px] font-semibold whitespace-nowrap transition-colors ${
-                active ? 'text-[#4F46E5]' : 'text-slate-600 hover:text-slate-900'
+              aria-current={active ? 'page' : undefined}
+              className={`relative h-full flex items-center px-3 sm:px-4 text-body font-bold whitespace-nowrap transition-colors focus-visible:bg-indigo-50 focus-visible:text-[#4F46E5] ${
+                active ? 'text-[#4F46E5]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
               <span>{item.label}</span>

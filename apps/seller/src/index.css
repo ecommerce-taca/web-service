@@ -8,4 +8,58 @@
   body {
     @apply font-sans bg-surface text-main antialiased;
   }
+
+  * {
+    scrollbar-color: #cbd5e1 transparent;
+  }
+
+  ::selection {
+    @apply bg-taca-primary-light text-taca-primary-hover;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    @apply outline-none;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    @apply ring-2 ring-taca-primary ring-offset-2;
+  }
+}
+
+@layer components {
+  .seller-page-title {
+    @apply text-[24px] sm:text-heading font-extrabold tracking-tight text-taca-text-main;
+  }
+
+  .seller-section-title {
+    @apply text-title font-bold text-taca-text-main;
+  }
+
+  .seller-body-text {
+    @apply text-body text-slate-600;
+  }
+
+  .seller-caption {
+    @apply text-caption text-taca-text-muted;
+  }
+
+  .seller-page-shell {
+    @apply min-h-screen bg-taca-surface text-taca-text-main font-sans;
+  }
+
+  .seller-content {
+    @apply w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-8;
+  }
+
+  .seller-footer {
+    @apply bg-white border-t border-taca-border px-4 sm:px-6 lg:px-12 py-5 text-caption text-taca-text-muted text-center;
+  }
 }

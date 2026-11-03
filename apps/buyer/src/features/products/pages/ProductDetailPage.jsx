@@ -41,15 +41,15 @@ const ProductDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="py-12 max-w-[1440px] mx-auto px-4 lg:px-[80px] animate-pulse">
-        <div className="h-6 bg-gray-200 rounded w-1/4 mb-6"></div>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-5 h-[400px] bg-gray-200 rounded-xl"></div>
-          <div className="lg:col-span-7 flex flex-col gap-4">
-            <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-6 bg-gray-200 rounded w-1/3"></div>
-            <div className="h-12 bg-gray-200 rounded w-1/2"></div>
-            <div className="h-40 bg-gray-200 rounded w-full"></div>
+      <div className="py-6 sm:py-8 animate-pulse" aria-label="Đang tải thông tin sản phẩm">
+        <div className="h-4 bg-taca-border rounded-control w-1/3 max-w-[220px] mb-5"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-brand-8">
+          <div className="lg:col-span-5 aspect-square lg:h-[480px] lg:aspect-auto bg-taca-border rounded-card"></div>
+          <div className="lg:col-span-7 flex flex-col gap-4 rounded-card border border-taca-border bg-white p-4 sm:p-6">
+            <div className="h-7 bg-taca-border rounded-control w-3/4"></div>
+            <div className="h-5 bg-taca-border rounded-control w-2/5"></div>
+            <div className="h-16 bg-taca-surface rounded-card w-full"></div>
+            <div className="h-24 bg-taca-surface rounded-card w-full"></div>
           </div>
         </div>
       </div>
@@ -58,27 +58,29 @@ const ProductDetailPage = () => {
 
   if (error || !product) {
     return (
-      <div className="py-16 text-center">
-        <h2 className="text-xl font-bold text-gray-800 mb-2">{error || 'Không tìm thấy sản phẩm'}</h2>
-        <Link to="/" className="text-taca-primary font-medium hover:underline">
-          Quay lại trang chủ
-        </Link>
+      <div className="py-10 sm:py-16">
+        <div className="mx-auto max-w-[640px] rounded-card border border-taca-border bg-white px-5 py-10 text-center shadow-brand sm:px-8">
+          <h2 className="mb-3 text-[20px] font-bold text-taca-text-main">{error || 'Không tìm thấy sản phẩm'}</h2>
+          <Link to="/" className="inline-flex min-h-[44px] items-center rounded-control bg-taca-primary px-5 text-[14px] font-semibold text-white transition-colors hover:bg-taca-primary-hover">
+            Quay lại trang chủ
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="py-6 flex flex-col gap-6">
+    <div className="py-4 sm:py-6 flex flex-col gap-5 sm:gap-brand-6">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1 text-[13px] text-taca-text-muted">
+      <nav className="flex min-w-0 items-center gap-1 text-[12px] sm:text-[13px] text-taca-text-muted overflow-x-auto whitespace-nowrap" aria-label="Breadcrumb">
         <Link to="/" className="text-taca-text-muted hover:text-taca-primary transition-colors">Trang chủ</Link>
         <span>/</span>
         <Link to="/category/dien-thoai" className="text-taca-text-muted hover:text-taca-primary transition-colors">Điện thoại</Link>
         <span>/</span>
-        <span className="text-taca-text-main font-semibold">{product.name}</span>
-      </div>
+        <span className="text-taca-text-main font-semibold truncate max-w-[240px] sm:max-w-[420px]">{product.name}</span>
+      </nav>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-5 sm:gap-brand-6">
         {/* Product Purchase (Gallery & Info) */}
         <ProductPurchase 
           product={product} 

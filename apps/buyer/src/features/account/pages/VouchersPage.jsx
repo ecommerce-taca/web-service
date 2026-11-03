@@ -67,7 +67,7 @@ const VouchersPage = () => {
 
   return (
     <div className="flex flex-col h-full bg-white">
-      <div className="p-6 md:p-8 flex-1">
+      <div className="p-4 sm:p-6 md:p-8 flex-1">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-[20px] font-bold text-taca-text-main m-0 flex items-center gap-2">
             <Tag className="w-5 h-5 text-taca-primary" />

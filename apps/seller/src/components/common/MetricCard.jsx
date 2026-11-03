@@ -8,18 +8,18 @@ export default function MetricCard({ label, value, trend, isPositive, isWarning,
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow transition-shadow">
-      <div className="text-[12px] font-semibold text-slate-500 tracking-wide uppercase">
+    <div className="bg-white rounded-card border border-taca-border p-4 sm:p-5 shadow-brand hover:shadow-brand-md transition-shadow min-h-[112px]">
+      <div className="text-caption font-bold text-taca-text-muted tracking-wide uppercase">
         {label}
       </div>
-      <div className="text-[26px] font-extrabold text-slate-900 mt-2 tracking-tight">
+      <div className="text-[24px] sm:text-heading font-extrabold text-taca-text-main mt-2 tracking-tight break-words">
         {value}
       </div>
       {(trend || subtitle) && (
-        <div className="mt-2.5 flex items-center gap-1.5">
+        <div className="mt-2.5 flex items-center gap-1.5 flex-wrap">
           {trend && (
             <span
-              className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${getTrendColor()}`}
+              className={`text-caption font-semibold px-2 py-0.5 rounded-control border max-w-full break-words ${getTrendColor()}`}
             >
               {trend}
             </span>
