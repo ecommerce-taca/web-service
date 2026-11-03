@@ -6,6 +6,7 @@ import { useCart } from '../../features/cart/hooks/useCart';
 import { getSellerRegistrationStatus } from '../../features/account/services/seller-register.api';
 import searchApi from '../../features/search/services/search.api';
 import SearchSuggestDropdown from '../../features/search/components/SearchSuggestDropdown';
+import { BrandLogo } from '@taca/ui-components';
 import MegaMenu from './MegaMenu';
 
 const getSellerUrl = (path = '/seller') => {
@@ -189,19 +190,27 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-50">
-      {/* Main Header Bar - Primary background #4f46e5 */}
-      <div className="bg-taca-primary min-h-[64px] sm:h-[78px] py-2 sm:py-0">
+      {/* Main Header Bar - TACA pastel blue background */}
+      <div className="bg-[linear-gradient(180deg,#F4F8FF_0%,#EAF4FF_58%,#FFFFFF_100%)] min-h-[64px] sm:h-[78px] py-2 sm:py-0 border-b border-taca-border/70">
         <div className="max-w-[1440px] mx-auto h-full flex items-center px-4 sm:px-6 lg:px-[80px] gap-2.5 sm:gap-6 lg:gap-8">
           {/* Logo */}
-          <Link to="/" className="no-underline flex-shrink-0">
-            <h1 className="text-white text-[24px] sm:text-[30px] font-black tracking-tight leading-none m-0 hover:opacity-95 transition-opacity">
-              TACA
-            </h1>
+          <Link
+            to="/"
+            aria-label="Taca - Trang chủ"
+            className="no-underline flex-shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+          >
+            <BrandLogo
+              alt=""
+              decorative
+              width={204}
+              height={46}
+              className="w-[88px] sm:w-[112px] lg:w-[128px] max-h-[36px] object-contain"
+            />
           </Link>
 
           {/* Search Bar - Responsive, centered & balanced with auto-suggest dropdown */}
           <div className="relative flex-1 min-w-0 max-w-[640px] h-[38px] sm:h-[44px]" ref={searchContainerRef}>
-            <form onSubmit={handleSearch} className="flex items-center bg-white h-full w-full rounded-xl border border-transparent focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-white/30 overflow-hidden shadow-xs transition-all">
+            <form onSubmit={handleSearch} className="flex items-center bg-white h-full w-full rounded-control border border-taca-primary/25 focus-within:border-taca-primary/50 focus-within:ring-2 focus-within:ring-taca-primary/15 overflow-hidden shadow-brand transition-all">
               <div className="pl-3 sm:pl-3.5 pr-1 flex items-center text-slate-400">
                 <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
               </div>
@@ -254,10 +263,10 @@ const Header = () => {
             <a
               href={getSellerUrl(sellerNav.url)}
               title={sellerNav.subText}
-              className="hidden sm:flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-white hover:bg-white/10 transition-all no-underline group cursor-pointer border border-transparent hover:border-white/15"
+              className="hidden sm:flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-taca-text-main hover:bg-white/80 transition-all no-underline group cursor-pointer border border-transparent hover:border-taca-border"
             >
-              <Store className="w-4 h-4 text-white shrink-0" />
-              <span className="hidden lg:inline text-[13px] font-bold text-white group-hover:text-amber-200 transition-colors whitespace-nowrap">
+              <Store className="w-4 h-4 text-taca-primary shrink-0" />
+              <span className="hidden lg:inline text-[13px] font-bold text-taca-text-main group-hover:text-taca-primary transition-colors whitespace-nowrap">
                 {sellerNav.title}
               </span>
               {sellerNav.badge && (
@@ -269,7 +278,7 @@ const Header = () => {
                       ? 'bg-amber-400 text-slate-950'
                       : sellerNav.badge === 'Cần sửa'
                       ? 'bg-rose-400 text-white'
-                      : 'bg-white/20 text-white'
+                      : 'bg-taca-primary-light text-taca-primary'
                   }`}
                 >
                   {sellerNav.badge}
@@ -277,22 +286,22 @@ const Header = () => {
               )}
             </a>
 
-            <span className="hidden sm:block h-5 w-px bg-white/20" />
+            <span className="hidden sm:block h-5 w-px bg-taca-border" />
 
             {/* User / Đăng nhập */}
             {user ? (
               <Link
                 to="/account"
-                className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-xl text-white hover:bg-white/10 transition-all no-underline cursor-pointer group border border-transparent hover:border-white/15"
+                className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-xl text-taca-text-main hover:bg-white/80 transition-all no-underline cursor-pointer group border border-transparent hover:border-taca-border"
               >
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/20 flex items-center justify-center text-[12px] sm:text-[13px] font-extrabold text-white border border-white/30 shadow-xs shrink-0">
-                  {user.full_name ? user.full_name.charAt(0).toUpperCase() : <UserIcon className="w-4 h-4 text-white" />}
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white flex items-center justify-center text-[12px] sm:text-[13px] font-extrabold text-taca-primary border border-taca-primary/20 shadow-xs shrink-0">
+                  {user.full_name ? user.full_name.charAt(0).toUpperCase() : <UserIcon className="w-4 h-4 text-taca-primary" />}
                 </div>
                 <div className="hidden sm:flex flex-col text-left leading-tight">
-                  <span className="text-[10px] text-white/70 font-medium">Tài khoản</span>
-                  <span className="text-[12px] font-bold text-white max-w-[120px] truncate group-hover:text-amber-200 transition-colors flex items-center gap-1">
+                  <span className="text-[10px] text-taca-text-muted font-medium">Tài khoản</span>
+                  <span className="text-[12px] font-bold text-taca-text-main max-w-[120px] truncate group-hover:text-taca-primary transition-colors flex items-center gap-1">
                     <span>{user.full_name || user.name || 'Người dùng'}</span>
-                    <ChevronDown className="w-3 h-3 text-white/70" />
+                    <ChevronDown className="w-3 h-3 text-taca-text-muted" />
                   </span>
                 </div>
               </Link>
@@ -300,36 +309,36 @@ const Header = () => {
               <button
                 type="button"
                 onClick={() => openAuthModal()}
-                className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-xl text-white hover:bg-white/10 transition-all cursor-pointer group border border-transparent hover:border-white/15 bg-transparent"
+                className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-xl text-taca-text-main hover:bg-white/80 transition-all cursor-pointer group border border-transparent hover:border-taca-border bg-transparent"
               >
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/20 flex items-center justify-center border border-white/30 shadow-xs shrink-0">
-                  <UserIcon className="w-4 h-4 text-white" />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white flex items-center justify-center border border-taca-primary/20 shadow-xs shrink-0">
+                  <UserIcon className="w-4 h-4 text-taca-primary" />
                 </div>
                 <div className="hidden sm:flex flex-col text-left leading-tight">
-                  <span className="text-[10px] text-white/70 font-medium">Xin chào</span>
-                  <span className="text-[12px] font-bold text-white group-hover:text-amber-200 transition-colors whitespace-nowrap">
+                  <span className="text-[10px] text-taca-text-muted font-medium">Xin chào</span>
+                  <span className="text-[12px] font-bold text-taca-text-main group-hover:text-taca-primary transition-colors whitespace-nowrap">
                     Đăng nhập
                   </span>
                 </div>
               </button>
             )}
 
-            <span className="hidden sm:block h-5 w-px bg-white/20" />
+            <span className="hidden sm:block h-5 w-px bg-taca-border" />
 
             {/* Cart */}
             <Link
               to="/cart"
-              className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-xl text-white hover:bg-white/10 transition-all no-underline flex-shrink-0 group cursor-pointer border border-transparent hover:border-white/15"
+              className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-xl text-taca-text-main hover:bg-white/80 transition-all no-underline flex-shrink-0 group cursor-pointer border border-transparent hover:border-taca-border"
             >
-              <div className="relative flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/15 border border-white/25 group-hover:bg-white/25 transition-colors shrink-0">
-                <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+              <div className="relative flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border border-taca-primary/20 group-hover:border-taca-primary/40 transition-colors shrink-0">
+                <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-taca-primary" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-taca-sale text-white text-[10px] font-extrabold px-1.5 py-0.2 rounded-full min-w-[18px] text-center border-2 border-taca-primary shadow-xs">
+                  <span className="absolute -top-1.5 -right-1.5 bg-taca-sale text-white text-[10px] font-extrabold px-1.5 py-0.2 rounded-full min-w-[18px] text-center border-2 border-white shadow-xs">
                     {cartCount}
                   </span>
                 )}
               </div>
-              <span className="hidden sm:inline text-[13px] font-bold text-white group-hover:text-amber-200 transition-colors whitespace-nowrap">
+              <span className="hidden sm:inline text-[13px] font-bold text-taca-text-main group-hover:text-taca-primary transition-colors whitespace-nowrap">
                 Giỏ hàng
               </span>
             </Link>
@@ -352,9 +361,9 @@ const Header = () => {
               onClick={() => setIsMegaMenuOpen((prev) => !prev)}
               aria-expanded={isMegaMenuOpen}
               aria-haspopup="true"
-              className="bg-transparent border-none text-[11px] font-extrabold text-taca-text-main cursor-pointer hover:text-taca-primary transition-colors py-2 flex items-center gap-1.5 whitespace-nowrap"
+              className="bg-transparent border-none text-[11px] font-extrabold text-taca-text-main cursor-pointer hover:text-taca-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary/30 rounded-control transition-colors py-2 flex items-center gap-1.5 whitespace-nowrap"
             >
-              <Menu className="w-3.5 h-3.5 text-slate-700 shrink-0" />
+              <Menu className="w-3.5 h-3.5 text-taca-primary shrink-0" />
               <span className="hidden xs:inline">DANH MỤC</span>
               <span className="hidden md:inline">SẢN PHẨM</span>
               <ChevronDown className={`w-3 h-3 text-slate-500 transition-transform duration-200 ${isMegaMenuOpen ? 'rotate-180 text-taca-primary' : ''}`} />
@@ -367,7 +376,7 @@ const Header = () => {
               <Link
                 key={cat}
                 to={`/category/${cat.toLowerCase().replace(/\s+/g, '-')}`}
-                className="text-[12px] font-medium text-slate-600 px-2.5 sm:px-3.5 py-1 rounded-lg hover:text-taca-primary hover:bg-slate-50 transition-colors no-underline whitespace-nowrap shrink-0"
+                className="text-[12px] font-medium text-taca-text-muted px-2.5 sm:px-3.5 py-1 rounded-control hover:text-taca-primary hover:bg-taca-primary-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary/30 transition-colors no-underline whitespace-nowrap shrink-0"
               >
                 {cat}
               </Link>

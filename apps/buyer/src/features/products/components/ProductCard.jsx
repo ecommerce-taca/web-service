@@ -47,7 +47,7 @@ const ProductCard = ({
   return (
     <Link 
       to={`/product/${actualId}`} 
-      className="flex flex-col bg-white border border-taca-border cursor-pointer group hover:border-taca-primary hover:shadow-md transition-all h-full no-underline rounded-[12px] overflow-hidden p-3 gap-3 relative"
+      className="group relative flex h-full min-w-0 cursor-pointer flex-col gap-2.5 overflow-hidden rounded-[12px] border border-taca-border bg-white p-2.5 transition-all sm:p-3 sm:gap-3 hover:border-taca-primary hover:shadow-md no-underline"
     >
       {/* Image Area */}
       <div className="relative w-full aspect-square bg-[#f4f7ff] rounded-[8px] overflow-hidden flex-shrink-0">

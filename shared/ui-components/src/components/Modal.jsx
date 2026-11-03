@@ -41,25 +41,25 @@ const Modal = ({
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity"
       onMouseDown={handleBackdropMouseDown}
     >
-      <div 
+      <div
         ref={modalRef}
-        className={`bg-white shadow-2xl rounded-2xl border-2 border-taca-border w-full ${width} m-4 max-h-[90vh] flex flex-col relative`}
+        className={`relative m-4 flex max-h-[90vh] w-full ${width} flex-col rounded-panel border border-taca-border bg-white shadow-brand-lg`}
         role="dialog"
         aria-modal="true"
       >
         {!hideHeader && (
           <div className="flex items-center justify-between p-4 border-b border-taca-border">
-            <h2 className="text-[18px] font-bold text-taca-text-main">
+            <h2 className="text-title font-bold text-taca-text-main">
               {title}
             </h2>
             {!hideCloseButton && (
               <button 
                 onClick={onClose}
-                className="p-1 text-taca-text-muted hover:text-taca-text-main transition-colors focus:outline-none"
+                className="rounded-control p-2 text-taca-text-muted transition-colors hover:bg-taca-surface hover:text-taca-text-main focus:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary"
                 aria-label="Close modal"
               >
                 <X size={20} />
@@ -92,6 +92,7 @@ Modal.propTypes = {
   children: PropTypes.node.isRequired,
   width: PropTypes.string,
   hideCloseButton: PropTypes.bool,
+  hideHeader: PropTypes.bool,
 };
 
 export default Modal;

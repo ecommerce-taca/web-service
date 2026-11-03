@@ -34,9 +34,9 @@ const ShopPage = () => {
   }, [shopId]);
 
   return (
-    <div className="bg-taca-surface min-h-screen pb-12">
+    <div className="min-h-full pb-brand-12">
       {/* Breadcrumb */}
-      <div className="py-4 text-[12px] text-taca-text-muted font-medium flex gap-2 items-center">
+      <div className="py-brand-4 text-[12px] text-taca-text-muted font-medium flex flex-wrap gap-2 items-center">
         <Link to="/" className="hover:text-taca-primary no-underline text-inherit">
           Trang chủ
         </Link>
@@ -48,7 +48,7 @@ const ShopPage = () => {
         </span>
       </div>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-brand-6">
         {/* Shop Header with real API integration */}
         <ShopHero shopId={shopId} onShopLoaded={(data) => data?.name && setShopName(data.name)} />
 
@@ -56,7 +56,7 @@ const ShopPage = () => {
         <ShopVouchers />
 
         {/* Content Area */}
-        <div className="bg-white p-6 border border-taca-border rounded-[12px]">
+        <div className="bg-white p-4 sm:p-6 border border-taca-border rounded-card shadow-brand">
           <ShopProductFilter />
           <ShopProductList shopId={shopId} />
         </div>

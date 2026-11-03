@@ -44,7 +44,10 @@ export default function ProductsPage() {
         page: 1,
         size: 50
       });
-      const dataItems = res?.data?.items || [];
+      const payload = res?.data;
+      const dataItems = Array.isArray(payload)
+        ? payload
+        : (payload?.items || []);
       setItems(dataItems);
     } catch (err) {
       console.error('Lỗi khi tải danh sách sản phẩm người bán:', err);

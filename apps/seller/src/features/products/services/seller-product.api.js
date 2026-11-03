@@ -305,7 +305,13 @@ export const sellerProductApi = {
   getProducts: async ({ status, q, sort = 'newest', page = 1, size = 20 } = {}) => {
     if (!isMockMode()) {
       return apiClient.get('/seller/products', {
-        params: { ...(status && { status }), ...(q && { q }), sort, page, size }
+        params: {
+          ...(status && status !== 'ALL' && status !== 'OUT_OF_STOCK' && { status }),
+          ...(q && { q }),
+          sort,
+          page,
+          size
+        }
       });
     }
 

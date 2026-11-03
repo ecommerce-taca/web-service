@@ -15,10 +15,10 @@ const FlashProductCard = ({
   return (
     <Link
       to={`/product/${id || 1}`}
-      className="flex bg-white rounded-2xl p-3 border border-slate-200/80 hover:border-rose-400 shadow-2xs hover:shadow-md hover:-translate-y-1 transition-all duration-300 group no-underline flex-1 min-w-[260px]"
+      className="group flex min-w-0 flex-1 flex-col overflow-hidden rounded-panel border border-slate-200/80 bg-white p-2.5 shadow-2xs transition-all duration-300 no-underline hover:-translate-y-0.5 hover:border-rose-400 hover:shadow-md sm:flex-row sm:p-3"
     >
       {/* Left: Product Image */}
-      <div className="w-[110px] h-[120px] rounded-xl bg-slate-50 flex-shrink-0 flex items-center justify-center overflow-hidden relative border border-slate-100">
+      <div className="relative flex aspect-square w-full flex-shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-slate-50 sm:h-[120px] sm:w-[110px] sm:aspect-auto">
         {image ? (
           <img
             src={image}
@@ -37,7 +37,7 @@ const FlashProductCard = ({
       </div>
 
       {/* Right: Info */}
-      <div className="flex flex-col justify-between flex-1 pl-3 py-0.5 min-w-0">
+      <div className="flex min-w-0 flex-1 flex-col justify-between pt-2.5 sm:pl-3 sm:pt-0.5">
         <div>
           <span className="text-[9px] uppercase font-bold text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">
             HOT DEAL

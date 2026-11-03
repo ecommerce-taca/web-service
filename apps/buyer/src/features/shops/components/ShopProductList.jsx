@@ -36,7 +36,7 @@ const ShopProductList = ({ shopId }) => {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-[20px] font-bold text-taca-text-main m-0">Sản phẩm của gian hàng</h2>
+        <h2 className="text-[18px] sm:text-[20px] font-bold text-taca-text-main m-0">Sản phẩm của gian hàng</h2>
         {!loading && !error && (
           <span className="text-[13px] text-taca-text-muted font-medium">
             {products.length} sản phẩm
@@ -45,21 +45,21 @@ const ShopProductList = ({ shopId }) => {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-4">
           {Array.from({ length: 5 }).map((_, idx) => (
-            <div key={idx} className="h-64 bg-slate-100 rounded-xl animate-pulse" />
+            <div key={idx} className="h-64 bg-taca-surface border border-taca-border rounded-card animate-pulse" />
           ))}
         </div>
       ) : error ? (
-        <div className="py-12 text-center text-rose-600 text-[14px]">
+        <div className="py-12 text-center text-taca-sale text-[14px] bg-taca-surface rounded-card">
           {error}
         </div>
       ) : products.length === 0 ? (
-        <div className="py-12 text-center text-taca-text-muted text-[14px]">
+        <div className="py-12 text-center text-taca-text-muted text-[14px] bg-taca-surface rounded-card border border-dashed border-taca-border">
           Gian hàng hiện chưa có sản phẩm nào.
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-4">
           {products.map((product) => (
             <ProductCard
               key={product.id || product.product_id}

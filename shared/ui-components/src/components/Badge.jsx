@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 
 const Badge = ({ children, variant = 'default', className = '', ...props }) => {
-  const baseClass = 'inline-flex items-center justify-center text-[10px] font-bold rounded-md border px-2 py-0.5 uppercase tracking-wide';
+  const baseClass = 'inline-flex items-center justify-center rounded-pill border px-2 py-0.5 text-caption font-bold uppercase tracking-wide leading-4';
   
   const variants = {
     sale: 'bg-taca-sale text-white border-taca-sale',

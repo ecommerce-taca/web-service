@@ -49,11 +49,11 @@ const RecommendedProducts = () => {
   }, [products, activeTab]);
 
   return (
-    <section className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs relative">
+    <section className="relative rounded-panel border border-taca-border bg-white p-4 shadow-brand sm:p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
         <div className="flex items-center gap-2.5">
-          <span className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 font-extrabold text-sm shadow-2xs">
+          <span className="flex h-8 w-8 items-center justify-center rounded-control border border-taca-border bg-taca-primary-light text-sm font-extrabold text-taca-primary shadow-brand">
             <Sparkles className="w-4 h-4" />
           </span>
           <div>
@@ -79,7 +79,7 @@ const RecommendedProducts = () => {
                 className={`px-3.5 py-1.5 rounded-xl text-[12px] font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
                   isActive
                     ? 'bg-taca-primary text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+                    : 'bg-taca-surface text-taca-text-muted hover:bg-taca-primary-light hover:text-taca-primary'
                 }`}
               >
                 {IconComponent && (
@@ -94,13 +94,13 @@ const RecommendedProducts = () => {
 
       {/* Products Grid */}
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-5">
+        <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
           {[...Array(10)].map((_, i) => (
-            <div key={i} className="h-64 rounded-2xl bg-slate-100 animate-pulse border border-slate-200/60" />
+            <div key={i} className="h-64 animate-pulse rounded-panel border border-taca-border bg-taca-surface" />
           ))}
         </div>
       ) : filteredProducts.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-5">
+        <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
           {filteredProducts.slice(0, 10).map((product) => (
             <ProductCard key={product.id || product.product_id} product={product} />
           ))}
@@ -115,7 +115,7 @@ const RecommendedProducts = () => {
       <div className="pt-8 text-center">
         <Link
           to="/search"
-          className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 font-bold text-[13px] border border-slate-200 transition-all shadow-2xs hover:shadow-xs no-underline"
+          className="inline-flex items-center gap-2 rounded-control border border-taca-border bg-taca-surface px-8 py-3 text-[13px] font-bold text-taca-text-main no-underline shadow-brand transition-all hover:bg-taca-primary-light hover:text-taca-primary hover:shadow-brand"
         >
           <span>Xem thêm nhiều sản phẩm khác</span>
           <span>→</span>

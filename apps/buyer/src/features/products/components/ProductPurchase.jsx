@@ -130,10 +130,10 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
     : [product.image || "https://placehold.co/400"];
 
   return (
-    <div className="bg-white p-4 sm:p-6 rounded-[12px] border border-taca-border flex flex-col md:flex-row gap-6 md:gap-8">
+    <div className="bg-white p-4 sm:p-6 rounded-card border border-taca-border shadow-brand flex flex-col lg:flex-row gap-5 lg:gap-brand-8">
       {/* Left: Gallery */}
-      <div className="w-full md:w-[400px] flex-shrink-0 flex flex-col gap-4">
-        <div className="w-full aspect-square bg-taca-surface rounded-[8px] flex items-center justify-center text-taca-text-muted overflow-hidden relative border border-slate-100">
+      <div className="w-full lg:w-[400px] xl:w-[440px] flex-shrink-0 flex flex-col gap-brand-3">
+        <div className="w-full aspect-square bg-taca-surface rounded-card flex items-center justify-center text-taca-text-muted overflow-hidden relative border border-taca-border">
           <img 
             src={galleryImages[selectedImageIndex] || galleryImages[0]} 
             alt={product.name || product.title} 
@@ -146,14 +146,14 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
             />
           </div>
         </div>
-        <div className="flex gap-3 overflow-x-auto pb-1">
+        <div className="flex gap-brand-2 sm:gap-brand-3 overflow-x-auto pb-1">
           {galleryImages.map((img, i) => (
             <button
               type="button"
               key={i} 
               onClick={() => setSelectedImageIndex(i)}
-              className={`w-[70px] h-[70px] flex-shrink-0 bg-taca-surface rounded-[6px] border cursor-pointer overflow-hidden transition-all ${
-                selectedImageIndex === i ? 'border-2 border-taca-primary shadow-xs' : 'border-slate-200 hover:border-slate-300'
+              className={`w-[64px] h-[64px] sm:w-[72px] sm:h-[72px] flex-shrink-0 bg-taca-surface rounded-control border cursor-pointer overflow-hidden transition-all ${
+                selectedImageIndex === i ? 'border-2 border-taca-primary shadow-brand' : 'border-taca-border hover:border-taca-primary/50'
               }`}
             >
               <img src={img} alt={`Thumb ${i + 1}`} className="w-full h-full object-cover" />
@@ -163,7 +163,7 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
       </div>
 
       {/* Right: Info */}
-      <div className="flex-1 flex flex-col gap-5">
+      <div className="flex-1 min-w-0 flex flex-col gap-brand-4 sm:gap-5">
         {/* Title & Brand */}
         <div>
           {product.isOfficial && (
@@ -171,7 +171,7 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
               CHÍNH HÃNG
             </span>
           )}
-          <h1 className="text-[20px] md:text-[24px] font-bold text-taca-text-main inline align-middle">
+          <h1 className="text-[20px] sm:text-[22px] lg:text-[24px] leading-[1.35] font-bold text-taca-text-main inline align-middle">
             {product.name || product.title}
           </h1>
           <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap text-[13px] sm:text-[14px] text-taca-text-muted mt-3">
@@ -193,15 +193,15 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
         </div>
 
         {/* Price Area */}
-        <div className="bg-[#fafafa] rounded-xl border border-slate-200/70 p-4 flex flex-col gap-2">
+        <div className="bg-taca-surface rounded-card border border-taca-border p-brand-4 flex flex-col gap-2">
           {product.isFlashSale && (
-            <div className="text-[#ff424e] text-[12px] font-bold flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 fill-[#ff424e]" />
+            <div className="text-taca-sale text-[12px] font-bold flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 fill-taca-sale" />
               <span>FLASH SALE · Kết thúc trong 02:45:18</span>
             </div>
           )}
           <div className="flex items-end gap-3 flex-wrap">
-            <span className="text-[32px] font-bold text-[#ff424e] leading-none">
+            <span className="text-[28px] sm:text-[32px] font-bold text-taca-sale leading-none">
               {Number(currentPrice).toLocaleString('vi-VN')} ₫
             </span>
             {currentOriginalPrice && currentOriginalPrice > currentPrice && (
@@ -210,7 +210,7 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
               </span>
             )}
             {discountPercent && discountPercent > 0 && (
-              <span className="text-[12px] font-bold text-[#ff424e] bg-[#ff424e]/10 px-1.5 py-0.5 rounded-[3px] mb-1">
+              <span className="text-[12px] font-bold text-taca-sale bg-taca-sale/10 px-1.5 py-0.5 rounded-[3px] mb-1">
                 -{discountPercent}%
               </span>
             )}
@@ -244,8 +244,8 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
                         onClick={() => handleSelectAttribute(attr.name, val)}
                         className={`px-3.5 py-2 text-[13px] transition-all rounded-[8px] border cursor-pointer flex items-center gap-2 ${
                           isSelected 
-                            ? 'bg-[#f4f7ff] border-taca-primary text-taca-primary font-semibold ring-1 ring-taca-primary' 
-                            : 'bg-white border-taca-border text-taca-text-main hover:border-slate-300'
+                            ? 'bg-taca-primary-light border-taca-primary text-taca-primary font-semibold ring-1 ring-taca-primary'
+                            : 'bg-white border-taca-border text-taca-text-main hover:border-taca-primary/50'
                         }`}
                       >
                         {hasSwatchHex && (
@@ -265,8 +265,8 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
         )}
         
         {/* SKU status badge */}
-        <div className="text-[12px] font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 w-fit flex items-center gap-2">
-          <span>SKU đã chọn: <strong className="text-slate-900">{currentSkuCode}</strong></span>
+        <div className="text-[12px] font-medium text-taca-text-muted bg-taca-surface border border-taca-border rounded-control px-3 py-2 w-fit max-w-full flex items-center gap-2 flex-wrap">
+          <span>SKU đã chọn: <strong className="text-taca-text-main">{currentSkuCode}</strong></span>
           <span className="text-slate-300">·</span>
           <span>
             {isOutOfStock ? (
@@ -289,7 +289,7 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-1 relative">
           <Button 
             variant="outline" 
-            className="flex-1 h-[48px] text-[15px] font-semibold rounded-[8px] border-2 border-taca-primary text-taca-primary bg-white hover:bg-indigo-50"
+            className="flex-1 h-[48px] text-[15px] font-semibold rounded-control border-2 border-taca-primary text-taca-primary bg-white hover:bg-taca-primary-light"
             onClick={handleAddToCart}
             disabled={isOutOfStock}
           >

@@ -7,10 +7,10 @@ const ProductShopCard = ({ shop }) => {
   const shopUrl = `/shop/${shop.id || 1}`;
   
   return (
-    <div className="bg-white p-6 rounded-[12px] border border-taca-border flex items-center justify-between">
-      <Link to={shopUrl} className="flex items-center gap-6 hover:opacity-80 transition-opacity no-underline">
+    <div className="bg-white p-4 sm:p-6 rounded-card border border-taca-border shadow-brand flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <Link to={shopUrl} className="flex min-w-0 items-center gap-4 sm:gap-6 hover:opacity-80 transition-opacity no-underline">
         {/* Avatar Placeholder */}
-        <div className="w-[80px] h-[80px] bg-[#f4f7ff] flex items-center justify-center text-[24px] font-bold text-taca-primary rounded-[8px]">
+        <div className="w-[64px] h-[64px] sm:w-[80px] sm:h-[80px] shrink-0 bg-taca-primary-light flex items-center justify-center text-[20px] sm:text-[24px] font-bold text-taca-primary rounded-card">
           {shop.avatar || 'TA'}
         </div>
         
@@ -31,8 +31,8 @@ const ProductShopCard = ({ shop }) => {
       </Link>
 
       {/* Xem cửa hàng Action */}
-      <Link to={shopUrl}>
-        <Button variant="outline" className="px-6 h-[40px] text-[14px] font-semibold rounded-[8px] border-taca-border hover:!border-taca-primary hover:!text-taca-primary">
+      <Link to={shopUrl} className="w-full sm:w-auto">
+        <Button variant="outline" className="w-full sm:w-auto px-6 h-[44px] text-[14px] font-semibold rounded-control border-taca-border hover:!border-taca-primary hover:!text-taca-primary">
           Xem cửa hàng
         </Button>
       </Link>

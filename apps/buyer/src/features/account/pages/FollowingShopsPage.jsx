@@ -56,7 +56,7 @@ const FollowingShopsPage = () => {
 
   return (
     <div className="flex flex-col h-full bg-white">
-      <div className="p-6 md:p-8 flex-1">
+      <div className="p-4 sm:p-6 md:p-8 flex-1">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 pb-4 border-b border-slate-100">
           <div>

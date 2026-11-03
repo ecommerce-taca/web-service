@@ -47,31 +47,31 @@ const CATEGORY_THEMES = {
   'dien-thoai': {
     title: 'ĐIỆN THOẠI & PHỤ KIỆN CHÍNH HÃNG',
     subtitle: 'Apple, Samsung, Xiaomi, OPPO · Trả góp 0% · Giao nhanh 2H',
-    bgGradient: 'from-slate-950 via-indigo-950 to-blue-900',
+    bgGradient: 'from-[#F4F8FF] via-[#EEF5FF] to-white',
     icon: Smartphone,
   },
   'laptop': {
     title: 'LAPTOP & MÁY TÍNH XÁCH TAY',
     subtitle: 'MacBook, Dell, Asus, Lenovo · Hiệu năng vượt trội · Bảo hành 24T',
-    bgGradient: 'from-slate-950 via-slate-900 to-indigo-950',
+    bgGradient: 'from-[#F4F8FF] via-[#EEF5FF] to-white',
     icon: Laptop,
   },
   'gia-dung': {
     title: 'GIA DỤNG & NHÀ BẾP THÔNG MINH',
     subtitle: 'Lock&Lock, Philips, Tefal · Tiện nghi cuộc sống gia đình',
-    bgGradient: 'from-teal-950 via-emerald-950 to-slate-900',
+    bgGradient: 'from-[#F4F8FF] via-[#F7FBFA] to-white',
     icon: Utensils,
   },
   'thoi-trang': {
     title: 'THỜI TRANG & PHỤ KIỆN XUÂN HÈ',
     subtitle: 'Quần áo, Giày dép, Túi xách · Xu hướng mới nhất 2026',
-    bgGradient: 'from-rose-950 via-pink-950 to-slate-900',
+    bgGradient: 'from-[#FFF7F8] via-[#FFF9F7] to-white',
     icon: Shirt,
   },
   'nha-sach': {
     title: 'NHÀ SÁCH & VĂN PHÒNG PHẨM',
     subtitle: 'Sách kinh tế, Kỹ năng sống, Văn học · Tuyển chọn tinh hoa tri thức',
-    bgGradient: 'from-amber-950 via-yellow-950 to-slate-900',
+    bgGradient: 'from-[#FFF9ED] via-[#FFFBF4] to-white',
     icon: BookOpen,
   },
 };
@@ -118,7 +118,7 @@ const CategoryLandingPage = () => {
   const currentTheme = CATEGORY_THEMES[categorySlug] || {
     title: `${(categorySlug || 'DANH MỤC').replace(/-/g, ' ').toUpperCase()} CHÍNH HÃNG`,
     subtitle: 'Cam kết 100% hàng thật · Ưu đãi độc quyền hôm nay',
-    bgGradient: 'from-slate-950 via-indigo-950 to-blue-900',
+    bgGradient: 'from-[#F4F8FF] via-[#EEF5FF] to-white',
     icon: Layers,
   };
   const ThemeIcon = currentTheme.icon;
@@ -180,18 +180,18 @@ const CategoryLandingPage = () => {
   const { isFavorite, toggleFavorite } = useFavorites();
 
   return (
-    <div className="py-2 flex flex-col gap-6">
+    <div className="py-4 sm:py-6 flex flex-col gap-brand-6">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-500">
-        <Link to="/" className="text-slate-500 no-underline hover:text-indigo-600 transition-colors">
+      <div className="flex flex-wrap items-center gap-1.5 text-[12px] font-semibold text-taca-text-muted">
+        <Link to="/" className="text-taca-text-muted no-underline hover:text-taca-primary transition-colors">
           Trang chủ
         </Link>
         <span>/</span>
-        <Link to="/category" className="text-slate-500 no-underline hover:text-indigo-600 transition-colors">
+        <Link to="/category" className="text-taca-text-muted no-underline hover:text-taca-primary transition-colors">
           Danh mục
         </Link>
         <span>/</span>
-        <span className="text-slate-900 font-bold capitalize">
+        <span className="text-taca-text-main font-bold capitalize">
           {categoryInfo?.name || (categorySlug ? categorySlug.replace(/-/g, ' ') : 'Điện thoại')} {subCategorySlug ? `- ${subCategorySlug.replace(/-/g, ' ')}` : ''}
         </span>
       </div>
@@ -217,35 +217,31 @@ const CategoryLandingPage = () => {
         {/* Main Content */}
         <div className="flex-1 flex flex-col gap-6 min-w-0 w-full">
           {/* Category Hero Banner */}
-          <div className={`w-full min-h-[220px] bg-gradient-to-r ${currentTheme.bgGradient} rounded-3xl p-5 sm:p-8 flex flex-col sm:flex-row items-center justify-between overflow-hidden relative shadow-sm border border-white/10`}>
-            {/* Ambient blur glow */}
-            <div className="absolute -top-16 -right-16 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-16 -left-16 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-
+          <div className={`w-full min-h-[220px] bg-gradient-to-r ${currentTheme.bgGradient} rounded-panel p-5 sm:p-8 flex flex-col sm:flex-row items-center justify-between overflow-hidden relative shadow-brand border border-taca-border`}>
             <div className="flex flex-col gap-2.5 z-10 max-w-xl">
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-full bg-white/20 text-white text-[10px] font-extrabold uppercase tracking-wider backdrop-blur-xs flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-white" />
+                <span className="px-2.5 py-1 rounded-pill bg-white text-taca-primary text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1.5 border border-taca-border">
+                  <ShieldCheck className="w-3.5 h-3.5 text-taca-primary" />
                   CHÍNH HÃNG 100%
                 </span>
-                <span className="px-2.5 py-1 rounded-full bg-amber-400 text-slate-950 text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1">
-                  <Zap className="w-3.5 h-3.5 fill-slate-950" />
+                <span className="px-2.5 py-1 rounded-pill bg-taca-warning text-white text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1">
+                  <Zap className="w-3.5 h-3.5 fill-white" />
                   FREESHIP 0Đ
                 </span>
               </div>
 
-              <h1 className="text-white text-[28px] sm:text-[32px] font-black uppercase m-0 leading-tight tracking-tight drop-shadow-sm">
+              <h1 className="text-taca-text-main text-[26px] sm:text-[32px] font-black uppercase m-0 leading-tight tracking-tight">
                 {categoryInfo?.name || currentTheme.title}
               </h1>
 
-              <p className="text-white/85 text-[13px] font-medium leading-relaxed m-0">
+              <p className="text-taca-text-muted text-[13px] font-medium leading-relaxed m-0">
                 {currentTheme.subtitle}
               </p>
 
               <div className="pt-2">
                 <Link
                   to="/search?q=deal"
-                  className="inline-flex items-center gap-2 bg-white text-slate-900 font-extrabold text-[12px] px-6 py-2.5 rounded-xl hover:bg-amber-300 transition-all shadow-md no-underline w-fit cursor-pointer group"
+                  className="inline-flex items-center gap-2 bg-taca-primary text-white font-extrabold text-[12px] px-6 py-2.5 rounded-control hover:bg-taca-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary/30 transition-colors shadow-brand no-underline w-fit cursor-pointer group"
                 >
                   <span>Khám phá Deal Hôm Nay</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
@@ -254,16 +250,16 @@ const CategoryLandingPage = () => {
             </div>
 
             {/* Icon Graphic */}
-            <div className="hidden md:flex w-28 h-28 rounded-3xl bg-white/10 border border-white/20 items-center justify-center shadow-2xl backdrop-blur-xs transform hover:rotate-6 hover:scale-105 transition-transform duration-300 text-white">
-              <ThemeIcon className="w-14 h-14 text-white" strokeWidth={1.5} />
+            <div className="hidden md:flex w-28 h-28 rounded-panel bg-white/80 border border-taca-border items-center justify-center shadow-brand text-taca-primary">
+              <ThemeIcon className="w-14 h-14 text-taca-primary" strokeWidth={1.5} />
             </div>
           </div>
 
           {/* Nhu cầu sử dụng & Thương hiệu (Quick Filter Chips) */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
+          <div className="bg-white p-4 sm:p-5 rounded-card border border-taca-border shadow-brand space-y-4">
             {/* Nhu cầu sử dụng */}
             <div>
-              <div className="text-[12px] font-extrabold text-slate-500 uppercase tracking-wider mb-2">
+              <div className="text-[12px] font-extrabold text-taca-text-muted uppercase tracking-wider mb-2">
                 Nhu cầu sử dụng nổi bật
               </div>
               <div className="flex flex-wrap gap-2">
@@ -271,7 +267,7 @@ const CategoryLandingPage = () => {
                   <Link
                     key={useCase}
                     to={`/search?q=${encodeURIComponent(useCase)}`}
-                    className="px-3.5 py-1.5 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 rounded-xl text-[12px] text-slate-700 hover:text-indigo-600 font-semibold transition-all no-underline shadow-2xs"
+                    className="px-3.5 py-1.5 bg-taca-surface hover:bg-taca-primary-light border border-taca-border hover:border-taca-primary/40 rounded-control text-[12px] text-taca-text-main hover:text-taca-primary font-semibold transition-colors no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary/30"
                   >
                     {useCase}
                   </Link>
@@ -281,7 +277,7 @@ const CategoryLandingPage = () => {
 
             {/* Thương hiệu */}
             <div>
-              <div className="text-[12px] font-extrabold text-slate-500 uppercase tracking-wider mb-2">
+              <div className="text-[12px] font-extrabold text-taca-text-muted uppercase tracking-wider mb-2">
                 Thương hiệu hàng đầu
               </div>
               <div className="flex flex-wrap gap-2">
@@ -289,7 +285,7 @@ const CategoryLandingPage = () => {
                   <Link
                     key={brand}
                     to={`/search?brand=${brand}`}
-                    className="px-4 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 hover:border-indigo-400 rounded-xl text-[12px] font-bold text-slate-800 hover:text-indigo-600 transition-all no-underline shadow-2xs"
+                    className="px-4 py-1.5 bg-white hover:bg-taca-primary-light border border-taca-border hover:border-taca-primary/40 rounded-control text-[12px] font-bold text-taca-text-main hover:text-taca-primary transition-colors no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary/30"
                   >
                     {brand}
                   </Link>
@@ -301,15 +297,15 @@ const CategoryLandingPage = () => {
           {/* Section: Danh sách sản phẩm */}
           <div className="space-y-4">
             {/* Header: Sắp xếp theo chip & Nút mở lọc trên mobile */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="bg-white p-3 sm:p-4 rounded-card border border-taca-border shadow-brand flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center justify-between">
-                <span className="text-[15px] font-extrabold text-slate-900">
+                <span className="text-[15px] font-extrabold text-taca-text-main">
                   Sản phẩm trong ngành ({products.length})
                 </span>
                 <button
                   type="button"
                   onClick={() => setIsMobileFilterOpen(true)}
-                  className="lg:hidden px-3 py-1.5 text-[12px] rounded-xl font-bold transition-all cursor-pointer flex items-center gap-1.5 bg-indigo-50 text-taca-primary hover:bg-indigo-100 border border-indigo-200"
+                  className="lg:hidden px-3 py-1.5 text-[12px] rounded-control font-bold transition-colors cursor-pointer flex items-center gap-1.5 bg-taca-primary-light text-taca-primary hover:bg-taca-primary/10 border border-taca-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary/30"
                 >
                   <SlidersHorizontal className="w-3.5 h-3.5" />
                   <span>Bộ lọc</span>
@@ -323,13 +319,13 @@ const CategoryLandingPage = () => {
                       key={chip.id}
                       type="button"
                       onClick={() => setActiveChip(chip.id)}
-                      className={`px-3 py-1.5 text-[12px] rounded-xl font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      className={`px-3 py-1.5 text-[12px] rounded-control font-bold transition-colors cursor-pointer flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary/30 ${
                         activeChip === chip.id 
                           ? 'bg-taca-primary text-white shadow-xs' 
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+                          : 'bg-taca-surface text-taca-text-muted hover:bg-taca-primary-light hover:text-taca-primary border border-transparent hover:border-taca-primary/20'
                       }`}
                     >
-                      <ChipIcon className={`w-3.5 h-3.5 ${activeChip === chip.id ? 'text-white' : 'text-slate-500'}`} />
+                      <ChipIcon className={`w-3.5 h-3.5 ${activeChip === chip.id ? 'text-white' : 'text-taca-text-muted'}`} />
                       <span>{chip.label}</span>
                     </button>
                   );
@@ -339,10 +335,10 @@ const CategoryLandingPage = () => {
 
             {/* Active Filters Badges */}
             {(brand || priceRange !== 'all' || isOfficial || minRating > 0) && (
-              <div className="flex flex-wrap items-center gap-2 p-3 bg-white rounded-xl border border-slate-200/60 shadow-2xs">
-                <span className="text-[12px] font-bold text-slate-500">Đang lọc:</span>
+              <div className="flex flex-wrap items-center gap-2 p-3 bg-white rounded-control border border-taca-border shadow-brand">
+                <span className="text-[12px] font-bold text-taca-text-muted">Đang lọc:</span>
                 {brand && (
-                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full shadow-2xs">
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-taca-primary-light text-taca-primary border border-taca-primary/20 px-3 py-1 rounded-pill">
                     <span>Hãng: {brand}</span>
                     <button type="button" onClick={() => updateParam('brand', '')} className="hover:text-rose-600 cursor-pointer flex items-center bg-transparent border-none p-0">
                       <X className="w-3 h-3" />
@@ -358,8 +354,8 @@ const CategoryLandingPage = () => {
                   </span>
                 )}
                 {isOfficial && (
-                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 px-3 py-1 rounded-full shadow-2xs">
-                    <ShieldCheck className="w-3.5 h-3.5 text-rose-600" />
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-taca-primary-light text-taca-primary border border-taca-primary/20 px-3 py-1 rounded-pill">
+                    <ShieldCheck className="w-3.5 h-3.5 text-taca-primary" />
                     <span>Mall Chính hãng</span>
                     <button type="button" onClick={() => updateParam('official', false)} className="hover:text-rose-600 cursor-pointer flex items-center bg-transparent border-none p-0">
                       <X className="w-3 h-3" />
@@ -389,10 +385,10 @@ const CategoryLandingPage = () => {
             {loading ? (
               <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 animate-pulse">
                 {[...Array(8)].map((_, i) => (
-                  <div key={i} className="bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col gap-3 shadow-2xs">
-                    <div className="w-full aspect-square bg-slate-100 rounded-xl"></div>
-                    <div className="h-4 bg-slate-100 rounded w-3/4"></div>
-                    <div className="h-4 bg-slate-100 rounded w-1/2"></div>
+                  <div key={i} className="bg-white border border-taca-border rounded-card p-4 flex flex-col gap-3 shadow-brand">
+                    <div className="w-full aspect-square bg-taca-surface rounded-control"></div>
+                    <div className="h-4 bg-taca-surface rounded w-3/4"></div>
+                    <div className="h-4 bg-taca-surface rounded w-1/2"></div>
                   </div>
                 ))}
               </div>
@@ -417,7 +413,7 @@ const CategoryLandingPage = () => {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 text-slate-400 bg-white rounded-2xl border border-dashed border-slate-300">
+              <div className="text-center py-12 text-taca-text-muted bg-white rounded-card border border-dashed border-taca-border">
                 Chưa có sản phẩm nào trong danh mục này
               </div>
             )}
@@ -425,23 +421,23 @@ const CategoryLandingPage = () => {
           
           {/* Deal theo thương hiệu */}
           <div className="space-y-3 pt-2">
-            <h2 className="text-[16px] font-black text-slate-900 m-0 uppercase tracking-tight">
+            <h2 className="text-[16px] font-black text-taca-text-main m-0 uppercase tracking-tight">
               ƯU ĐÃI THƯƠNG HIỆU HÀNG ĐẦU
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Link
                 to="/search?brand=Apple"
-                className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white flex flex-col justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all no-underline group border border-white/10"
+                className="min-h-[128px] p-4 rounded-card bg-white text-taca-text-main flex flex-col justify-between shadow-brand hover:shadow-brand-md transition-shadow no-underline group border border-taca-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary/30"
               >
                 <div>
-                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-white/20 text-white">
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-pill bg-taca-primary-light text-taca-primary">
                     APPLE WEEK
                   </span>
-                  <div className="text-[15px] font-black mt-2 group-hover:text-amber-300 transition-colors">
+                  <div className="text-[15px] font-black mt-2 group-hover:text-taca-primary transition-colors">
                     Giảm Đến 5 Triệu Đồng
                   </div>
                 </div>
-                <span className="text-[11px] font-bold text-white/80 mt-3 flex items-center gap-1 group-hover:text-amber-200 transition-colors">
+                <span className="text-[11px] font-bold text-taca-text-muted mt-3 flex items-center gap-1 group-hover:text-taca-primary transition-colors">
                   <span>Xem sản phẩm</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                 </span>
@@ -449,17 +445,17 @@ const CategoryLandingPage = () => {
 
               <Link
                 to="/search?brand=Samsung"
-                className="p-4 rounded-2xl bg-gradient-to-br from-blue-950 to-blue-900 text-white flex flex-col justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all no-underline group border border-white/10"
+                className="min-h-[128px] p-4 rounded-card bg-white text-taca-text-main flex flex-col justify-between shadow-brand hover:shadow-brand-md transition-shadow no-underline group border border-taca-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary/30"
               >
                 <div>
-                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-white/20 text-white">
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-pill bg-taca-primary-light text-taca-primary">
                     SAMSUNG GALAXY AI
                   </span>
-                  <div className="text-[15px] font-black mt-2 group-hover:text-amber-300 transition-colors">
+                  <div className="text-[15px] font-black mt-2 group-hover:text-taca-primary transition-colors">
                     Tặng Quà Lên Đến 3 Triệu
                   </div>
                 </div>
-                <span className="text-[11px] font-bold text-white/80 mt-3 flex items-center gap-1 group-hover:text-amber-200 transition-colors">
+                <span className="text-[11px] font-bold text-taca-text-muted mt-3 flex items-center gap-1 group-hover:text-taca-primary transition-colors">
                   <span>Xem sản phẩm</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                 </span>
@@ -467,17 +463,17 @@ const CategoryLandingPage = () => {
 
               <Link
                 to="/search?brand=Anker"
-                className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950 to-indigo-900 text-white flex flex-col justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all no-underline group border border-white/10"
+                className="min-h-[128px] p-4 rounded-card bg-white text-taca-text-main flex flex-col justify-between shadow-brand hover:shadow-brand-md transition-shadow no-underline group border border-taca-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary/30"
               >
                 <div>
-                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-white/20 text-white">
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-pill bg-taca-primary-light text-taca-primary">
                     ANKER GANPRIME
                   </span>
-                  <div className="text-[15px] font-black mt-2 group-hover:text-amber-300 transition-colors">
+                  <div className="text-[15px] font-black mt-2 group-hover:text-taca-primary transition-colors">
                     Sạc Siêu Nhanh Freeship 0Đ
                   </div>
                 </div>
-                <span className="text-[11px] font-bold text-white/80 mt-3 flex items-center gap-1 group-hover:text-amber-200 transition-colors">
+                <span className="text-[11px] font-bold text-taca-text-muted mt-3 flex items-center gap-1 group-hover:text-taca-primary transition-colors">
                   <span>Xem sản phẩm</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                 </span>
@@ -492,19 +488,19 @@ const CategoryLandingPage = () => {
       {isMobileFilterOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
           <div 
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-taca-text-main/35 transition-opacity"
             onClick={() => setIsMobileFilterOpen(false)}
           />
-          <div className="relative ml-auto w-full max-w-xs bg-white h-full shadow-2xl p-5 overflow-y-auto flex flex-col z-10 animate-in slide-in-from-right duration-200">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
-              <h3 className="text-[16px] font-bold text-slate-900 m-0 flex items-center gap-2">
+          <div className="relative ml-auto w-full max-w-[min(320px,calc(100vw-24px))] bg-white h-full shadow-brand-lg p-5 overflow-y-auto flex flex-col z-10 animate-in slide-in-from-right duration-200">
+            <div className="flex items-center justify-between pb-4 border-b border-taca-border mb-4">
+              <h3 className="text-[16px] font-bold text-taca-text-main m-0 flex items-center gap-2">
                 <SlidersHorizontal className="w-4 h-4 text-taca-primary" />
                 <span>Bộ lọc tìm kiếm</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setIsMobileFilterOpen(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-taca-text-muted hover:text-taca-primary hover:bg-taca-primary-light transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary/30"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -527,11 +523,11 @@ const CategoryLandingPage = () => {
                 onResetFilters={handleResetFilters}
               />
             </div>
-            <div className="pt-4 border-t border-slate-100 mt-4">
+            <div className="pt-4 border-t border-taca-border mt-4">
               <button
                 type="button"
                 onClick={() => setIsMobileFilterOpen(false)}
-                className="w-full py-2.5 rounded-xl bg-taca-primary text-white font-bold text-[13px] shadow-sm hover:bg-indigo-700 transition-colors cursor-pointer"
+                className="w-full py-2.5 rounded-control bg-taca-primary text-white font-bold text-[13px] shadow-brand hover:bg-taca-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-taca-primary/30 transition-colors cursor-pointer"
               >
                 Xem kết quả
               </button>

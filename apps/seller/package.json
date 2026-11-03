@@ -10,6 +10,7 @@
     "preview": "vite preview --port 5175 --strictPort"
   },
   "dependencies": {
+    "@taca/ui-components": "*",
     "axios": "^1.20.0",
     "lucide-react": "^0.435.0",
     "prop-types": "^15.8.1",
