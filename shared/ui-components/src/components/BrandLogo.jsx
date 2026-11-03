@@ -1,4 +1,4 @@
-import tacaLogo from '../assets/taca-logo.png';
+import tacaLogo from '../assets/taca-logo.js';
 
 const BrandLogo = ({
   alt = 'Taca',

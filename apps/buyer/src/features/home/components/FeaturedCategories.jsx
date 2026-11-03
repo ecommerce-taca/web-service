@@ -27,7 +27,7 @@ const FeaturedCategories = () => {
   return (
     <section className="relative rounded-panel border border-taca-border bg-white p-4 shadow-brand sm:p-6">
       {/* Title */}
-      <div className="flex items-center justify-between pb-4 border-slate-100 border-b">
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-slate-100 border-b">
         <div className="flex items-center gap-2.5">
           <span className="flex h-8 w-8 items-center justify-center rounded-control border border-taca-border bg-taca-primary-light text-sm font-extrabold text-taca-primary shadow-brand">
             <Layers className="w-4 h-4" />

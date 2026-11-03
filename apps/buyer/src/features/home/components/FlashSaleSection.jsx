@@ -97,7 +97,7 @@ const FlashSaleSection = () => {
       </div>
 
       {/* Product Cards Grid - 4 cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-5">
+      <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4 lg:gap-4">
         {FLASH_PRODUCTS.map((product) => (
           <FlashProductCard
             key={product.id}

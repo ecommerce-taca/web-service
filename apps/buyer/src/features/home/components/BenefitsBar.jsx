@@ -38,10 +38,10 @@ const BenefitsBar = () => {
               <IconComponent className="w-5 h-5" />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-[13px] font-extrabold text-slate-900 truncate">
+              <span className="line-clamp-2 text-[12px] font-extrabold leading-snug text-slate-900 sm:text-[13px]">
                 {b.title}
               </span>
-              <span className="text-[11px] font-medium text-slate-500 truncate">
+              <span className="line-clamp-2 text-[10px] font-medium leading-snug text-slate-500 sm:text-[11px]">
                 {b.desc}
               </span>
             </div>

@@ -240,9 +240,9 @@ export default function CheckoutPage() {
     : '28 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh';
 
   return (
-    <div className="bg-taca-surface min-h-screen pb-16">
+    <div className="pb-4 sm:pb-8 lg:pb-12">
       {/* Breadcrumb */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-[13px] text-taca-text-muted">
+      <div className="py-1 sm:py-2 text-[13px] text-taca-text-muted">
         <Link to="/" className="hover:text-taca-primary text-inherit no-underline">Trang chủ</Link>
         <span className="mx-2">/</span>
         <Link to="/cart" className="hover:text-taca-primary text-inherit no-underline">Giỏ hàng</Link>
@@ -250,7 +250,7 @@ export default function CheckoutPage() {
         <span className="text-taca-text-main font-semibold">Thanh toán</span>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-2">
+      <div className="mt-3 sm:mt-4">
         <h1 className="text-2xl font-bold text-taca-text-main mb-6">Thanh toán</h1>
 
         {checkoutError && (
@@ -268,7 +268,7 @@ export default function CheckoutPage() {
           <div className="flex-1 space-y-6 w-full">
             
             {/* 1. Địa chỉ nhận hàng */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-taca-border">
+            <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-taca-border">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-[14px] font-extrabold text-taca-text-main uppercase">1. ĐỊA CHỈ NHẬN HÀNG</h2>
                 <button 
@@ -291,7 +291,7 @@ export default function CheckoutPage() {
             </div>
 
             {/* 2. Sản phẩm & Vận chuyển */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-taca-border">
+            <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-taca-border">
               <h2 className="text-[14px] font-extrabold text-taca-text-main uppercase mb-6">2. SẢN PHẨM & VẬN CHUYỂN</h2>
               
               <div className="space-y-6">
@@ -299,17 +299,17 @@ export default function CheckoutPage() {
                   <p className="text-sm text-taca-text-muted">Chưa có sản phẩm nào được chọn.</p>
                 ) : (
                   items.map(item => (
-                    <div key={item.id} className="flex items-start justify-between pb-4 border-b border-slate-100 last:border-0 last:pb-0">
-                      <div className="flex items-start">
+                    <div key={item.id} className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 pb-4 border-b border-slate-100 last:border-0 last:pb-0">
+                      <div className="flex items-start min-w-0">
                         <div className="w-20 h-20 bg-slate-50 rounded-lg flex-shrink-0 overflow-hidden border border-taca-border">
                           <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                         </div>
-                        <div className="ml-4 flex flex-col pt-1">
+                        <div className="ml-3 sm:ml-4 flex flex-col pt-1 min-w-0">
                           <h3 className="text-[13px] font-bold text-taca-text-main line-clamp-2 leading-snug">{item.name}</h3>
                           <p className="text-[11px] font-medium text-taca-text-muted mt-1">{item.variant} - SL: {item.quantity}</p>
                         </div>
                       </div>
-                      <div className="text-[13px] font-extrabold text-taca-sale pt-1 flex-shrink-0 ml-4">
+                      <div className="text-[13px] font-extrabold text-taca-sale sm:pt-1 flex-shrink-0 sm:ml-4 text-right">
                         {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.quantity)}
                       </div>
                     </div>

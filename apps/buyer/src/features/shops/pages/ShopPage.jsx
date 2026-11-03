@@ -34,7 +34,7 @@ const ShopPage = () => {
   }, [shopId]);
 
   return (
-    <div className="bg-taca-surface min-h-screen pb-brand-12">
+    <div className="min-h-full pb-brand-12">
       {/* Breadcrumb */}
       <div className="py-brand-4 text-[12px] text-taca-text-muted font-medium flex flex-wrap gap-2 items-center">
         <Link to="/" className="hover:text-taca-primary no-underline text-inherit">

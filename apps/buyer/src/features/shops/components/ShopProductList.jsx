@@ -45,7 +45,7 @@ const ShopProductList = ({ shopId }) => {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-4">
           {Array.from({ length: 5 }).map((_, idx) => (
             <div key={idx} className="h-64 bg-taca-surface border border-taca-border rounded-card animate-pulse" />
           ))}
@@ -59,7 +59,7 @@ const ShopProductList = ({ shopId }) => {
           Gian hàng hiện chưa có sản phẩm nào.
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-4">
           {products.map((product) => (
             <ProductCard
               key={product.id || product.product_id}

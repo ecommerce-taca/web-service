@@ -189,7 +189,7 @@ const SearchPage = () => {
       {/* Main Layout */}
       <div className="flex flex-col lg:flex-row gap-5 lg:gap-6 items-start">
         {/* Left Sidebar Filters */}
-        <div className="w-full lg:w-[260px] flex-shrink-0">
+        <div className="hidden lg:block w-[260px] flex-shrink-0">
           <FilterSidebar
             selectedCategory={category}
             onCategoryChange={(val) => updateParam('category', val)}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { Check, ExternalLink } from 'lucide-react';
+import { BrandLogo } from '@taca/ui-components';
 import { getSellerUser, signoutSeller } from '../../services/seller-auth.api';
 import SellerLoginModal from '../common/SellerLoginModal';
 
@@ -40,27 +41,30 @@ export default function SellerHeader({ shopName = 'Taca Apple Flagship Store', u
 
   return (
     <>
-      <header className="bg-white border-b border-slate-200 h-[68px] px-4 sm:px-6 lg:px-12 flex items-center justify-between gap-2 sm:gap-4">
+      <header className="bg-white border-b border-taca-border h-[64px] sm:h-[68px] px-3 sm:px-6 lg:px-12 flex items-center justify-between gap-2 sm:gap-4">
         {/* Left branding & store selector */}
         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-          <Link to={`${basePath}/`} className="flex items-center gap-2 group text-decoration-none shrink-0">
-            <span className="text-[22px] sm:text-[26px] font-extrabold tracking-tight text-[#4F46E5] font-sans">
-              taca
-            </span>
+          <Link to={`${basePath}/`} className="flex items-center gap-1.5 sm:gap-2 group text-decoration-none shrink-0">
+            <BrandLogo
+              alt="TACA"
+              width={204}
+              height={46}
+              className="h-[32px] sm:h-[36px] w-auto max-w-[112px] sm:max-w-[128px] object-contain"
+            />
             <span className="text-[9px] sm:text-[10px] font-bold tracking-wider uppercase px-1.5 sm:px-2 py-0.5 rounded bg-indigo-50 text-[#4F46E5] border border-indigo-100">
               SELLER
             </span>
           </Link>
 
           {/* Store Switcher */}
-          <div className="relative ml-2 hidden sm:block">
+          <div className="relative ml-2 hidden md:block min-w-0">
             <button
               type="button"
               onClick={() => setIsStoreMenuOpen(!isStoreMenuOpen)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 text-[12px] font-semibold text-slate-800 hover:bg-slate-50 transition-colors"
+              className="flex items-center gap-2 max-w-[220px] lg:max-w-[280px] px-3 py-1.5 rounded-control border border-taca-border text-caption font-semibold text-slate-800 hover:bg-slate-50 transition-colors"
             >
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>{shopName}</span>
+              <span className="truncate">{shopName}</span>
               <span className="text-slate-400 text-[10px]">▾</span>
             </button>
 
@@ -89,7 +93,7 @@ export default function SellerHeader({ shopName = 'Taca Apple Flagship Store', u
         </div>
 
         {/* Right navigation links & user info */}
-        <div className="flex items-center gap-2.5 sm:gap-5 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 lg:gap-5 shrink-0">
           <a
             href={isShell ? "/shop/shop_apple_001" : "http://localhost:5173/shop/shop_apple_001"}
             target="_blank"

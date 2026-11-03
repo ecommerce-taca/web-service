@@ -16,7 +16,7 @@ const SortBar = ({ currentSort = 'popular', onSortChange, totalCount = 0 }) => {
         <span className="text-[12px] font-bold text-taca-text-muted uppercase tracking-wider shrink-0">
           Ưu tiên xem:
         </span>
-        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+        <div className="flex max-w-full items-center gap-1.5 min-w-0 overflow-x-auto pb-1 sm:pb-0 sm:flex-wrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {SORT_OPTIONS.map((opt) => {
             const isActive = currentSort === opt.id;
             const IconComponent = opt.icon;

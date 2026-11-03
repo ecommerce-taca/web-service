@@ -82,7 +82,7 @@ const OrderCard = ({ order }) => {
       {/* Product Items List */}
       <div className="space-y-3.5">
         {order.items.map((item, index) => (
-          <div key={index} className="flex items-center gap-3.5">
+          <div key={index} className="flex items-start sm:items-center gap-3.5">
             {/* Product Image: cố định 64px không bị co méo */}
             <div className="w-16 h-16 min-w-[64px] min-h-[64px] max-w-[64px] max-h-[64px] rounded-xl bg-slate-50 border border-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
               {item.image ? (
@@ -112,7 +112,7 @@ const OrderCard = ({ order }) => {
             </div>
 
             {/* Price */}
-            <div className="text-right shrink-0 whitespace-nowrap">
+            <div className="text-right shrink-0 whitespace-nowrap ml-auto">
               <span className="text-[14px] font-bold text-slate-900">
                 {(item.price * item.quantity).toLocaleString('vi-VN')} ₫
               </span>

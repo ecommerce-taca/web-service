@@ -17,9 +17,11 @@ export default {
             hover: '#4338CA',
             light: '#EEF2FF',
           },
+          info: '#2563EB',
           sale: '#FF424E',
           warning: '#FF9800',
           success: '#00AB56',
+          error: '#E11D48',
           surface: '#F5F5FA',
           text: {
             main: '#242424',

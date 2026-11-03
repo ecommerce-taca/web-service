@@ -16,9 +16,9 @@ const AccountLayout = () => {
   };
 
   return (
-    <div className="bg-taca-surface min-h-screen pb-brand-12">
+    <div className="pb-brand-12">
       {/* Container */}
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-brand-12 xl:px-[80px]">
+      <div>
         {/* Breadcrumb */}
         <div className="py-4 text-[13px] text-taca-text-muted">
           <Link to="/" className="hover:text-taca-primary transition-colors">Trang chủ</Link>
