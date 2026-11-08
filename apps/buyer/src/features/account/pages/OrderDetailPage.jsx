@@ -140,7 +140,7 @@ const OrderDetailPage = () => {
 
   return (
     <div className="flex flex-col h-full bg-white">
-      <div className="p-6 md:p-8 flex-1 max-w-[1200px] w-full mx-auto space-y-6">
+      <div className="p-4 sm:p-6 md:p-8 flex-1 w-full mx-auto space-y-6">
         
         {/* Top Navigation & Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
@@ -227,7 +227,7 @@ const OrderDetailPage = () => {
 
               <div className="space-y-4">
                 {(order.order_items || []).map((item, index) => (
-                  <div key={index} className="flex items-center gap-4">
+                  <div key={index} className="flex items-start sm:items-center gap-3 sm:gap-4">
                     {/* Fixed dimensions for product image to avoid container blowing up */}
                     <div className="w-20 h-20 min-w-[80px] min-h-[80px] max-w-[80px] max-h-[80px] rounded-xl bg-slate-50 border border-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
                       {item.product_image ? (

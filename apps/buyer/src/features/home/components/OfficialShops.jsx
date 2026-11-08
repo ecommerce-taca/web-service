@@ -72,11 +72,11 @@ const SHOPS = [
 
 const OfficialShops = () => {
   return (
-    <section className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs relative">
+    <section className="relative rounded-panel border border-taca-border bg-white p-4 shadow-brand sm:p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-slate-100">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
+        <div className="space-y-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-3">
             <span className="px-2.5 py-0.5 rounded-md bg-rose-600 text-white font-black text-[11px] uppercase tracking-wider shadow-xs">
               MALL
             </span>
@@ -85,8 +85,8 @@ const OfficialShops = () => {
             </h2>
           </div>
           <p className="text-[12px] text-slate-500 font-medium m-0 flex items-center gap-4 flex-wrap">
-            <span className="flex items-center gap-1.5 text-indigo-700 font-semibold">
-              <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" />
+            <span className="flex items-center gap-1.5 font-semibold text-taca-primary">
+              <ShieldCheck className="w-4 h-4 text-taca-primary shrink-0" />
               Cam kết 100% hàng thật
             </span>
             <span className="text-slate-300 hidden sm:inline">•</span>
@@ -104,7 +104,7 @@ const OfficialShops = () => {
 
         <Link
           to="/search?q=mall"
-          className="text-[12px] font-bold text-[#0A68FF] hover:text-[#0855D2] transition-colors no-underline whitespace-nowrap flex items-center gap-1 group"
+          className="group flex items-center gap-1 whitespace-nowrap text-[12px] font-bold text-taca-primary no-underline transition-colors hover:text-taca-primary-hover"
         >
           <span>Xem tất cả Mall</span>
           <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
@@ -117,7 +117,7 @@ const OfficialShops = () => {
           <Link
             key={shop.id}
             to={`/shop/${shop.slug}`}
-            className="flex items-center p-3.5 rounded-2xl border border-slate-200/80 hover:border-indigo-400 bg-white hover:bg-slate-50/50 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group no-underline cursor-pointer gap-3.5"
+            className="group flex cursor-pointer items-center gap-3.5 rounded-panel border border-taca-border bg-white p-3.5 no-underline shadow-brand transition-all duration-300 hover:-translate-y-0.5 hover:border-taca-primary hover:bg-taca-surface hover:shadow-brand-lg"
           >
             {/* Avatar logo */}
             <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${shop.bgGradient} flex items-center justify-center shadow-xs flex-shrink-0 group-hover:scale-105 transition-transform border border-white/20 text-white`}>
@@ -129,7 +129,7 @@ const OfficialShops = () => {
             {/* Info */}
             <div className="flex flex-col flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-[13px] font-extrabold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">
+                <span className="truncate text-[13px] font-extrabold text-taca-text-main transition-colors group-hover:text-taca-primary">
                   {shop.name}
                 </span>
               </div>

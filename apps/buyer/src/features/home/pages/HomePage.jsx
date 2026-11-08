@@ -8,7 +8,7 @@ import RecommendedProducts from '../components/RecommendedProducts';
 
 const HomePage = () => {
   return (
-    <div className="flex flex-col gap-6 pb-8">
+    <div className="flex flex-col gap-4 pb-6 sm:gap-5 sm:pb-8 lg:gap-6">
       {/* Top Hero Row: Dynamic Carousel (flex-1) + 2 Campaign Banners stacked (w-[400px]) */}
       <div className="flex flex-col lg:flex-row gap-4 items-stretch">
         {/* Left: Dynamic Hero Banner Carousel */}

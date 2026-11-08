@@ -88,7 +88,7 @@ const ReviewsPage = () => {
 
   return (
     <div className="flex flex-col h-full bg-white">
-      <div className="p-6 md:p-8 flex-1">
+      <div className="p-4 sm:p-6 md:p-8 flex-1">
         <h1 className="text-[20px] font-bold text-taca-text-main mb-6">Đánh giá của tôi</h1>
 
         {/* Tabs */}

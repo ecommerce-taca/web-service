@@ -97,9 +97,9 @@ const ShopHero = ({ shopId, onShopLoaded }) => {
 
   if (loading && !shop) {
     return (
-      <div className="bg-white p-6 border border-taca-border rounded-[12px] flex items-center justify-between mb-6 animate-pulse">
-        <div className="flex items-center gap-6">
-          <div className="w-[80px] h-[80px] bg-slate-200 rounded-[8px]" />
+      <div className="bg-white p-4 sm:p-6 border border-taca-border rounded-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 animate-pulse">
+        <div className="flex items-center gap-4 sm:gap-6">
+          <div className="w-[72px] h-[72px] sm:w-[80px] sm:h-[80px] bg-taca-surface rounded-control" />
           <div className="space-y-3">
             <div className="h-5 w-48 bg-slate-200 rounded" />
             <div className="h-4 w-32 bg-slate-200 rounded" />
@@ -122,33 +122,33 @@ const ShopHero = ({ shopId, onShopLoaded }) => {
   const logoUrl = shop?.logo_url;
 
   return (
-    <div className="bg-white p-6 border border-taca-primary rounded-[12px] flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 shadow-xs">
+    <div className="bg-gradient-to-r from-[#F4F8FF] via-white to-white p-4 sm:p-6 border border-taca-border rounded-card flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 shadow-brand">
       {/* Left side: Logo and Info */}
-      <div className="flex items-center gap-5 sm:gap-6">
+      <div className="flex items-start sm:items-center gap-4 sm:gap-6 min-w-0">
         {/* Shop Logo */}
         {logoUrl ? (
           <img
             src={logoUrl}
             alt={shopName}
-            className="w-[80px] h-[80px] rounded-[8px] object-cover border border-slate-200 shrink-0"
+            className="w-[72px] h-[72px] sm:w-[80px] sm:h-[80px] rounded-control object-cover border border-taca-border shrink-0 bg-white"
           />
         ) : (
-          <div className="w-[80px] h-[80px] bg-slate-900 text-white flex flex-col items-center justify-center rounded-[8px] shrink-0 text-[10px] font-bold p-1 text-center shadow-xs">
-            <span className="text-[#0A68FF] font-black tracking-tight text-[12px]">taca</span>
-            <span className="uppercase tracking-wider line-clamp-2 leading-tight">
+          <div className="w-[72px] h-[72px] sm:w-[80px] sm:h-[80px] bg-white border border-taca-border text-taca-text-main flex flex-col items-center justify-center rounded-control shrink-0 text-[10px] font-bold p-1 text-center shadow-brand">
+            <span className="text-taca-primary font-black tracking-tight text-[12px]">taca</span>
+            <span className="uppercase tracking-wider line-clamp-2 leading-tight text-taca-text-muted">
               {shopName.slice(0, 15)}
             </span>
           </div>
         )}
 
         {/* Shop Info */}
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5 min-w-0">
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-[18px] sm:text-[20px] font-bold text-taca-text-main m-0 leading-snug">
               {shopName}
             </h1>
             {isOfficial && (
-              <Badge variant="official" className="border border-taca-primary !rounded-[4px] text-[11px] font-bold">
+              <Badge variant="official" className="border border-taca-primary/30 !rounded-pill text-[11px] font-bold">
                 Official Store
               </Badge>
             )}
@@ -170,7 +170,7 @@ const ShopHero = ({ shopId, onShopLoaded }) => {
             <span className="text-taca-border">|</span>
             <span>{responseRate} phản hồi</span>
             <span className="text-taca-border">|</span>
-            <span className="font-semibold text-slate-800">
+            <span className="font-semibold text-taca-text-main">
               {formatFollowersCount(followersCount)} người theo dõi
             </span>
           </div>
@@ -178,15 +178,15 @@ const ShopHero = ({ shopId, onShopLoaded }) => {
       </div>
 
       {/* Right side: Actions */}
-      <div className="flex items-center gap-3 self-end md:self-center shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 self-stretch sm:self-end md:self-center shrink-0">
         <Button
           variant={isFollowing ? 'secondary' : 'outline'}
           onClick={handleToggleFollow}
           disabled={followActionLoading}
-          className={`px-5 h-[40px] rounded-[8px] text-[13px] font-bold cursor-pointer transition-all ${
+          className={`flex-1 sm:flex-none px-4 sm:px-5 h-[40px] rounded-control text-[13px] font-bold cursor-pointer transition-colors ${
             isFollowing
-              ? '!bg-slate-100 !text-slate-700 !border-slate-300 hover:!bg-rose-50 hover:!text-rose-600 hover:!border-rose-200'
-              : '!border-taca-primary !text-taca-primary hover:!bg-taca-primary/5'
+              ? '!bg-white !text-taca-text-main !border-taca-border hover:!bg-taca-primary-light hover:!text-taca-primary hover:!border-taca-primary/30'
+              : '!bg-taca-primary !border-taca-primary !text-white hover:!bg-taca-primary-hover focus-visible:!ring-2 focus-visible:!ring-taca-primary/30'
           }`}
         >
           {followActionLoading ? (
@@ -207,7 +207,7 @@ const ShopHero = ({ shopId, onShopLoaded }) => {
 
         <Button
           variant="primary"
-          className="px-5 h-[40px] rounded-[8px] text-[13px] font-bold cursor-pointer hover:shadow-md transition-shadow"
+          className="flex-1 sm:flex-none px-4 sm:px-5 h-[40px] rounded-control text-[13px] font-bold cursor-pointer hover:bg-taca-primary-hover transition-colors"
         >
           Chat ngay
         </Button>

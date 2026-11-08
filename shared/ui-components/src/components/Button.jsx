@@ -14,12 +14,12 @@ const Button = ({
   const baseClasses = 'inline-flex items-center justify-center font-bold rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-taca-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
   
   const variants = {
-    primary: 'bg-taca-primary text-white border-taca-primary hover:not-disabled:bg-taca-primary-hover',
-    secondary: 'bg-white text-taca-text-main border-taca-border hover:not-disabled:bg-taca-surface',
-    outline: 'bg-transparent text-taca-primary border-taca-primary hover:not-disabled:bg-taca-primary/5',
-    destructive: 'bg-taca-sale text-white border-taca-sale hover:not-disabled:bg-red-700',
-    danger: 'bg-taca-sale text-white border-taca-sale hover:not-disabled:bg-red-700',
-    ghost: 'bg-transparent text-taca-text-main border-transparent hover:not-disabled:bg-taca-surface',
+    primary: 'border-taca-primary bg-taca-primary text-white shadow-brand hover:border-taca-primary-hover hover:bg-taca-primary-hover disabled:bg-taca-primary',
+    secondary: 'border-taca-border bg-white text-taca-text-main shadow-brand hover:bg-taca-surface',
+    outline: 'border-taca-primary bg-transparent text-taca-primary hover:bg-taca-primary-light',
+    destructive: 'border-taca-sale bg-taca-sale text-white shadow-brand hover:bg-red-700',
+    danger: 'border-taca-sale bg-taca-sale text-white shadow-brand hover:bg-red-700',
+    ghost: 'border-transparent bg-transparent text-taca-text-main hover:bg-taca-surface',
   };
 
   const sizes = {

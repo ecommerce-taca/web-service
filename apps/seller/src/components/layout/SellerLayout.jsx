@@ -67,10 +67,10 @@ export default function SellerLayout() {
   // Loading skeleton
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
+      <div className="seller-page-shell flex items-center justify-center px-4">
         <div className="text-center">
           <div className="w-10 h-10 border-4 border-[#4F46E5] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-sm text-slate-500 font-medium">Đang xác thực quyền truy cập Kênh Người Bán...</p>
+          <p className="text-body text-taca-text-muted font-medium">Đang xác thực quyền truy cập Kênh Người Bán...</p>
         </div>
       </div>
     );
@@ -80,13 +80,13 @@ export default function SellerLayout() {
   const canAccessOnboarding = ['DRAFT', 'NEEDS_INFO', 'REJECTED'].includes(kycStatus) && isOnboarding;
   if (canAccessOnboarding) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans flex flex-col">
-        <header className="bg-white border-b border-slate-200 h-[68px] px-6 lg:px-12 flex items-center justify-between sticky top-0 z-50">
-          <div className="flex items-center gap-3">
+      <div className="seller-page-shell flex flex-col">
+        <header className="bg-white border-b border-taca-border min-h-[64px] sm:h-[68px] px-3 sm:px-6 lg:px-12 flex items-center justify-between sticky top-0 z-50">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <span className="text-[26px] font-extrabold tracking-tight text-[#4F46E5] font-sans">
               taca
             </span>
-            <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+            <span className="text-[9px] sm:text-caption font-bold tracking-wider uppercase px-1.5 sm:px-2 py-0.5 rounded-pill bg-indigo-50 text-indigo-700 border border-indigo-200">
               SELLER ONBOARDING
             </span>
           </div>
@@ -97,13 +97,13 @@ export default function SellerLayout() {
             <span>← Kênh người mua</span>
           </a>
         </header>
-        <main className="flex-1 max-w-[1200px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="flex-1 max-w-[1200px] w-full mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
           <Outlet />
         </main>
-        <footer className="bg-white border-t border-slate-200 py-6 px-6 lg:px-12 text-center text-[12px] text-slate-500">
-          <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <footer className="seller-footer">
+          <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
             <p>© 2026 Taca Ecommerce System. Kênh Người Bán & Quản lý vận hành.</p>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center justify-center flex-wrap gap-x-4 gap-y-2 sm:gap-x-6">
               <button
                 type="button"
                 onClick={() => setIsPolicyModalOpen(true)}
@@ -133,14 +133,14 @@ export default function SellerLayout() {
   // Approval Gate: Nếu chưa được Admin phê duyệt, chặn vào Kênh Người Bán
   if (!isApproved) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans flex flex-col">
+      <div className="seller-page-shell flex flex-col">
         {/* Minimal Gate Header */}
-        <header className="bg-white border-b border-slate-200 h-[68px] px-6 lg:px-12 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <header className="bg-white border-b border-taca-border min-h-[64px] sm:h-[68px] px-3 sm:px-6 lg:px-12 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <span className="text-[26px] font-extrabold tracking-tight text-[#4F46E5] font-sans">
               taca
             </span>
-            <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+            <span className="text-[9px] sm:text-caption font-bold tracking-wider uppercase px-1.5 sm:px-2 py-0.5 rounded-pill bg-amber-50 text-amber-700 border border-amber-200">
               XÉT DUYỆT GIAN HÀNG
             </span>
           </div>
@@ -154,8 +154,8 @@ export default function SellerLayout() {
         </header>
 
         {/* Main Gate Body */}
-        <main className="flex-1 w-full max-w-[800px] mx-auto px-4 py-12 flex flex-col justify-center">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 sm:p-10 text-center">
+        <main className="flex-1 w-full max-w-[800px] mx-auto px-3 sm:px-4 py-6 sm:py-12 flex flex-col justify-center">
+          <div className="bg-white rounded-panel border border-taca-border shadow-brand p-4 sm:p-8 lg:p-10 text-center">
             {kycStatus === 'PENDING' ? (
               <>
                 <div className="w-20 h-20 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-6 text-amber-600 shadow-xs">
@@ -356,10 +356,10 @@ export default function SellerLayout() {
           </div>
         </main>
 
-        <footer className="bg-white border-t border-slate-200 py-6 px-6 lg:px-12 text-center text-[12px] text-slate-500">
-          <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <footer className="seller-footer">
+          <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
             <p>© 2026 Taca Ecommerce System. Kênh Người Bán & Quản lý vận hành.</p>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center justify-center flex-wrap gap-x-4 gap-y-2 sm:gap-x-6">
               <button
                 type="button"
                 onClick={() => setIsPolicyModalOpen(true)}
@@ -387,7 +387,7 @@ export default function SellerLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans flex flex-col">
+    <div className="seller-page-shell flex flex-col">
       {/* Unified Sticky Navigation Bar */}
       <div className="sticky top-0 z-30 bg-white shadow-xs">
         <SellerHeader shopName={shop?.name} />
@@ -395,15 +395,15 @@ export default function SellerLayout() {
       </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-12 py-8">
+      <main className="seller-content flex-1">
         <Outlet />
       </main>
 
       {/* Seller Portal Footer */}
-      <footer className="bg-white border-t border-slate-200 py-6 px-6 lg:px-12 text-center text-[12px] text-slate-500">
-        <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <footer className="seller-footer">
+        <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
           <p>© 2026 Taca Ecommerce System. Kênh Người Bán & Quản lý vận hành đa dịch vụ.</p>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center justify-center flex-wrap gap-x-4 gap-y-2 sm:gap-x-6">
             <button
               type="button"
               onClick={() => setIsPolicyModalOpen(true)}

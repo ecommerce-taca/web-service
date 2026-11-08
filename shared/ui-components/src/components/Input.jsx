@@ -1,4 +1,4 @@
-import { forwardRef, useState } from 'react';
+import { forwardRef, useId, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -12,8 +12,10 @@ const Input = forwardRef(({
   type = 'text',
   ...props
 }, ref) => {
-  const inputId = id || Math.random().toString(36).substring(7);
+  const generatedId = useId();
+  const inputId = id || generatedId;
   const [showPassword, setShowPassword] = useState(false);
+  const messageId = error || helperText ? `${inputId}-message` : undefined;
 
   const isPassword = type === 'password';
   const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
@@ -31,7 +33,9 @@ const Input = forwardRef(({
           ref={ref}
           id={inputId}
           type={inputType}
-          className={`w-full h-10 px-3 rounded-lg ${isPassword ? 'pr-10' : ''} bg-white border ${error ? 'border-taca-sale focus:ring-taca-sale' : 'border-taca-border focus:ring-taca-primary'} text-[14px] text-taca-text-main placeholder-taca-text-muted focus:outline-none focus:ring-1 focus:border-transparent transition-all [&::-ms-reveal]:hidden [&::-webkit-contacts-auto-fill-button]:hidden ${className}`}
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={messageId}
+          className={`h-10 w-full rounded-control border px-3 bg-white ${isPassword ? 'pr-10' : ''} ${error ? 'border-taca-sale focus:border-taca-sale focus:ring-taca-sale' : 'border-taca-border focus:border-taca-primary focus:ring-taca-primary'} text-body text-taca-text-main placeholder:text-taca-text-muted disabled:cursor-not-allowed disabled:bg-taca-surface disabled:text-taca-text-muted focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all [&::-ms-reveal]:hidden [&::-webkit-contacts-auto-fill-button]:hidden ${className}`}
           {...props}
         />
         {isPassword && (
@@ -51,7 +55,7 @@ const Input = forwardRef(({
         )}
       </div>
       {(error || helperText) && (
-        <span className={`text-[10px] font-medium ${error ? 'text-taca-sale' : 'text-taca-text-muted'}`}>
+        <span id={messageId} className={`text-caption font-medium ${error ? 'text-taca-sale' : 'text-taca-text-muted'}`}>
           {error || helperText}
         </span>
       )}

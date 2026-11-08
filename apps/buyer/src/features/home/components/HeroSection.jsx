@@ -59,21 +59,21 @@ const HeroSection = () => {
   const slide = SLIDES[currentSlide];
 
   return (
-    <section className="relative flex-1 h-[320px] rounded-2xl overflow-hidden shadow-sm group select-none">
+    <section className="relative min-h-[300px] w-full flex-1 overflow-hidden rounded-panel shadow-brand group select-none sm:min-h-[320px] lg:min-h-[340px]">
       {/* Background with active slide gradient */}
       <div className={`absolute inset-0 bg-gradient-to-r ${slide.bgGradient} transition-all duration-700`} />
 
       {/* Background Ambient Glow */}
       <div className="absolute -top-24 -left-24 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-taca-primary/20 rounded-full blur-3xl pointer-events-none" />
 
       {/* Decorative pattern lines */}
       <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
 
       {/* Slide Content */}
-      <div className="relative z-10 h-full flex items-center justify-between px-5 sm:px-10">
+      <div className="relative z-10 min-h-[300px] h-full flex items-center justify-between px-5 py-6 sm:min-h-[320px] sm:px-10 sm:py-8 lg:min-h-[340px] lg:px-12">
         {/* Left text column */}
-        <div className="max-w-[480px] space-y-2.5 sm:space-y-3">
+        <div className="max-w-[480px] space-y-2.5 sm:space-y-3 pr-0 lg:pr-4">
           <div className="inline-block">
             <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold tracking-wider uppercase shadow-xs ${slide.badgeBg}`}>
               {slide.tag}
@@ -91,7 +91,7 @@ const HeroSection = () => {
           <div className="pt-2">
             <Link
               to={slide.url}
-              className="inline-flex items-center gap-2 px-5 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-white text-slate-900 hover:bg-amber-300 font-extrabold text-[12px] shadow-md transition-all hover:scale-105 no-underline cursor-pointer group/btn"
+              className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-control bg-white text-taca-text-main hover:bg-taca-primary-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 font-extrabold text-[12px] shadow-brand transition-all no-underline cursor-pointer group/btn"
             >
               <span>{slide.ctaText}</span>
               <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
@@ -105,7 +105,7 @@ const HeroSection = () => {
           <img
             src={slide.image}
             alt={slide.title}
-            className="w-[220px] h-[220px] object-cover rounded-2xl shadow-2xl border border-white/20 transform hover:rotate-1 hover:scale-105 transition-all duration-300"
+            className="h-[220px] w-[220px] rounded-panel border border-white/20 object-cover shadow-brand-lg transition-all duration-300 hover:scale-[1.02]"
           />
         </div>
       </div>
@@ -115,7 +115,7 @@ const HeroSection = () => {
         type="button"
         onClick={prevSlide}
         aria-label="Previous slide"
-        className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-slate-900/60 hover:bg-slate-900/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-xs cursor-pointer z-20 border border-white/20"
+        className="absolute left-3 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-slate-900/60 text-white opacity-100 backdrop-blur-xs transition-opacity hover:bg-slate-900/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:opacity-0 sm:group-hover:opacity-100"
       >
         <ChevronLeft className="w-5 h-5 text-white" />
       </button>
@@ -124,7 +124,7 @@ const HeroSection = () => {
         type="button"
         onClick={nextSlide}
         aria-label="Next slide"
-        className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-slate-900/60 hover:bg-slate-900/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-xs cursor-pointer z-20 border border-white/20"
+        className="absolute right-3 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-slate-900/60 text-white opacity-100 backdrop-blur-xs transition-opacity hover:bg-slate-900/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:opacity-0 sm:group-hover:opacity-100"
       >
         <ChevronRight className="w-5 h-5 text-white" />
       </button>

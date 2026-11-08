@@ -57,15 +57,15 @@ export default function CartPage() {
   }
 
   return (
-    <div className="bg-taca-surface min-h-screen pb-16">
+    <div className="pb-4 sm:pb-8 lg:pb-12">
       {/* Breadcrumb */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-[13px] text-taca-text-muted">
+      <div className="py-1 sm:py-2 text-[13px] text-taca-text-muted">
         <Link to="/" className="hover:text-taca-primary text-inherit no-underline">Trang chủ</Link>
         <span className="mx-2">/</span>
         <span className="text-taca-text-main font-semibold">Giỏ hàng</span>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-2">
+      <div className="mt-3 sm:mt-4">
         <h1 className="text-2xl font-bold text-taca-text-main mb-6">
           Giỏ hàng ({items.length} sản phẩm)
         </h1>

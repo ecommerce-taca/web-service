@@ -12,7 +12,7 @@ const CampaignBanner = ({
 }) => {
   return (
     <section
-      className="p-4 sm:p-5 rounded-2xl flex items-center justify-between gap-4 w-full lg:w-[400px] min-w-0 h-[152px] overflow-hidden relative shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 group"
+      className="relative flex min-h-[152px] w-full items-center justify-between gap-3 overflow-hidden rounded-panel p-4 shadow-brand transition-all duration-300 hover:-translate-y-0.5 hover:shadow-brand-lg sm:min-h-[160px] sm:p-5 lg:w-[400px]"
       style={{ backgroundColor: bgColor, color: textColor }}
     >
       {/* Decorative gradient overlay */}
