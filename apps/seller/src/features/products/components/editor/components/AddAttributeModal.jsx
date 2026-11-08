@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import { X, Check } from 'lucide-react';
 
@@ -33,9 +34,9 @@ export default function AddAttributeModal({ isOpen, onClose, onAddAttribute }) {
     setTempValueInput('');
   };
 
-  return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-2xs">
-      <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-[520px] p-6 space-y-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-in fade-in">
+      <div className="relative my-auto bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[520px] p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95">
         <div className="flex items-center justify-between pb-2 border-b border-slate-100">
           <h4 className="text-[16px] font-bold text-slate-900 uppercase">
             THÊM THUỘC TÍNH SKU
@@ -51,16 +52,45 @@ export default function AddAttributeModal({ isOpen, onClose, onAddAttribute }) {
         </div>
 
         <div>
-          <label className="block text-[12px] font-bold text-slate-700 mb-1">
-            Tên thuộc tính *
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-[12px] font-bold text-slate-700">
+              Tên thuộc tính *
+            </label>
+            <span className="text-[10px] text-slate-400">Gợi ý 1-click</span>
+          </div>
           <input
             type="text"
             value={newAttrName}
             placeholder="Ví dụ: Chất liệu, Phiên bản, Kết nối..."
             onChange={(e) => setNewAttrName(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:border-[#4F46E5]"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:border-[#4F46E5] mb-1.5"
           />
+          <div className="flex flex-wrap gap-1">
+            {[
+              { name: 'Màu sắc', type: 'COLOR_SWATCH' },
+              { name: 'Dung lượng', type: 'PLAIN' },
+              { name: 'Kích thước', type: 'PLAIN' },
+              { name: 'Chất liệu', type: 'PLAIN' },
+              { name: 'Kết nối', type: 'PLAIN' },
+              { name: 'Phiên bản', type: 'PLAIN' },
+            ].map((p) => (
+              <button
+                key={p.name}
+                type="button"
+                onClick={() => {
+                  setNewAttrName(p.name);
+                  setNewAttrType(p.type);
+                }}
+                className={`px-2 py-0.5 rounded border text-[11px] font-medium transition-all cursor-pointer ${
+                  newAttrName === p.name
+                    ? 'border-[#4F46E5] bg-indigo-50 text-[#4F46E5] font-bold'
+                    : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600'
+                }`}
+              >
+                {p.name}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div>
@@ -160,7 +190,8 @@ export default function AddAttributeModal({ isOpen, onClose, onAddAttribute }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

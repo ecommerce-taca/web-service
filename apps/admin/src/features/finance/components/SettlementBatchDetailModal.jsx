@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { createPortal } from 'react-dom';
 import { X, AlertTriangle, Building2 } from 'lucide-react';
 
 export default function SettlementBatchDetailModal({ isOpen, onClose, batchDetail, onRetry }) {
@@ -17,9 +18,9 @@ export default function SettlementBatchDetailModal({ isOpen, onClose, batchDetai
   const formatVnd = (val) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 py-6 sm:py-10 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-200">
+      <div className="relative my-auto bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70 shrink-0">
           <div>
@@ -47,7 +48,7 @@ export default function SettlementBatchDetailModal({ isOpen, onClose, batchDetai
             type="button"
             onClick={onClose}
             aria-label="Đóng"
-            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" aria-hidden="true" />
           </button>
@@ -57,19 +58,19 @@ export default function SettlementBatchDetailModal({ isOpen, onClose, batchDetai
         <div className="p-6 bg-slate-50 border-b border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-4 shrink-0">
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">TỔNG DOANH THU (GROSS)</span>
-            <div className="text-[20px] font-extrabold text-slate-900 mt-1">
+            <div className="text-[20px] font-black text-slate-900 mt-1">
               {formatVnd(total_gross)}
             </div>
           </div>
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">PHÍ SÀN THU VỀ</span>
-            <div className="text-[20px] font-extrabold text-emerald-600 mt-1">
+            <div className="text-[20px] font-black text-emerald-600 mt-1">
               {formatVnd(total_commission)}
             </div>
           </div>
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">THỰC CHI SELLER (NET)</span>
-            <div className="text-[20px] font-extrabold text-indigo-600 mt-1">
+            <div className="text-[20px] font-black text-indigo-600 mt-1">
               {formatVnd(total_net)}
             </div>
           </div>
@@ -111,9 +112,9 @@ export default function SettlementBatchDetailModal({ isOpen, onClose, batchDetai
                       {formatVnd(s.gross)}
                     </td>
                     <td className="py-3.5 px-4 text-right font-semibold text-rose-600">
-                      −{formatVnd(s.commission)}
+                      -{formatVnd(s.commission)}
                     </td>
-                    <td className="py-3.5 px-4 text-right font-bold text-indigo-600">
+                    <td className="py-3.5 px-4 text-right font-bold text-slate-900">
                       {formatVnd(s.net)}
                     </td>
                     <td className="py-3.5 px-4 text-center">
@@ -153,14 +154,15 @@ export default function SettlementBatchDetailModal({ isOpen, onClose, batchDetai
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 rounded-lg font-bold text-[12px] shadow-2xs transition-colors cursor-pointer"
+              className="px-5 py-2 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 rounded-xl font-bold text-[12px] shadow-2xs transition-colors cursor-pointer"
             >
               Đóng
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

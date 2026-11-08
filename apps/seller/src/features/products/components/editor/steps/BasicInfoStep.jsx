@@ -1,5 +1,32 @@
 import PropTypes from 'prop-types';
-import { X, Camera } from 'lucide-react';
+import { X, Camera, Sparkles, Smartphone, Laptop, Headphones, Home, Cpu } from 'lucide-react';
+
+const CATEGORY_PRESETS = [
+  { id: 'dien-thoai', label: 'Điện thoại', icon: Smartphone },
+  { id: 'laptop', label: 'Laptop & PC', icon: Laptop },
+  { id: 'am-thanh', label: 'Âm thanh', icon: Headphones },
+  { id: 'gia-dung', label: 'Gia dụng', icon: Home },
+  { id: 'phu-kien', label: 'Phụ kiện', icon: Cpu },
+];
+
+const BRAND_PRESETS = ['Apple', 'Samsung', 'Sony', 'Xiaomi', 'Dell', 'Asus', 'Logitech'];
+
+const SINGLE_PRICE_PRESETS = ['99.000 ₫', '199.000 ₫', '499.000 ₫', '990.000 ₫', '2.490.000 ₫', '29.490.000 ₫'];
+
+const SINGLE_STOCK_PRESETS = [10, 20, 50, 100, 200, 500];
+
+function generateCodeFromName(name) {
+  if (!name) return 'SPU-PRODUCT';
+  const clean = name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9\s]/g, '')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 4)
+    .join('-');
+  return clean ? `SPU-${clean.toUpperCase()}` : 'SPU-PRODUCT';
+}
 
 /**
  * Step 1: Thông tin cơ bản SPU & Hình ảnh sản phẩm (S3 Presigned URL)
@@ -37,6 +64,7 @@ export default function BasicInfoStep({
         THÔNG TIN SPU
       </span>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Tên SPU */}
         <div>
           <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
             Tên sản phẩm (SPU) *
@@ -46,48 +74,101 @@ export default function BasicInfoStep({
             value={spuName}
             placeholder="Ví dụ: iPhone 16 Pro Max"
             onChange={(e) => setSpuName(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5]"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5] text-xs font-medium"
           />
         </div>
+
+        {/* Danh mục Category */}
         <div>
-          <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-            Danh mục chính (Category) *
-          </label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5] bg-white text-xs font-semibold"
-          >
-            <option value="dien-thoai">Điện thoại & Tablet (dien-thoai)</option>
-            <option value="laptop">Laptop & Máy tính (laptop)</option>
-            <option value="am-thanh">Âm thanh & Phụ kiện (am-thanh)</option>
-            <option value="gia-dung">Thiết bị thông minh & Gia dụng (gia-dung)</option>
-            <option value="phu-kien">Phụ kiện công nghệ (phu-kien)</option>
-            {category && !['dien-thoai', 'laptop', 'am-thanh', 'gia-dung', 'phu-kien'].includes(category) && (
-              <option value={category}>{category}</option>
-            )}
-          </select>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-[11px] font-bold text-slate-700 uppercase">
+              Danh mục chính (Category) *
+            </label>
+            <span className="text-[10px] text-slate-400">Chọn 1-click</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5 mb-1.5">
+            {CATEGORY_PRESETS.map((cat) => {
+              const Icon = cat.icon;
+              const isSelected = category === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setCategory(cat.id)}
+                  className={`px-2 py-1 rounded-md border text-[11px] font-semibold flex items-center gap-1 transition-all cursor-pointer ${
+                    isSelected
+                      ? 'border-[#4F46E5] bg-indigo-50 text-[#4F46E5] ring-1 ring-[#4F46E5]'
+                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300'
+                  }`}
+                >
+                  <Icon className="w-3 h-3" aria-hidden="true" />
+                  <span>{cat.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Thương hiệu */}
         <div>
-          <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-            Thương hiệu
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-[11px] font-bold text-slate-700 uppercase">
+              Thương hiệu
+            </label>
+            <span className="text-[10px] text-slate-400">Gợi ý nhanh</span>
+          </div>
           <input
             type="text"
             value={brand}
             placeholder="Apple, Samsung, Sony..."
             onChange={(e) => setBrand(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5]"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5] text-xs mb-1.5"
           />
+          <div className="flex flex-wrap gap-1">
+            {BRAND_PRESETS.map((b) => (
+              <button
+                key={b}
+                type="button"
+                onClick={() => setBrand(b === 'Khác' ? '' : b)}
+                className={`px-2 py-0.5 rounded border text-[11px] font-medium transition-all cursor-pointer ${
+                  brand === b
+                    ? 'border-[#4F46E5] bg-indigo-50 text-[#4F46E5] font-bold'
+                    : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600'
+                }`}
+              >
+                {b}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {/* Mã SPU */}
         <div>
-          <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-            Mã SPU (Product Code)
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-[11px] font-bold text-slate-700 uppercase">
+              Mã SPU (Product Code)
+            </label>
+            <button
+              type="button"
+              onClick={() => {
+                const generated = generateCodeFromName(spuName);
+                setSpuCode(generated);
+                if (setSkuPrefix) setSkuPrefix(generated.replace(/^SPU-/, ''));
+              }}
+              className="text-[10px] font-bold text-[#4F46E5] hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <Sparkles className="w-3 h-3" aria-hidden="true" />
+              <span>Tạo mã từ tên</span>
+            </button>
+          </div>
           <input
             type="text"
             value={spuCode}
-            onChange={(e) => setSpuCode(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value.toUpperCase();
+              setSpuCode(val);
+              if (setSkuPrefix) setSkuPrefix(val.replace(/^SPU-/, '') || 'SPU');
+            }}
             placeholder="Ví dụ: SPU-IP16PRO"
             className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5] font-mono text-xs uppercase"
           />
@@ -177,8 +258,20 @@ export default function BasicInfoStep({
                     setSingleSkuPrice(Number(clean).toLocaleString('vi-VN'));
                   }
                 }}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5] font-semibold text-xs"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5] font-semibold text-xs mb-1.5"
               />
+              <div className="flex flex-wrap gap-1">
+                {SINGLE_PRICE_PRESETS.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setSingleSkuPrice(p.replace(' ₫', ''))}
+                    className="px-1.5 py-0.5 rounded border text-[10px] font-medium transition-all cursor-pointer border-slate-200 bg-white hover:bg-slate-50 text-slate-600"
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
             </div>
             <div>
               <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
@@ -189,8 +282,20 @@ export default function BasicInfoStep({
                 min="0"
                 value={singleSkuStock}
                 onChange={(e) => setSingleSkuStock(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5] font-semibold text-xs"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5] font-semibold text-xs mb-1.5"
               />
+              <div className="flex flex-wrap gap-1">
+                {SINGLE_STOCK_PRESETS.map((cnt) => (
+                  <button
+                    key={cnt}
+                    type="button"
+                    onClick={() => setSingleSkuStock(cnt)}
+                    className="px-1.5 py-0.5 rounded border text-[10px] font-medium transition-all cursor-pointer border-slate-200 bg-white hover:bg-slate-50 text-slate-600"
+                  >
+                    {cnt}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}

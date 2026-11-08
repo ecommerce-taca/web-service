@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Download, Check, CheckCircle2, AlertTriangle, Eye, Calendar, Filter, RotateCcw } from 'lucide-react';
 import { adminFinanceApi } from '../../../services/admin-finance.api';
 import SettlementBatchDetailModal from '../components/SettlementBatchDetailModal';
+import StepUpMfaModal from '../../../components/common/StepUpMfaModal';
+import CreateRefundModal from '../components/CreateRefundModal';
 
 export default function AdminFinancePage() {
   const [summary, setSummary] = useState(null);
@@ -12,6 +14,13 @@ export default function AdminFinancePage() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportFormat, setExportFormat] = useState('xlsx');
   const [notice, setNotice] = useState('');
+  const [retryBatchId, setRetryBatchId] = useState(null);
+  const [isRetryMfaOpen, setIsRetryMfaOpen] = useState(false);
+  const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
+  const [selectedPaymentForRefund, setSelectedPaymentForRefund] = useState(null);
+
+  // Giới hạn ngày: chỉ cho phép chọn ngày trong quá khứ hoặc hôm nay (<= today)
+  const today = new Date().toISOString().slice(0, 10);
 
   // Bộ lọc thời gian cho báo cáo tài chính tổng quan (MISS-010)
   const [fromDate, setFromDate] = useState(() => {
@@ -21,6 +30,34 @@ export default function AdminFinancePage() {
   });
   const [toDate, setToDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [loadingSummary, setLoadingSummary] = useState(false);
+
+  // Helper tính toán các khoảng ngày chọn nhanh (Quick Presets)
+  const getPresetRange = useCallback((preset) => {
+    const now = new Date();
+    const to = now.toISOString().slice(0, 10);
+    let from = to;
+
+    if (preset === 'today') {
+      from = to;
+    } else if (preset === '7d') {
+      const d = new Date();
+      d.setDate(d.getDate() - 7);
+      from = d.toISOString().slice(0, 10);
+    } else if (preset === '30d') {
+      const d = new Date();
+      d.setDate(d.getDate() - 30);
+      from = d.toISOString().slice(0, 10);
+    } else if (preset === 'month') {
+      const d = new Date(now.getFullYear(), now.getMonth(), 1);
+      from = d.toISOString().slice(0, 10);
+    }
+    return { from, to };
+  }, []);
+
+  const isPresetActive = useCallback((presetKey) => {
+    const { from, to } = getPresetRange(presetKey);
+    return fromDate === from && toDate === to;
+  }, [fromDate, toDate, getPresetRange]);
 
   const loadData = useCallback(async (customParams = null) => {
     try {
@@ -55,10 +92,61 @@ export default function AdminFinancePage() {
     return () => clearTimeout(timer);
   }, [loadData]);
 
+  // Điều chỉnh an toàn khi người dùng nhập hoặc chọn ngày
+  const handleFromDateChange = (val) => {
+    let nextFrom = val;
+    if (nextFrom > today) {
+      nextFrom = today;
+    }
+    setFromDate(nextFrom);
+    if (toDate && nextFrom > toDate) {
+      setToDate(nextFrom);
+    }
+  };
+
+  const handleToDateChange = (val) => {
+    let nextTo = val;
+    if (nextTo > today) {
+      nextTo = today;
+    }
+    setToDate(nextTo);
+    if (fromDate && nextTo < fromDate) {
+      setFromDate(nextTo);
+    }
+  };
+
+  const handleSelectPreset = (presetKey) => {
+    const { from, to } = getPresetRange(presetKey);
+    setFromDate(from);
+    setToDate(to);
+    loadData({ from, to });
+    const labels = {
+      today: 'Hôm nay',
+      '7d': '7 ngày qua',
+      '30d': '30 ngày qua',
+      month: 'Tháng này'
+    };
+    setNotice(`Đã chọn nhanh khoảng thời gian: ${labels[presetKey] || presetKey} (${from} → ${to})`);
+    setTimeout(() => setNotice(''), 3000);
+  };
+
   const handleFilter = (e) => {
     e.preventDefault();
-    loadData({ from: fromDate, to: toDate });
-    setNotice(`Đã cập nhật số liệu tài chính từ ${fromDate} đến ${toDate}`);
+    let validFrom = fromDate;
+    let validTo = toDate;
+
+    // Ràng buộc bảo vệ: không cho phép vượt quá ngày hôm nay
+    if (validTo > today) {
+      validTo = today;
+      setToDate(today);
+    }
+    if (validFrom > validTo) {
+      validFrom = validTo;
+      setFromDate(validTo);
+    }
+
+    loadData({ from: validFrom, to: validTo });
+    setNotice(`Đã cập nhật số liệu tài chính từ ${validFrom} đến ${validTo}`);
     setTimeout(() => setNotice(''), 3000);
   };
 
@@ -70,6 +158,8 @@ export default function AdminFinancePage() {
     setFromDate(defaultFrom);
     setToDate(defaultTo);
     loadData({ from: defaultFrom, to: defaultTo });
+    setNotice(`Đã đặt lại phạm vi 30 ngày gần nhất (${defaultFrom} → ${defaultTo})`);
+    setTimeout(() => setNotice(''), 3000);
   };
 
   const handleExport = async () => {
@@ -105,10 +195,16 @@ export default function AdminFinancePage() {
     }
   };
 
-  const handleRetrySettlement = async (batchId) => {
+  const handleOpenRetryMfa = (batchId) => {
+    setRetryBatchId(batchId);
+    setIsRetryMfaOpen(true);
+  };
+
+  const handleConfirmRetrySettlement = async (stepUpToken) => {
+    if (!retryBatchId) return;
     try {
-      await adminFinanceApi.retrySettlement(batchId, '123456');
-      setNotice(`Đã gửi yêu cầu xử lý lại đợt quyết toán #${batchId}!`);
+      await adminFinanceApi.retrySettlement(retryBatchId, stepUpToken);
+      setNotice(`Đã xác thực 2FA thành công và gửi yêu cầu xử lý lại đợt quyết toán #${retryBatchId}!`);
       setTimeout(() => setNotice(''), 4000);
       loadData();
       if (isDetailModalOpen) {
@@ -116,6 +212,10 @@ export default function AdminFinancePage() {
       }
     } catch (err) {
       console.warn('Lỗi retry settlement:', err);
+      setNotice('Không thể thử lại đợt quyết toán. Vui lòng kiểm tra lại mã 2FA.');
+    } finally {
+      setRetryBatchId(null);
+      setIsRetryMfaOpen(false);
     }
   };
 
@@ -134,43 +234,135 @@ export default function AdminFinancePage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* Header - Khớp Penpot Board Taca Admin / Finance */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-[24px] font-extrabold text-slate-900 tracking-tight">
-            Finance
-          </h1>
-          <p className="text-[13px] text-slate-500 mt-0.5">
-            Đối soát Marketplace, settlement seller, reserve và chargeback.
-          </p>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-[24px] font-extrabold text-slate-900 tracking-tight">
+              Finance
+            </h1>
+            <p className="text-[13px] text-slate-500 mt-0.5">
+              Đối soát Marketplace, settlement seller, reserve và chargeback.
+            </p>
+          </div>
+
+          {/* Export Action */}
+          <div className="flex items-center gap-2">
+            <select
+              id="admin-finance-export-format"
+              name="adminFinanceExportFormat"
+              aria-label="Định dạng xuất báo cáo tài chính"
+              value={exportFormat}
+              onChange={(e) => setExportFormat(e.target.value)}
+              className="px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-[12px] font-semibold focus:outline-none focus:border-indigo-500 cursor-pointer shadow-2xs"
+            >
+              <option value="xlsx">Excel (.xlsx)</option>
+              <option value="csv">CSV (.csv)</option>
+            </select>
+            <button
+              type="button"
+              disabled={isExporting}
+              onClick={handleExport}
+              className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 rounded-xl font-bold text-[13px] shadow-2xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 hover:shadow-xs"
+            >
+              <Download className="w-4 h-4 text-slate-600" aria-hidden="true" />
+              <span>{isExporting ? 'Đang xuất...' : 'Xuất báo cáo'}</span>
+            </button>
+          </div>
         </div>
 
-        {/* Date Filter & Export Tooling (MISS-010) */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <form onSubmit={handleFilter} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
-            <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" aria-hidden="true" />
-            <input
-              id="admin-finance-from-date"
-              name="adminFinanceFromDate"
-              type="date"
-              aria-label="Từ ngày"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              className="text-[12px] text-slate-700 bg-transparent border-0 focus:outline-none"
-            />
-            <span className="text-slate-400 text-[12px]">→</span>
-            <input
-              id="admin-finance-to-date"
-              name="adminFinanceToDate"
-              type="date"
-              aria-label="Đến ngày"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              className="text-[12px] text-slate-700 bg-transparent border-0 focus:outline-none"
-            />
+        {/* Date Filter Toolbar & Quick Presets (Chỉ cho phép ngày quá khứ & hôm nay: <= today) */}
+        <div className="p-3 bg-white border border-slate-200/90 rounded-2xl shadow-2xs flex flex-wrap items-center justify-between gap-3">
+          {/* Quick Preset Boxes - Thao tác 1-Click thuận tiện UX */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1 hidden sm:inline">
+              Kỳ nhanh:
+            </span>
+            <button
+              type="button"
+              onClick={() => handleSelectPreset('today')}
+              className={`px-3 py-1.5 rounded-xl text-[12px] font-bold transition-all cursor-pointer ${
+                isPresetActive('today')
+                  ? 'bg-indigo-600 text-white shadow-2xs'
+                  : 'bg-slate-100/80 hover:bg-slate-200/70 text-slate-700 border border-slate-200/50'
+              }`}
+            >
+              Hôm nay
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSelectPreset('7d')}
+              className={`px-3 py-1.5 rounded-xl text-[12px] font-bold transition-all cursor-pointer ${
+                isPresetActive('7d')
+                  ? 'bg-indigo-600 text-white shadow-2xs'
+                  : 'bg-slate-100/80 hover:bg-slate-200/70 text-slate-700 border border-slate-200/50'
+              }`}
+            >
+              7 ngày qua
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSelectPreset('30d')}
+              className={`px-3 py-1.5 rounded-xl text-[12px] font-bold transition-all cursor-pointer ${
+                isPresetActive('30d')
+                  ? 'bg-indigo-600 text-white shadow-2xs'
+                  : 'bg-slate-100/80 hover:bg-slate-200/70 text-slate-700 border border-slate-200/50'
+              }`}
+            >
+              30 ngày qua
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSelectPreset('month')}
+              className={`px-3 py-1.5 rounded-xl text-[12px] font-bold transition-all cursor-pointer ${
+                isPresetActive('month')
+                  ? 'bg-indigo-600 text-white shadow-2xs'
+                  : 'bg-slate-100/80 hover:bg-slate-200/70 text-slate-700 border border-slate-200/50'
+              }`}
+            >
+              Tháng này
+            </button>
+          </div>
+
+          {/* Custom Date Form (Ràng buộc max={today} không vượt quá ngày hiện tại) */}
+          <form onSubmit={handleFilter} className="flex items-center gap-2 flex-wrap sm:flex-nowrap bg-slate-50/80 px-3 py-1.5 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-1.5 text-slate-600">
+              <Calendar className="w-3.5 h-3.5 text-indigo-600 shrink-0" aria-hidden="true" />
+              <span className="text-[11px] font-bold text-slate-500 uppercase">Từ:</span>
+              <input
+                id="admin-finance-from-date"
+                name="adminFinanceFromDate"
+                type="date"
+                max={toDate < today ? toDate : today}
+                aria-label="Từ ngày (chỉ trong quá khứ hoặc hôm nay)"
+                value={fromDate}
+                onChange={(e) => handleFromDateChange(e.target.value)}
+                className="text-[12px] font-medium text-slate-800 bg-transparent border-0 focus:outline-none cursor-pointer"
+                title="Chỉ chọn ngày trong quá khứ hoặc hôm nay"
+              />
+            </div>
+
+            <span className="text-slate-400 text-[12px] font-bold">→</span>
+
+            <div className="flex items-center gap-1.5 text-slate-600">
+              <span className="text-[11px] font-bold text-slate-500 uppercase">Đến:</span>
+              <input
+                id="admin-finance-to-date"
+                name="adminFinanceToDate"
+                type="date"
+                max={today}
+                min={fromDate}
+                aria-label="Đến ngày (tối đa ngày hôm nay)"
+                value={toDate}
+                onChange={(e) => handleToDateChange(e.target.value)}
+                className="text-[12px] font-medium text-slate-800 bg-transparent border-0 focus:outline-none cursor-pointer"
+                title="Chỉ chọn ngày trong quá khứ hoặc hôm nay (tối đa hôm nay)"
+              />
+            </div>
+
             <button
               type="submit"
               disabled={loadingSummary}
-              className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+              className="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer border border-indigo-200/50"
             >
               <Filter className="w-3 h-3" aria-hidden="true" />
               <span>{loadingSummary ? 'Đang lọc...' : 'Lọc'}</span>
@@ -185,30 +377,6 @@ export default function AdminFinancePage() {
               <RotateCcw className="w-3 h-3" aria-hidden="true" />
             </button>
           </form>
-
-          {/* Export Action */}
-          <div className="flex items-center gap-1.5">
-            <select
-              id="admin-finance-export-format"
-              name="adminFinanceExportFormat"
-              aria-label="Định dạng xuất báo cáo tài chính"
-              value={exportFormat}
-              onChange={(e) => setExportFormat(e.target.value)}
-              className="px-2 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-[12px] font-semibold focus:outline-none cursor-pointer"
-            >
-              <option value="xlsx">Excel (.xlsx)</option>
-              <option value="csv">CSV (.csv)</option>
-            </select>
-            <button
-              type="button"
-              disabled={isExporting}
-              onClick={handleExport}
-              className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 rounded-lg font-bold text-[13px] shadow-2xs transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              <Download className="w-4 h-4 text-slate-600" aria-hidden="true" />
-              <span>{isExporting ? 'Đang xuất...' : 'Xuất báo cáo'}</span>
-            </button>
-          </div>
         </div>
       </div>
 
@@ -343,10 +511,10 @@ export default function AdminFinancePage() {
                         {isFailed && (
                           <button
                             type="button"
-                            onClick={() => handleRetrySettlement(batch.batch_id)}
-                            className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded text-[11px] font-bold cursor-pointer"
+                            onClick={() => handleOpenRetryMfa(batch.batch_id)}
+                            className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded text-[11px] font-bold cursor-pointer flex items-center gap-1"
                           >
-                            Thử lại
+                            <span>Thử lại (2FA)</span>
                           </button>
                         )}
                         <button
@@ -384,6 +552,17 @@ export default function AdminFinancePage() {
             <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
               Khớp 100%
             </span>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedPaymentForRefund(null);
+                setIsRefundModalOpen(true);
+              }}
+              className="px-3 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1"
+            >
+              <RotateCcw className="w-3 h-3" aria-hidden="true" />
+              <span>Tạo hoàn tiền (2FA)</span>
+            </button>
           </div>
         </div>
 
@@ -398,6 +577,7 @@ export default function AdminFinancePage() {
                 <th className="py-3 px-6 text-right">SỐ TIỀN</th>
                 <th className="py-3 px-6 text-center">KẾT QUẢ ĐỐI SOÁT</th>
                 <th className="py-3 px-6 text-right">THỜI GIAN</th>
+                <th className="py-3 px-6 text-center">THAO TÁC</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white">
@@ -434,6 +614,19 @@ export default function AdminFinancePage() {
                   <td className="py-3.5 px-6 text-right text-slate-500 text-[12px]">
                     {new Date(r.checked_at).toLocaleString('vi-VN')}
                   </td>
+                  <td className="py-3.5 px-6 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedPaymentForRefund(r);
+                        setIsRefundModalOpen(true);
+                      }}
+                      className="px-2.5 py-1 text-rose-600 hover:bg-rose-50 rounded text-[11px] font-bold transition-colors cursor-pointer inline-flex items-center gap-1"
+                    >
+                      <RotateCcw className="w-3 h-3" aria-hidden="true" />
+                      <span>Hoàn tiền</span>
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -446,7 +639,31 @@ export default function AdminFinancePage() {
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
         batchDetail={selectedBatchDetail}
-        onRetry={handleRetrySettlement}
+        onRetry={handleOpenRetryMfa}
+      />
+
+      {/* Modal Xác thực 2FA khi Thử lại Quyết toán */}
+      <StepUpMfaModal
+        isOpen={isRetryMfaOpen}
+        onClose={() => {
+          setIsRetryMfaOpen(false);
+          setRetryBatchId(null);
+        }}
+        onSuccess={handleConfirmRetrySettlement}
+        title="Xác thực 2FA Thử lại Quyết toán"
+        description={`Kích hoạt chạy lại đợt quyết toán #${retryBatchId || ''} yêu cầu mã OTP 2FA từ ứng dụng Authenticator để đảm bảo tính an toàn tài chính sàn.`}
+      />
+
+      {/* Modal Tạo Lệnh Hoàn Tiền (#4, REQ-04) */}
+      <CreateRefundModal
+        isOpen={isRefundModalOpen}
+        onClose={() => setIsRefundModalOpen(false)}
+        onSuccess={({ paymentId, amount }) => {
+          loadData();
+          setNotice(`Đã tạo lệnh hoàn tiền thành công ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)} cho giao dịch #${paymentId}! Bút toán đảo sổ cái đã được ghi nhận.`);
+          setTimeout(() => setNotice(''), 4000);
+        }}
+        initialPayment={selectedPaymentForRefund}
       />
     </div>
   );

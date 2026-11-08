@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import { X, ShieldCheck } from 'lucide-react';
 import { adminFinanceApi } from '../../../services/admin-finance.api';
@@ -65,11 +66,11 @@ export default function CreateFeeRuleModal({ isOpen, onClose, onSuccess }) {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 py-6 sm:py-10 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-200">
+      <div className="relative my-auto bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Header - Khớp Penpot Taca Admin / Fees / Taxes */}
-        <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
+        <div className="px-6 py-4 sm:py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70 shrink-0">
           <div>
             <h2 className="text-[18px] font-bold text-slate-900 tracking-tight">
               Tạo Biểu phí & Thuế Mới
@@ -82,14 +83,14 @@ export default function CreateFeeRuleModal({ isOpen, onClose, onSuccess }) {
             type="button"
             onClick={onClose}
             aria-label="Đóng"
-            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-[13px]">
+        {/* Form Body with internal scrolling */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4 text-[13px]">
           {error && (
             <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-[12px] font-semibold">
               {error}
@@ -270,11 +271,11 @@ export default function CreateFeeRuleModal({ isOpen, onClose, onSuccess }) {
           </div>
 
           {/* Footer */}
-          <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-3">
+          <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-slate-600 hover:text-slate-900 text-[12px] font-semibold"
+              className="px-4 py-2 text-slate-600 hover:text-slate-900 text-[12px] font-semibold cursor-pointer"
             >
               Hủy
             </button>
@@ -288,9 +289,16 @@ export default function CreateFeeRuleModal({ isOpen, onClose, onSuccess }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
+
+CreateFeeRuleModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func
+};
 
 CreateFeeRuleModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,

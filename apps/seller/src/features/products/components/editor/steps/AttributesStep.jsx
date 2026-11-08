@@ -1,9 +1,34 @@
 import PropTypes from 'prop-types';
-import { X, Plus, RefreshCw, Trash2, Sparkles, Barcode, AlertTriangle } from 'lucide-react';
-import SkuMatrixRow from '../components/SkuMatrixRow';
+import { X, Plus, Trash2, Sparkles, Layers } from 'lucide-react';
+
+const COMMON_ATTRIBUTE_PRESETS = [
+  { name: 'Màu sắc', display_as: 'COLOR_SWATCH', values: ['Đen', 'Trắng', 'Titan', 'Xanh'] },
+  { name: 'Dung lượng', display_as: 'PLAIN', values: ['128GB', '256GB', '512GB'] },
+  { name: 'Kích thước', display_as: 'PLAIN', values: ['S', 'M', 'L', 'XL'] },
+  { name: 'Kết nối', display_as: 'PLAIN', values: ['Wi-Fi', '5G'] },
+  { name: 'Chất liệu', display_as: 'PLAIN', values: ['Cotton', 'Titanium', 'Nhôm'] },
+];
+
+const VALUE_SUGGESTIONS = {
+  color: ['Đen', 'Trắng', 'Xám', 'Xanh dương', 'Xanh lá', 'Đỏ', 'Vàng', 'Titan', 'Tím', 'Hồng'],
+  storage: ['64GB', '128GB', '256GB', '512GB', '1TB', '2TB'],
+  size: ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'],
+  connectivity: ['Wi-Fi', '5G', '4G LTE', 'Bluetooth', 'GPS'],
+};
+
+function getSuggestionsForAttr(name) {
+  const lower = (name || '').toLowerCase();
+  if (lower.includes('màu') || lower.includes('color')) return VALUE_SUGGESTIONS.color;
+  if (lower.includes('dung lượng') || lower.includes('bộ nhớ') || lower.includes('storage') || lower.includes('ssd') || lower.includes('ram')) {
+    return VALUE_SUGGESTIONS.storage;
+  }
+  if (lower.includes('kích') || lower.includes('size') || lower.includes('cỡ')) return VALUE_SUGGESTIONS.size;
+  if (lower.includes('kết nối') || lower.includes('connectivity') || lower.includes('mạng')) return VALUE_SUGGESTIONS.connectivity;
+  return [];
+}
 
 /**
- * Step 2: Quản lý thuộc tính SKU linh hoạt & Tự động sinh bảng SKU Matrix từ tổ hợp
+ * Step 2: Quản lý thuộc tính SKU linh hoạt & Tự động sinh tổ hợp biến thể
  */
 export default function AttributesStep({
   attributes,
@@ -13,70 +38,119 @@ export default function AttributesStep({
   onRemoveValue,
   onRemoveAttribute,
   onOpenAddAttrModal,
-  onRegenerateSkus,
+  onAddAttribute,
   combosCount,
-  skus = [],
-  skuPrefix = '',
-  bulkPriceInput = '',
-  setBulkPriceInput,
-  bulkStockInput = '',
-  setBulkStockInput,
-  onApplyBulkPrice,
-  onApplyBulkStock,
-  onToggleAllSkus,
-  onFormatAllSkuCodes,
-  onUpdateSkuCode,
-  onUpdateSkuPrice,
-  onUpdateSkuStock,
-  onToggleSku
+  combinations = []
 }) {
   return (
     <div className="space-y-6">
-      {/* 1. Phần cấu hình thuộc tính phân loại */}
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-[15px] font-bold text-slate-900 tracking-tight uppercase">
-            THUỘC TÍNH SKU & TỔ HỢP BIẾN THỂ
-          </h3>
-          <p className="text-[12px] text-slate-500 mt-0.5">
-            Tạo các nhóm thuộc tính (Màu sắc, Dung lượng, Kích thước...) và các giá trị tương ứng để tự động sinh ma trận biến thể SKU.
-          </p>
-        </div>
+      {/* 1. Header & Hướng dẫn */}
+      <div>
+        <h3 className="text-[15px] font-bold text-slate-900 tracking-tight uppercase">
+          THUỘC TÍNH SKU & PHÂN LOẠI HÀNG
+        </h3>
+        <p className="text-[12px] text-slate-500 mt-0.5">
+          Tạo các nhóm phân loại (Màu sắc, Dung lượng, Kích thước...) và chọn các giá trị để hệ thống tự động sinh ma trận biến thể SKU.
+        </p>
+      </div>
 
-        <div className="space-y-3">
-          {attributes.map((attr) => (
+      {/* 2. Gợi ý thuộc tính nhanh (1-Click Presets) */}
+      <div className="p-3 bg-slate-50/90 border border-slate-200 rounded-xl space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-bold text-slate-700 uppercase flex items-center gap-1">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" aria-hidden="true" />
+            <span>Thêm nhanh nhóm thuộc tính phổ biến</span>
+          </span>
+          <span className="text-[10px] text-slate-400">1-click điền sẵn</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {COMMON_ATTRIBUTE_PRESETS.map((preset) => {
+            const alreadyExists = attributes.some(
+              (a) => a.name.toLowerCase() === preset.name.toLowerCase()
+            );
+            return (
+              <button
+                key={preset.name}
+                type="button"
+                disabled={alreadyExists}
+                onClick={() => {
+                  if (onAddAttribute && !alreadyExists) {
+                    onAddAttribute(preset);
+                  }
+                }}
+                className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-all flex items-center gap-1 ${
+                  alreadyExists
+                    ? 'border-slate-200 bg-slate-100/60 text-slate-400 cursor-not-allowed'
+                    : 'border-indigo-200 bg-white hover:bg-indigo-50 text-[#4F46E5] hover:border-[#4F46E5] cursor-pointer shadow-2xs'
+                }`}
+              >
+                <Plus className="w-3 h-3" aria-hidden="true" />
+                <span>{preset.name}</span>
+                <span className="text-[10px] text-slate-400 font-normal">
+                  ({preset.values.slice(0, 2).join(', ')}...)
+                </span>
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            onClick={onOpenAddAttrModal}
+            className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
+          >
+            <Plus className="w-3 h-3" aria-hidden="true" />
+            <span>Tùy chỉnh khác...</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 3. Danh sách thuộc tính hiện có */}
+      <div className="space-y-3">
+        {attributes.map((attr) => {
+          const suggestions = getSuggestionsForAttr(attr.name).filter(
+            (s) => !attr.values.includes(s)
+          );
+
+          return (
             <div
               key={attr.id}
-              className="p-3.5 bg-slate-50/80 border border-slate-200 rounded-xl flex flex-wrap items-center justify-between gap-3 shadow-2xs"
+              className="p-4 bg-white border border-slate-200 rounded-xl space-y-3 shadow-2xs"
             >
-              <div className="flex items-center gap-3">
-                <span className="text-slate-400 font-mono select-none">⋮⋮</span>
-                <span className="font-bold text-slate-800 text-[13px]">
-                  {attr.id} · {attr.name}
-                </span>
-                {attr.display_as === 'COLOR_SWATCH' && (
-                  <span className="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-semibold border border-indigo-100">
-                    Màu sắc
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-slate-400 font-mono text-xs select-none">⋮⋮</span>
+                  <span className="font-bold text-slate-900 text-[13px]">
+                    {attr.name}
                   </span>
-                )}
+                  {attr.display_as === 'COLOR_SWATCH' ? (
+                    <span className="text-[10px] bg-indigo-50 text-[#4F46E5] px-2 py-0.5 rounded-full font-bold border border-indigo-100">
+                      Hiển thị Màu sắc
+                    </span>
+                  ) : (
+                    <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
+                      Văn bản
+                    </span>
+                  )}
+                </div>
+
                 {onRemoveAttribute && attributes.length > 1 && (
                   <button
                     type="button"
                     onClick={() => onRemoveAttribute(attr.id)}
                     aria-label={`Xóa thuộc tính ${attr.name}`}
-                    title="Xóa thuộc tính này"
-                    className="text-slate-400 hover:text-rose-500 hover:bg-rose-50 p-1 rounded-md transition-colors cursor-pointer"
+                    title="Xóa nhóm thuộc tính này"
+                    className="text-slate-400 hover:text-rose-500 hover:bg-rose-50 p-1.5 rounded-md transition-colors cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 )}
               </div>
 
+              {/* Danh sách giá trị hiện tại */}
               <div className="flex flex-wrap items-center gap-2">
                 {attr.values.map((val) => (
                   <span
                     key={val}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-[12px] font-medium text-slate-800 shadow-2xs"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 border border-slate-300 rounded-lg text-[12px] font-semibold text-slate-800 shadow-2xs"
                   >
                     <span>{val}</span>
                     <button
@@ -90,207 +164,93 @@ export default function AttributesStep({
                   </span>
                 ))}
 
-                {/* Add value mini-input */}
+                {/* Ô nhập giá trị tùy chỉnh */}
                 <div className="flex items-center gap-1">
                   <input
                     type="text"
-                    placeholder="＋ Giá trị"
+                    placeholder="+ Nhập giá trị"
                     value={newValueInputs[attr.id] || ''}
-                    onChange={(e) => setNewValueInputs({ ...newValueInputs, [attr.id]: e.target.value })}
+                    onChange={(e) =>
+                      setNewValueInputs({ ...newValueInputs, [attr.id]: e.target.value })
+                    }
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
                         onAddValue(attr.id);
                       }
                     }}
-                    className="w-24 px-2 py-1 bg-white border border-dashed border-slate-300 rounded-lg text-[11px] text-slate-700 focus:outline-none focus:border-[#4F46E5]"
+                    className="w-28 px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-[#4F46E5]"
                   />
                   <button
                     type="button"
                     onClick={() => onAddValue(attr.id)}
-                    className="text-[11px] font-bold text-[#4F46E5] px-1 hover:underline cursor-pointer"
+                    className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg border border-slate-300 cursor-pointer"
                   >
-                    +
+                    Thêm
                   </button>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
 
-        <div className="flex flex-wrap items-center justify-between text-[12px] pt-1 gap-2 border-b border-slate-100 pb-4">
-          <button
-            type="button"
-            onClick={onOpenAddAttrModal}
-            className="font-bold text-[#4F46E5] hover:underline flex items-center gap-1 cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Thêm thuộc tính mới</span>
-          </button>
-          <div className="flex items-center gap-3">
-            <span className="text-slate-500 font-medium">
-              {attributes.length} thuộc tính · <strong className="text-slate-900 font-bold">{combosCount}</strong> tổ hợp SKU
-            </span>
-            <button
-              type="button"
-              onClick={onRegenerateSkus}
-              className="px-3.5 py-1.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
-            >
-              <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Sinh lại bảng SKU ({combosCount} tổ hợp)</span>
-            </button>
-          </div>
-        </div>
+              {/* Gợi ý giá trị 1-click */}
+              {suggestions.length > 0 && (
+                <div className="flex items-center gap-1.5 pt-1 text-[11px] text-slate-500">
+                  <span className="text-[10px] text-slate-400 shrink-0">Gợi ý 1-click:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {suggestions.slice(0, 8).map((sug) => (
+                      <button
+                        key={sug}
+                        type="button"
+                        onClick={() => onAddValue(attr.id, sug)}
+                        className="px-2 py-0.5 bg-slate-100 hover:bg-indigo-50 hover:text-[#4F46E5] hover:border-indigo-200 border border-slate-200 rounded text-[10px] font-medium transition-colors cursor-pointer"
+                      >
+                        + {sug}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
-      {/* 2. Bảng Ma trận biến thể & Nhập mã SKU trực tiếp */}
-      {skus && skus.length > 0 ? (
-        <div className="space-y-4 pt-2">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <span className="text-[12px] font-bold uppercase tracking-wider text-slate-800 block mb-0.5">
-                BẢNG BIẾN THỂ & MÃ SKU ({skus.length} SKU)
+      {/* 4. Tóm tắt ma trận biến thể (Combos Summary Card) */}
+      <div className="p-4 bg-indigo-50/70 border border-indigo-200 rounded-xl space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Layers className="w-4 h-4 text-[#4F46E5]" aria-hidden="true" />
+            <span className="text-[13px] font-bold text-slate-900">
+              Ma trận biến thể ({combosCount} tổ hợp SKU)
+            </span>
+          </div>
+          <span className="text-[11px] font-bold text-[#4F46E5] bg-white px-2.5 py-1 rounded-full border border-indigo-200">
+            {combosCount} biến thể SKU
+          </span>
+        </div>
+
+        <p className="text-[12px] text-slate-600">
+          Hệ thống sẽ tự động sinh ma trận <strong>{combosCount} SKU</strong> từ {attributes.length} nhóm thuộc tính trên. Ở <strong>Bước 3: Giá & kho</strong>, bạn sẽ thiết lập mã SKU, giá bán và số lượng tồn kho (có hỗ trợ áp dụng hàng loạt 1-click).
+        </p>
+
+        {/* Xem trước tổ hợp */}
+        {combinations.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {combinations.slice(0, 8).map((combo, idx) => (
+              <span
+                key={idx}
+                className="px-2 py-1 bg-white border border-indigo-100 rounded-md text-[11px] font-medium text-slate-700 shadow-2xs"
+              >
+                {Object.values(combo).join(' / ')}
               </span>
-              <p className="text-[12px] text-slate-500">
-                Người bán nhập mã SKU (<code className="text-[#4F46E5] font-semibold">seller_sku</code>), giá bán và tồn kho cho từng biến thể tổ hợp. Tiền tố SKU: <span className="font-mono font-bold text-[#4F46E5]">{skuPrefix || 'SKU'}</span>
-              </p>
-            </div>
-            <div className="flex items-center gap-2 self-start sm:self-auto">
-              {onFormatAllSkuCodes && (
-                <button
-                  type="button"
-                  onClick={onFormatAllSkuCodes}
-                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" aria-hidden="true" />
-                  <span>Chuẩn hóa mã SKU</span>
-                </button>
-              )}
-            </div>
+            ))}
+            {combinations.length > 8 && (
+              <span className="px-2 py-1 bg-indigo-100/70 text-[#4F46E5] rounded-md text-[11px] font-bold">
+                +{combinations.length - 8} tổ hợp khác
+              </span>
+            )}
           </div>
-
-          {/* Bulk update toolbar */}
-          {setBulkPriceInput && setBulkStockInput && (
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-[12px]">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="font-bold text-slate-700">Áp dụng hàng loạt:</span>
-                <div className="flex items-center gap-1">
-                  <input
-                    type="text"
-                    placeholder="Giá bán chung (₫)"
-                    value={bulkPriceInput}
-                    onChange={(e) => setBulkPriceInput(e.target.value)}
-                    className="w-28 px-2.5 py-1 border border-slate-300 rounded-lg bg-white text-xs text-slate-900 focus:outline-none focus:border-[#4F46E5]"
-                  />
-                  <button
-                    type="button"
-                    onClick={onApplyBulkPrice}
-                    className="px-2.5 py-1 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg font-semibold text-xs transition-colors cursor-pointer"
-                  >
-                    Gán giá
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <input
-                    type="number"
-                    placeholder="Kho chung"
-                    value={bulkStockInput}
-                    onChange={(e) => setBulkStockInput(e.target.value)}
-                    className="w-20 px-2.5 py-1 border border-slate-300 rounded-lg bg-white text-xs text-slate-900 focus:outline-none focus:border-[#4F46E5]"
-                  />
-                  <button
-                    type="button"
-                    onClick={onApplyBulkStock}
-                    className="px-2.5 py-1 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg font-semibold text-xs transition-colors cursor-pointer"
-                  >
-                    Gán kho
-                  </button>
-                </div>
-              </div>
-
-              {onToggleAllSkus && (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onToggleAllSkus(true)}
-                    className="px-2.5 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg font-bold text-[11px] transition-colors cursor-pointer"
-                  >
-                    Bật tất cả
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onToggleAllSkus(false)}
-                    className="px-2.5 py-1 bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200 rounded-lg font-bold text-[11px] transition-colors cursor-pointer"
-                  >
-                    Tắt tất cả
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Cảnh báo khi tắt toàn bộ SKU */}
-          {skus.every(s => !s.enabled) && (
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between text-[12px] text-amber-800">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" aria-hidden="true" />
-                <span>Tất cả biến thể SKU đang bị <strong>TẮT (OFF)</strong>. Bấm <strong>Bật tất cả</strong> để kích hoạt!</span>
-              </div>
-              {onToggleAllSkus && (
-                <button
-                  type="button"
-                  onClick={() => onToggleAllSkus(true)}
-                  className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow-xs transition-colors cursor-pointer shrink-0"
-                >
-                  Bật tất cả ngay
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Table Container */}
-          <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
-            <div className="max-h-[45vh] overflow-y-auto">
-              <table className="w-full text-left border-collapse text-[12px]">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10">
-                    <th className="py-2.5 px-4 bg-slate-50">BIẾN THỂ ĐA THUỘC TÍNH</th>
-                    <th className="py-2.5 px-4 bg-slate-50">
-                      <span className="inline-flex items-center gap-1 text-slate-700">
-                        <Barcode className="w-3.5 h-3.5 text-[#4F46E5]" aria-hidden="true" />
-                        <span>MÃ SKU (seller_sku) *</span>
-                      </span>
-                    </th>
-                    <th className="py-2.5 px-4 bg-slate-50">GIÁ BÁN (₫)</th>
-                    <th className="py-2.5 px-4 bg-slate-50">TỒN KHO</th>
-                    <th className="py-2.5 px-4 text-center bg-slate-50">HIỂN THỊ</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {skus.map((sku) => (
-                    <SkuMatrixRow
-                      key={sku.id}
-                      sku={sku}
-                      onUpdateCode={onUpdateSkuCode}
-                      onUpdatePrice={onUpdateSkuPrice}
-                      onUpdateStock={onUpdateSkuStock}
-                      onToggle={onToggleSku}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="p-3 bg-slate-50 border-t border-slate-200 text-[11px] text-slate-500 text-center font-medium">
-              Tổng cộng: <strong className="text-slate-900">{skus.length}</strong> biến thể SKU được tạo từ tổ hợp thuộc tính
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="p-6 bg-slate-50 rounded-xl border border-dashed border-slate-300 text-center text-slate-500 text-xs">
-          Chưa có biến thể SKU nào. Hãy thêm giá trị cho các thuộc tính ở trên để tự động sinh bảng SKU Matrix.
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
@@ -298,7 +258,7 @@ export default function AttributesStep({
 AttributesStep.propTypes = {
   attributes: PropTypes.arrayOf(
     PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      id: PropTypes.number.isRequired,
       name: PropTypes.string.isRequired,
       display_as: PropTypes.string,
       values: PropTypes.arrayOf(PropTypes.string).isRequired,
@@ -310,20 +270,7 @@ AttributesStep.propTypes = {
   onRemoveValue: PropTypes.func.isRequired,
   onRemoveAttribute: PropTypes.func,
   onOpenAddAttrModal: PropTypes.func.isRequired,
-  onRegenerateSkus: PropTypes.func.isRequired,
+  onAddAttribute: PropTypes.func,
   combosCount: PropTypes.number.isRequired,
-  skus: PropTypes.arrayOf(PropTypes.object),
-  skuPrefix: PropTypes.string,
-  bulkPriceInput: PropTypes.string,
-  setBulkPriceInput: PropTypes.func,
-  bulkStockInput: PropTypes.string,
-  setBulkStockInput: PropTypes.func,
-  onApplyBulkPrice: PropTypes.func,
-  onApplyBulkStock: PropTypes.func,
-  onToggleAllSkus: PropTypes.func,
-  onFormatAllSkuCodes: PropTypes.func,
-  onUpdateSkuCode: PropTypes.func,
-  onUpdateSkuPrice: PropTypes.func,
-  onUpdateSkuStock: PropTypes.func,
-  onToggleSku: PropTypes.func,
+  combinations: PropTypes.arrayOf(PropTypes.object),
 };

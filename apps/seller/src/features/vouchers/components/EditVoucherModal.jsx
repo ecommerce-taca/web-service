@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import { X, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { updateSellerVoucher } from '../services/seller-voucher.api';
@@ -56,11 +57,11 @@ export default function EditVoucherModal({ voucher, isOpen, onClose, onSuccess }
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[580px] max-h-[92vh] flex flex-col overflow-hidden">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 py-6 sm:py-10 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-200">
+      <div className="relative my-auto bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[580px] max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+        <div className="px-6 py-4 sm:py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50 shrink-0">
           <div>
             <h2 className="text-[18px] font-bold text-slate-900 tracking-tight uppercase">
               CHỈNH SỬA VOUCHER
@@ -74,14 +75,14 @@ export default function EditVoucherModal({ voucher, isOpen, onClose, onSuccess }
             onClick={onClose}
             disabled={submitting}
             aria-label="Đóng"
-            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4 text-[13px]">
+        <form onSubmit={handleSubmit} className="flex-1 p-6 overflow-y-auto space-y-4 text-[13px] flex flex-col">
           {error && (
             <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-[12px] flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -219,7 +220,7 @@ export default function EditVoucherModal({ voucher, isOpen, onClose, onSuccess }
           </div>
 
           {/* Footer actions */}
-          <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-2.5">
+          <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-2.5 shrink-0 mt-auto">
             <button
               type="button"
               onClick={onClose}
@@ -245,7 +246,8 @@ export default function EditVoucherModal({ voucher, isOpen, onClose, onSuccess }
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
