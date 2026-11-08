@@ -89,7 +89,7 @@ const ProductDetailPage = () => {
         <Link to="/category/dien-thoai" className="text-taca-text-muted hover:text-taca-primary transition-colors">Điện thoại</Link>
         <span>/</span>
         <span className="text-taca-text-main font-semibold">{product.title || product.name}</span>
-      </div>
+      </nav>
 
       <div className="flex flex-col gap-5 sm:gap-brand-6">
         {/* Product Purchase (Gallery & Info) */}

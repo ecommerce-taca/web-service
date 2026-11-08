@@ -4,4 +4,5 @@ export { default as Modal } from './components/Modal';
 export { default as Badge } from './components/Badge';
 export { default as ErrorBoundary } from './components/ErrorBoundary';
 export { default as EmptyState } from './components/EmptyState';
+export { default as BrandLogo } from './components/BrandLogo';
 
