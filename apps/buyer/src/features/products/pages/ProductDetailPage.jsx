@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import ProductPurchase from '../components/ProductPurchase';
 import ProductShopCard from '../components/ProductShopCard';
@@ -6,6 +6,7 @@ import ProductContentTabs from '../components/ProductContentTabs';
 import ProductReviews from '../components/ProductReviews';
 import { productApi } from '../services/product.api';
 import { useFavorites } from '../hooks/useFavorites';
+import { normalizeProduct } from '../../../../../../shared/utils/adapters/product.adapter';
 
 const ProductDetailPage = () => {
   const { id } = useParams();
@@ -14,30 +15,33 @@ const ProductDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    let isMounted = true;
+  const fetchProduct = useCallback((targetId) => {
     setLoading(true);
     setError(null);
 
-    productApi.getProductById(id)
+    productApi.getProductById(targetId)
       .then(res => {
-        if (isMounted) {
-          setProduct(res.data);
-          setLoading(false);
-        }
+        const raw = res?.data?.data || res?.data || res;
+        const normalized = normalizeProduct(raw);
+        setProduct(normalized);
+        setLoading(false);
       })
       .catch(err => {
-        if (isMounted) {
-          console.error('Failed to load product detail', err);
-          setError('Không thể tải thông tin sản phẩm');
-          setLoading(false);
-        }
+        console.error('Failed to load product detail', err);
+        setError('Không thể tải thông tin sản phẩm. Vui lòng thử lại!');
+        setLoading(false);
       });
+  }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+    if (isMounted) {
+      fetchProduct(id);
+    }
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [id, fetchProduct]);
 
   if (loading) {
     return (
@@ -58,10 +62,17 @@ const ProductDetailPage = () => {
 
   if (error || !product) {
     return (
-      <div className="py-10 sm:py-16">
-        <div className="mx-auto max-w-[640px] rounded-card border border-taca-border bg-white px-5 py-10 text-center shadow-brand sm:px-8">
-          <h2 className="mb-3 text-[20px] font-bold text-taca-text-main">{error || 'Không tìm thấy sản phẩm'}</h2>
-          <Link to="/" className="inline-flex min-h-[44px] items-center rounded-control bg-taca-primary px-5 text-[14px] font-semibold text-white transition-colors hover:bg-taca-primary-hover">
+      <div className="py-16 text-center">
+        <h2 className="text-xl font-bold text-gray-800 mb-2">{error || 'Không tìm thấy sản phẩm'}</h2>
+        <div className="flex items-center justify-center gap-4 mt-4">
+          <button
+            type="button"
+            onClick={() => fetchProduct(id)}
+            className="px-4 py-2 bg-taca-primary text-white rounded-lg font-medium hover:bg-taca-primary-dark transition-colors cursor-pointer text-sm"
+          >
+            Thử lại
+          </button>
+          <Link to="/" className="text-taca-primary font-medium hover:underline text-sm">
             Quay lại trang chủ
           </Link>
         </div>
@@ -77,7 +88,7 @@ const ProductDetailPage = () => {
         <span>/</span>
         <Link to="/category/dien-thoai" className="text-taca-text-muted hover:text-taca-primary transition-colors">Điện thoại</Link>
         <span>/</span>
-        <span className="text-taca-text-main font-semibold truncate max-w-[240px] sm:max-w-[420px]">{product.name}</span>
+        <span className="text-taca-text-main font-semibold">{product.title || product.name}</span>
       </nav>
 
       <div className="flex flex-col gap-5 sm:gap-brand-6">

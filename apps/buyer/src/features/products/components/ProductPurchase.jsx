@@ -60,16 +60,27 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
     return initial;
   });
 
-  // 3. Tìm SKU phù hợp nhất với tổ hợp thuộc tính đang chọn
+  // 3. Tìm SKU phù hợp nhất với tổ hợp thuộc tính đang chọn (hỗ trợ cả normalized key & tiếng Việt)
   const activeSku = useMemo(() => {
     if (!product.skus || product.skus.length === 0) return null;
     return product.skus.find(sku => {
       if (!sku.attributes) return false;
-      return Object.entries(selectedAttributes).every(
-        ([key, val]) => String(sku.attributes[key]) === String(val)
-      );
+      return Object.entries(selectedAttributes).every(([attrName, selectedVal]) => {
+        const def = attributeDefinitions.find(d => d.name === attrName || d.key === attrName);
+        const matchVal = (val) => String(val || '').trim().toLowerCase() === String(selectedVal || '').trim().toLowerCase();
+
+        if (sku.attributes[attrName] !== undefined && matchVal(sku.attributes[attrName])) return true;
+        if (def?.key && sku.attributes[def.key] !== undefined && matchVal(sku.attributes[def.key])) return true;
+
+        const matchedKey = Object.keys(sku.attributes).find(k =>
+          k.toLowerCase() === attrName.toLowerCase() || (def?.key && k.toLowerCase() === def.key.toLowerCase())
+        );
+        if (matchedKey && matchVal(sku.attributes[matchedKey])) return true;
+
+        return false;
+      });
     }) || product.skus[0];
-  }, [product.skus, selectedAttributes]);
+  }, [product.skus, selectedAttributes, attributeDefinitions]);
 
   // 4. Tính toán giá và tồn kho hiển thị (hỗ trợ cả price số và price object { base_price, sale_price })
   const rawPrice = activeSku?.price?.sale_price || activeSku?.price?.base_price || (typeof product.price === 'object' ? product.price?.sale_price || product.price?.base_price : product.price);
@@ -180,9 +191,9 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
               <span className="text-taca-text-main font-bold">{product.rating || 4.9}</span>
             </div>
             <div className="w-[1px] h-3 bg-taca-border"></div>
-            <div>{(product.reviewCount || product.rating_summary?.review_count || 1284).toLocaleString()} đánh giá</div>
+            <div>{(product.reviewCount ?? product.ratingCount ?? product.rating_summary?.count ?? 0).toLocaleString('vi-VN')} đánh giá</div>
             <div className="w-[1px] h-3 bg-taca-border"></div>
-            <div>Đã bán {(product.soldCount || product.rating_summary?.sold_count || 1420).toLocaleString()}</div>
+            <div>Đã bán {(product.soldCount ?? product.rating_summary?.sold_count ?? 0).toLocaleString('vi-VN')}</div>
             {product.brand && (
               <>
                 <div className="w-[1px] h-3 bg-taca-border"></div>

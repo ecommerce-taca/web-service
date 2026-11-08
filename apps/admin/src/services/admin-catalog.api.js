@@ -754,6 +754,84 @@ export const adminCatalogApi = {
       meta: { request_id: `req-${Date.now()}` },
     };
   },
+  /**
+   * STT 22a: Phê duyệt sản phẩm (Approve Product)
+   * POST /admin/catalog/products/{productId}/approve
+   * @param {string} productId
+   * @param {Object} payload - { version: number }
+   */
+  approveProduct: async (productId, { version = 1 } = {}) => {
+    const ver = Math.max(1, Number(version) || 1);
+    if (!isMockMode()) {
+      return apiClient.post(`/admin/catalog/products/${productId}/approve`, { version: ver });
+    }
+    await new Promise((res) => setTimeout(res, 100));
+    const target = localProducts.find((p) => p.product_id === productId);
+    if (target) {
+      target.status = 'ACTIVE';
+      target.version = (target.version || ver) + 1;
+    }
+    return { data: { product_id: productId, status: 'ACTIVE', version: ver + 1 } };
+  },
+
+  /**
+   * STT 23a: Từ chối sản phẩm (Reject Product with Reason)
+   * POST /admin/catalog/products/{productId}/reject
+   * @param {string} productId
+   * @param {Object} payload - { version: number, reason: string }
+   */
+  rejectProduct: async (productId, { version = 1, reason } = {}) => {
+    const ver = Math.max(1, Number(version) || 1);
+    const trimmedReason = (reason || '').trim();
+    if (!trimmedReason || trimmedReason.length < 5) {
+      throw new Error('Lý do từ chối sản phẩm phải có ít nhất 5 ký tự.');
+    }
+    if (!isMockMode()) {
+      return apiClient.post(`/admin/catalog/products/${productId}/reject`, {
+        version: ver,
+        reason: trimmedReason,
+      });
+    }
+    await new Promise((res) => setTimeout(res, 100));
+    const target = localProducts.find((p) => p.product_id === productId);
+    if (target) {
+      target.status = 'REJECTED';
+      target.rejection_reason = trimmedReason;
+      target.version = (target.version || ver) + 1;
+    }
+    return { data: { product_id: productId, status: 'REJECTED', rejection_reason: trimmedReason, version: ver + 1 } };
+  },
+
+  /**
+   * STT 24a: Xem lịch sử kiểm toán danh mục (Catalog Audit Logs)
+   * GET /admin/catalog/audits
+   */
+  getCatalogAudits: async (params = {}) => {
+    if (!isMockMode()) {
+      try {
+        const response = await apiClient.get('/admin/catalog/audits', { params });
+        return response?.data;
+      } catch (err) {
+        console.error('API Gateway GET /admin/catalog/audits failed:', err);
+        throw err;
+      }
+    }
+    await new Promise((res) => setTimeout(res, 100));
+    return {
+      data: [
+        {
+          audit_id: 'aud-001',
+          product_id: 'prod-01912f31',
+          action: 'APPROVE',
+          actor_id: 'admin-001',
+          actor_email: 'admin@taca.vn',
+          changes: { status: { from: 'PENDING_APPROVAL', to: 'ACTIVE' } },
+          created_at: new Date().toISOString()
+        }
+      ],
+      meta: { page: 1, size: 20, total: 1 }
+    };
+  },
 };
 
 export default adminCatalogApi;

@@ -128,10 +128,22 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
     try {
       const res = await sellerProductApi.getImportJobResultUrl(jobStatus.job_id);
       if (res?.data?.result_file_url) {
-        alert('Đã sẵn sàng tải báo cáo chi tiết kết quả nhập hàng!');
+        window.open(res.data.result_file_url, '_blank');
+      } else if (res?.data) {
+        const blob = res.data instanceof Blob ? res.data : new Blob([res.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `import_errors_${jobStatus.job_id}.xlsx`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
       }
     } catch (err) {
-      alert(`Lỗi tải báo cáo: ${err.message}`);
+      alert(`Lỗi tải báo cáo: ${err?.message || err}`);
     }
   };
 

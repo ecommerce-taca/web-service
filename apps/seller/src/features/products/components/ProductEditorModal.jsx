@@ -416,12 +416,10 @@ function ProductEditorForm({ product, onClose, onSave }) {
         .map(s => s.price.sale_price)
         .filter(p => p > 0);
       const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-      const maxPrice = prices.length > 0 ? Math.max(...prices) : minPrice;
+      const safeBasePrice = minPrice > 0 ? minPrice : 10000;
       const priceSummary = {
-        base_price: minPrice,
-        sale_price: minPrice,
-        min_price: minPrice,
-        max_price: maxPrice,
+        base_price: safeBasePrice,
+        ...(minPrice > 0 ? { sale_price: minPrice } : {}),
         currency: 'VND'
       };
 
@@ -559,12 +557,10 @@ function ProductEditorForm({ product, onClose, onSave }) {
         .map(s => s.price.sale_price)
         .filter(p => p > 0);
       const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-      const maxPrice = prices.length > 0 ? Math.max(...prices) : minPrice;
+      const safeBasePrice = minPrice > 0 ? minPrice : 10000;
       const priceSummary = {
-        base_price: minPrice,
-        sale_price: minPrice,
-        min_price: minPrice,
-        max_price: maxPrice,
+        base_price: safeBasePrice,
+        ...(minPrice > 0 ? { sale_price: minPrice } : {}),
         currency: 'VND'
       };
 

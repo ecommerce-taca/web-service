@@ -589,6 +589,10 @@ const SEARCH_SORT_MAP = {
   newest: 'newest',
 };
 
+let categoriesCache = null;
+let categoriesCacheTimestamp = 0;
+const CATEGORIES_CACHE_TTL = 15 * 60 * 1000; // 15 phút
+
 export const productApi = {
   /**
    * Tìm kiếm sản phẩm qua Search Service: GET /products/search
@@ -812,10 +816,20 @@ export const productApi = {
    * Lấy cây danh mục sản phẩm (Tree view, max depth 5)
    */
   getCategories: async () => {
-    if (!isMockMode()) {
-      return apiClient.get('/categories');
+    const now = Date.now();
+    if (categoriesCache && (now - categoriesCacheTimestamp < CATEGORIES_CACHE_TTL)) {
+      return categoriesCache;
     }
-    return { data: CATEGORIES_TREE };
+    if (!isMockMode()) {
+      const res = await apiClient.get('/categories');
+      categoriesCache = res;
+      categoriesCacheTimestamp = now;
+      return res;
+    }
+    const mockRes = { data: CATEGORIES_TREE };
+    categoriesCache = mockRes;
+    categoriesCacheTimestamp = now;
+    return mockRes;
   },
 
   /**
@@ -847,7 +861,13 @@ export const productApi = {
    */
   getFlashSaleProducts: async (params = {}) => {
     if (!isMockMode()) {
-      const res = await apiClient.get('/products', { params: { limit: params.limit || 8, page: 1, sort: 'popular' } });
+      const res = await apiClient.get('/products', {
+        params: {
+          size: params.size || params.limit || 8,
+          page: 1,
+          sort: 'newest'
+        }
+      });
       const products = res?.data?.data || res?.data || [];
       const discounted = Array.isArray(products) ? products.filter(p => {
         const sale = p.price?.sale_price || p.sale_price;

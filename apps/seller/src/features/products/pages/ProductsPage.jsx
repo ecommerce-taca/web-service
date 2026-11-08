@@ -24,6 +24,8 @@ export default function ProductsPage() {
   const tabs = [
     { id: 'ALL', label: 'Tất cả' },
     { id: 'ACTIVE', label: 'Đang bán' },
+    { id: 'PENDING_APPROVAL', label: 'Chờ duyệt' },
+    { id: 'REJECTED', label: 'Bị từ chối' },
     { id: 'DRAFT', label: 'Bản nháp' },
     { id: 'OUT_OF_STOCK', label: 'Hết hàng' },
     { id: 'INACTIVE', label: 'Tạm ẩn' },
@@ -31,8 +33,8 @@ export default function ProductsPage() {
     { id: 'ARCHIVED', label: 'Đã lưu trữ' },
   ];
 
-  // Fetch danh sách sản phẩm qua service (hỗ trợ Dual-Mode mock/live)
-  const loadProducts = useCallback(async () => {
+  // Fetch danh sách sản phẩm qua service (hỗ trợ Dual-Mode mock/live kèm AbortController)
+  const loadProducts = useCallback(async (signal) => {
     try {
       setLoading(true);
       setError(null);
@@ -42,14 +44,15 @@ export default function ProductsPage() {
         q: searchQuery.trim(),
         sort: 'newest',
         page: 1,
-        size: 50
+        size: 50,
+        signal
       });
-      const payload = res?.data;
-      const dataItems = Array.isArray(payload)
-        ? payload
-        : (payload?.items || []);
+      const dataItems = Array.isArray(res?.data)
+        ? res.data
+        : (res?.data?.items || res?.data?.data || []);
       setItems(dataItems);
     } catch (err) {
+      if (err?.name === 'CanceledError' || err?.name === 'AbortError') return;
       console.error('Lỗi khi tải danh sách sản phẩm người bán:', err);
       if (err?.response?.status === 401) {
         setIsAuthError(true);
@@ -63,10 +66,14 @@ export default function ProductsPage() {
   }, [activeTab, searchQuery]);
 
   useEffect(() => {
+    const controller = new AbortController();
     const timer = setTimeout(() => {
-      loadProducts();
+      loadProducts(controller.signal);
     }, 200);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [loadProducts]);
 
   useEffect(() => {
@@ -126,6 +133,9 @@ export default function ProductsPage() {
       const currentVersion = spu.version || 1;
       if (spu.status === 'ACTIVE') {
         await sellerProductApi.unpublishProduct(productId, currentVersion);
+      } else if (spu.status === 'DRAFT' || spu.status === 'REJECTED') {
+        await sellerProductApi.submitProduct(productId, currentVersion);
+        alert('Đã gửi yêu cầu phê duyệt sản phẩm thành công!');
       } else {
         await sellerProductApi.publishProduct(productId, currentVersion);
       }
@@ -325,8 +335,26 @@ export default function ProductsPage() {
             )}
           </div>
         ) : items.length === 0 ? (
-          <div className="py-16 text-center text-slate-400 text-[14px]">
-            Không tìm thấy sản phẩm nào phù hợp.
+          <div className="py-16 text-center flex flex-col items-center justify-center gap-3">
+            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+              <FileSpreadsheet className="w-7 h-7" aria-hidden="true" />
+            </div>
+            <div className="text-slate-800 font-bold text-[15px]">
+              Không tìm thấy sản phẩm nào phù hợp
+            </div>
+            <div className="text-slate-400 text-[13px] max-w-sm">
+              Thử thay đổi bộ lọc trạng thái hoặc từ khóa tìm kiếm để xem kết quả.
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingProduct(null);
+                setIsEditorOpen(true);
+              }}
+              className="mt-1 px-4 py-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg font-bold text-xs transition-colors cursor-pointer"
+            >
+              + Thêm sản phẩm mới
+            </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -363,6 +391,12 @@ export default function ProductsPage() {
                               <div className="text-[11px] text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded mt-1 font-medium inline-flex items-center gap-1">
                                 <AlertTriangle className="w-3 h-3 text-rose-600 shrink-0" aria-hidden="true" />
                                 <span>Vi phạm: {spu.block_reason}</span>
+                              </div>
+                            )}
+                            {spu.status === 'REJECTED' && (spu.rejection_reason || spu.rejected_reason) && (
+                              <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded mt-1 font-medium inline-flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" aria-hidden="true" />
+                                <span>Lý do từ chối: {spu.rejection_reason || spu.rejected_reason}</span>
                               </div>
                             )}
                           </div>
@@ -422,6 +456,10 @@ export default function ProductsPage() {
                                 ? 'Đã lưu trữ'
                                 : spu.status === 'BLOCKED'
                                 ? 'Bị khóa'
+                                : spu.status === 'REJECTED'
+                                ? 'Bị từ chối'
+                                : spu.status === 'PENDING_APPROVAL'
+                                ? 'Chờ duyệt'
                                 : spu.status === 'DRAFT'
                                 ? 'Bản nháp'
                                 : spu.status === 'ACTIVE'
@@ -433,9 +471,9 @@ export default function ProductsPage() {
                             type={
                               spu.status === 'ARCHIVED'
                                 ? 'archived'
-                                : spu.status === 'BLOCKED'
+                                : spu.status === 'BLOCKED' || spu.status === 'REJECTED'
                                 ? 'danger'
-                                : spu.status === 'DRAFT'
+                                : spu.status === 'PENDING_APPROVAL' || spu.status === 'DRAFT'
                                 ? 'pending'
                                 : spu.status === 'ACTIVE'
                                 ? 'active'
@@ -473,13 +511,19 @@ export default function ProductsPage() {
                               >
                                 Bị khóa
                               </span>
-                            ) : spu.status === 'DRAFT' ? (
+                            ) : spu.status === 'PENDING_APPROVAL' ? (
+                              <span 
+                                className="shrink-0 whitespace-nowrap h-7 px-2.5 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg inline-flex items-center justify-center"
+                              >
+                                Chờ duyệt
+                              </span>
+                            ) : spu.status === 'DRAFT' || spu.status === 'REJECTED' ? (
                               <button
                                 type="button"
                                 onClick={() => handleTogglePublish(spu)}
                                 className="shrink-0 whitespace-nowrap h-7 px-2.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg shadow-2xs transition-all cursor-pointer inline-flex items-center justify-center"
                               >
-                                Đăng bán
+                                {spu.status === 'REJECTED' ? 'Nộp duyệt lại' : 'Gửi duyệt'}
                               </button>
                             ) : spu.status !== 'ARCHIVED' ? (
                               <>
