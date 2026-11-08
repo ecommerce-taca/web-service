@@ -2,6 +2,9 @@ import PropTypes from 'prop-types';
 import { RefreshCw, AlertTriangle, Sparkles, Barcode } from 'lucide-react';
 import SkuMatrixRow from '../components/SkuMatrixRow';
 
+const BULK_PRICE_PRESETS = ['199.000 ₫', '499.000 ₫', '990.000 ₫', '2.490.000 ₫', '15.990.000 ₫', '29.490.000 ₫'];
+const BULK_STOCK_PRESETS = [10, 20, 50, 100, 200, 500];
+
 /**
  * Step 3: Biến thể đa thuộc tính (SKU Matrix) & Công cụ cập nhật hàng loạt
  */
@@ -23,6 +26,8 @@ export default function SkuMatrixStep({
   onUpdateSkuStock,
   onToggleSku
 }) {
+  const activeCount = skus.filter(s => s.enabled).length;
+  const totalStock = skus.reduce((sum, s) => sum + (Number(s.stock) || 0), 0);
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -57,59 +62,104 @@ export default function SkuMatrixStep({
       </div>
 
       {/* Bulk update toolbar */}
-      <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-[12px]">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="font-bold text-slate-700">Áp dụng hàng loạt:</span>
-          <div className="flex items-center gap-1">
-            <input
-              type="text"
-              placeholder="Giá bán chung (₫)"
-              value={bulkPriceInput}
-              onChange={(e) => setBulkPriceInput(e.target.value)}
-              className="w-28 px-2.5 py-1 border border-slate-300 rounded-lg bg-white text-xs text-slate-900 focus:outline-none focus:border-[#4F46E5]"
-            />
-            <button
-              type="button"
-              onClick={onApplyBulkPrice}
-              className="px-2.5 py-1 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg font-semibold text-xs transition-colors cursor-pointer"
-            >
-              Gán giá
-            </button>
+      <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5 text-[12px]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="font-bold text-slate-800">Áp dụng hàng loạt:</span>
+            <div className="flex items-center gap-1.5">
+              <input
+                type="text"
+                placeholder="Giá bán chung (₫)"
+                value={bulkPriceInput}
+                onChange={(e) => {
+                  const clean = e.target.value.replace(/\D/g, '');
+                  setBulkPriceInput(clean ? Number(clean).toLocaleString('vi-VN') : '');
+                }}
+                className="w-36 px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white text-xs text-slate-900 focus:outline-none focus:border-[#4F46E5] font-semibold"
+              />
+              <button
+                type="button"
+                onClick={onApplyBulkPrice}
+                className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg font-semibold text-xs transition-colors cursor-pointer shrink-0 shadow-2xs"
+              >
+                Gán giá
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <input
+                type="number"
+                placeholder="Kho chung"
+                min="0"
+                value={bulkStockInput}
+                onChange={(e) => setBulkStockInput(e.target.value)}
+                className="w-24 px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white text-xs text-slate-900 focus:outline-none focus:border-[#4F46E5] font-semibold"
+              />
+              <button
+                type="button"
+                onClick={onApplyBulkStock}
+                className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg font-semibold text-xs transition-colors cursor-pointer shrink-0 shadow-2xs"
+              >
+                Gán kho
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-center gap-1">
-            <input
-              type="number"
-              placeholder="Kho chung"
-              value={bulkStockInput}
-              onChange={(e) => setBulkStockInput(e.target.value)}
-              className="w-20 px-2.5 py-1 border border-slate-300 rounded-lg bg-white text-xs text-slate-900 focus:outline-none focus:border-[#4F46E5]"
-            />
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={onApplyBulkStock}
-              className="px-2.5 py-1 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg font-semibold text-xs transition-colors cursor-pointer"
+              onClick={() => onToggleAllSkus(true)}
+              className="px-2.5 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg font-bold text-[11px] transition-colors cursor-pointer"
             >
-              Gán kho
+              Bật tất cả ({skus.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => onToggleAllSkus(false)}
+              className="px-2.5 py-1 bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200 rounded-lg font-bold text-[11px] transition-colors cursor-pointer"
+            >
+              Tắt tất cả
             </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onToggleAllSkus(true)}
-            className="px-2.5 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg font-bold text-[11px] transition-colors cursor-pointer"
-          >
-            Bật tất cả
-          </button>
-          <button
-            type="button"
-            onClick={() => onToggleAllSkus(false)}
-            className="px-2.5 py-1 bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200 rounded-lg font-bold text-[11px] transition-colors cursor-pointer"
-          >
-            Tắt tất cả
-          </button>
+        {/* 1-Click quick presets for bulk price & stock */}
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200/70 text-[11px]">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-slate-400 font-medium">Giá nhanh:</span>
+            {BULK_PRICE_PRESETS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => {
+                  const clean = p.replace(/\D/g, '');
+                  setBulkPriceInput(Number(clean).toLocaleString('vi-VN'));
+                }}
+                className="px-2 py-0.5 rounded border border-slate-200 bg-white hover:bg-indigo-50 hover:text-[#4F46E5] text-slate-600 transition-colors cursor-pointer"
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-slate-400 font-medium">Kho nhanh:</span>
+            {BULK_STOCK_PRESETS.map((cnt) => (
+              <button
+                key={cnt}
+                type="button"
+                onClick={() => setBulkStockInput(String(cnt))}
+                className="px-2 py-0.5 rounded border border-slate-200 bg-white hover:bg-indigo-50 hover:text-[#4F46E5] text-slate-600 transition-colors cursor-pointer"
+              >
+                {cnt}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500 font-medium">
+          <span>Tổng số: <strong className="text-slate-900">{skus.length} SKU</strong> ({activeCount} đang bán, {skus.length - activeCount} tắt)</span>
+          <span>Tổng tồn kho: <strong className="text-slate-900">{totalStock.toLocaleString('vi-VN')}</strong> đơn vị</span>
         </div>
       </div>
 

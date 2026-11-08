@@ -242,8 +242,8 @@ function ProductEditorForm({ product, onClose, onSave }) {
     handleGoToStep(step + 1);
   };
 
-  const handleAddValue = (attrId) => {
-    const val = (newValueInputs[attrId] || '').trim();
+  const handleAddValue = (attrId, directVal = null) => {
+    const val = (directVal || newValueInputs[attrId] || '').trim();
     if (!val) return;
     const updatedAttrs = attributes.map(a => 
       a.id === attrId && !a.values.includes(val)
@@ -251,7 +251,9 @@ function ProductEditorForm({ product, onClose, onSave }) {
         : a
     );
     setAttributes(updatedAttrs);
-    setNewValueInputs({ ...newValueInputs, [attrId]: '' });
+    if (!directVal) {
+      setNewValueInputs({ ...newValueInputs, [attrId]: '' });
+    }
 
     // Reactive: Tự động cập nhật ma trận SKU ngay lập tức
     if (isMultiVariant) {
@@ -641,7 +643,7 @@ function ProductEditorForm({ product, onClose, onSave }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[920px] max-h-[92vh] flex flex-col overflow-hidden">
+    <div className="relative my-auto bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[920px] max-h-[90vh] flex flex-col overflow-hidden">
       {/* Header */}
       <div className="px-8 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
         <div>
@@ -747,22 +749,9 @@ function ProductEditorForm({ product, onClose, onSave }) {
             onRemoveValue={handleRemoveValue}
             onRemoveAttribute={handleRemoveAttribute}
             onOpenAddAttrModal={() => setIsAddAttrModalOpen(true)}
-            onRegenerateSkus={handleRegenerateSkus}
+            onAddAttribute={handleAddNewAttribute}
             combosCount={generatedCombinations.length}
-            skus={skus}
-            skuPrefix={skuPrefix}
-            bulkPriceInput={bulkPriceInput}
-            setBulkPriceInput={setBulkPriceInput}
-            bulkStockInput={bulkStockInput}
-            setBulkStockInput={setBulkStockInput}
-            onApplyBulkPrice={handleApplyBulkPrice}
-            onApplyBulkStock={handleApplyBulkStock}
-            onToggleAllSkus={handleToggleAllSkus}
-            onFormatAllSkuCodes={handleFormatAllSkuCodes}
-            onUpdateSkuCode={handleUpdateSkuCode}
-            onUpdateSkuPrice={handleUpdateSkuPrice}
-            onUpdateSkuStock={handleUpdateSkuStock}
-            onToggleSku={handleToggleSku}
+            combinations={generatedCombinations}
           />
         )}
 
@@ -861,7 +850,7 @@ export default function ProductEditorModal({ isOpen, product = null, onClose, on
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 py-6 sm:py-8 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-in fade-in">
       <ProductEditorForm
         key={product ? (product.id || product.productId) : 'new-product'}
         product={product}

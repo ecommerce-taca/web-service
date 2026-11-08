@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import { X, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { cancelSellerOrder } from '../services/seller-order.api';
@@ -44,11 +45,11 @@ export default function CancelOrderModal({ order, isOpen, onClose, onSuccess }) 
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[520px] overflow-hidden">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 py-6 sm:py-10 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-200">
+      <div className="relative my-auto bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[520px] max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-rose-50/60">
+        <div className="px-6 py-4 sm:py-5 border-b border-slate-200 flex items-center justify-between bg-rose-50/60 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
               <ShieldAlert className="w-5 h-5 text-rose-600" aria-hidden="true" />
@@ -74,7 +75,7 @@ export default function CancelOrderModal({ order, isOpen, onClose, onSuccess }) 
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto flex flex-col">
           <div className="p-6 space-y-5 text-[13px]">
             {/* Warning policy box */}
             <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
@@ -126,7 +127,7 @@ export default function CancelOrderModal({ order, isOpen, onClose, onSuccess }) 
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-2.5">
+          <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-2.5 shrink-0 mt-auto">
             <button
               type="button"
               onClick={onClose}
@@ -152,7 +153,8 @@ export default function CancelOrderModal({ order, isOpen, onClose, onSuccess }) 
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

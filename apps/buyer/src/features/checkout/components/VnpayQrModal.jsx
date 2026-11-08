@@ -106,18 +106,36 @@ export default function VnpayQrModal({
     }
   }, [paymentId, orderId, paymentStatus, onPaymentSuccess]);
 
-  // Tự động Polling mỗi 2.5 giây khi modal mở
+  // Tự động Polling có Exponential Backoff (BUG-MED-005): 2.5s (2 phút đầu), 5s (phút 2-5), 10s (sau 5 phút)
   useEffect(() => {
     if (!isOpen || !paymentId || paymentStatus !== 'PENDING') return;
 
+    const elapsedSeconds = 15 * 60 - timeLeft;
+    const intervalMs = elapsedSeconds < 120 ? 2500 : elapsedSeconds < 300 ? 5000 : 10000;
+
     pollingRef.current = setInterval(() => {
       checkStatus(false);
-    }, 2500);
+    }, intervalMs);
 
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
-  }, [isOpen, paymentId, paymentStatus, checkStatus]);
+  }, [isOpen, paymentId, paymentStatus, checkStatus, timeLeft]);
+
+  // Hỗ trợ phím tắt Enter để kiểm tra thanh toán nhanh (BUG-LOW-008)
+  useEffect(() => {
+    if (!isOpen || paymentStatus !== 'PENDING') return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        checkStatus(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, paymentStatus, checkStatus]);
 
   if (!isOpen) return null;
 

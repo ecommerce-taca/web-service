@@ -6,6 +6,8 @@ import { adminFinanceApi } from '../../../services/admin-finance.api';
 import StepUpMfaModal from '../../../components/common/StepUpMfaModal';
 
 export default function CreateSettlementBatchModal({ isOpen, onClose, onSuccess }) {
+  const today = new Date().toISOString().slice(0, 10);
+
   const [periodStart, setPeriodStart] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() - 7);
@@ -21,12 +23,42 @@ export default function CreateSettlementBatchModal({ isOpen, onClose, onSuccess 
 
   if (!isOpen) return null;
 
+  const handleQuickPeriod = (days) => {
+    const d = new Date();
+    d.setDate(d.getDate() - days);
+    setPeriodStart(d.toISOString().slice(0, 10));
+    setPeriodEnd(today);
+  };
+
+  const handlePeriodStartChange = (val) => {
+    let nextStart = val;
+    if (nextStart > today) nextStart = today;
+    setPeriodStart(nextStart);
+    if (periodEnd && nextStart > periodEnd) {
+      setPeriodEnd(nextStart);
+    }
+  };
+
+  const handlePeriodEndChange = (val) => {
+    let nextEnd = val;
+    if (nextEnd > today) nextEnd = today;
+    setPeriodEnd(nextEnd);
+    if (periodStart && nextEnd < periodStart) {
+      setPeriodStart(nextEnd);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     setErrorMsg('');
 
     if (!periodStart || !periodEnd) {
       setErrorMsg('Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc kỳ quyết toán.');
+      return;
+    }
+
+    if (periodStart > today || periodEnd > today) {
+      setErrorMsg('Kỳ quyết toán chỉ áp dụng cho các ngày trong quá khứ hoặc hôm nay. Không được chọn ngày trong tương lai.');
       return;
     }
 
@@ -77,10 +109,10 @@ export default function CreateSettlementBatchModal({ isOpen, onClose, onSuccess 
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 py-6 sm:py-10 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-200">
+      <div className="relative my-auto bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-indigo-600" aria-hidden="true" />
             <h3 className="text-[16px] font-black text-slate-900 tracking-tight">
@@ -97,8 +129,16 @@ export default function CreateSettlementBatchModal({ isOpen, onClose, onSuccess 
           </button>
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-[13px]">
+        {/* Form Body with internal scrolling */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4 text-[13px]">
+          {/* Thông báo chính sách T+2 Cron tự động */}
+          <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-[12px] text-indigo-900 flex items-start gap-2">
+            <Calendar className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" aria-hidden="true" />
+            <div>
+              <span className="font-bold">Tiến trình tự động định kỳ:</span> Quyết toán và giải ngân chuyển khoản được backend xử lý tự động vào 02:00 sáng Thứ Hai (T+2). Tạo lô thủ công chỉ áp dụng cho kiểm thử nội bộ hoặc đợt xử lý ngoại lệ có xác thực 2FA.
+            </div>
+          </div>
+
           {errorMsg && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-[12px] text-rose-700 font-medium flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" aria-hidden="true" />
@@ -106,35 +146,69 @@ export default function CreateSettlementBatchModal({ isOpen, onClose, onSuccess 
             </div>
           )}
 
-          {/* Period Selection */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="period-start-input" className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                Từ ngày
-              </label>
-              <input
-                id="period-start-input"
-                name="periodStart"
-                type="date"
-                required
-                value={periodStart}
-                onChange={(e) => setPeriodStart(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:border-indigo-600 text-[13px] bg-slate-50/50"
-              />
+          {/* Period Selection (Chỉ áp dụng quá khứ & hôm nay: <= today) */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                Kỳ quyết toán (Chỉ ngày quá khứ & hôm nay)
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => handleQuickPeriod(7)}
+                  className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-semibold transition-colors cursor-pointer"
+                >
+                  7 ngày
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickPeriod(14)}
+                  className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-semibold transition-colors cursor-pointer"
+                >
+                  14 ngày
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickPeriod(30)}
+                  className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-semibold transition-colors cursor-pointer"
+                >
+                  30 ngày
+                </button>
+              </div>
             </div>
-            <div>
-              <label htmlFor="period-end-input" className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                Đến ngày
-              </label>
-              <input
-                id="period-end-input"
-                name="periodEnd"
-                type="date"
-                required
-                value={periodEnd}
-                onChange={(e) => setPeriodEnd(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:border-indigo-600 text-[13px] bg-slate-50/50"
-              />
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="period-start-input" className="block text-[11px] font-semibold text-slate-500 mb-1">
+                  Từ ngày
+                </label>
+                <input
+                  id="period-start-input"
+                  name="periodStart"
+                  type="date"
+                  required
+                  max={periodEnd || today}
+                  value={periodStart}
+                  onChange={(e) => handlePeriodStartChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:border-indigo-600 text-[13px] bg-slate-50/50 cursor-pointer"
+                />
+              </div>
+              <div>
+                <label htmlFor="period-end-input" className="block text-[11px] font-semibold text-slate-500 mb-1">
+                  Đến ngày (tối đa hôm nay)
+                </label>
+                <input
+                  id="period-end-input"
+                  name="periodEnd"
+                  type="date"
+                  required
+                  max={today}
+                  min={periodStart}
+                  value={periodEnd}
+                  onChange={(e) => handlePeriodEndChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:border-indigo-600 text-[13px] bg-slate-50/50 cursor-pointer"
+                />
+              </div>
             </div>
           </div>
 
@@ -172,7 +246,7 @@ export default function CreateSettlementBatchModal({ isOpen, onClose, onSuccess 
           {scope === 'SPECIFIC' && (
             <div>
               <label htmlFor="specific-shops-input" className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                Danh sách Shop ID (cách nhau bởi dấu phẩy)
+                Danh sách Shop ID
               </label>
               <input
                 id="specific-shops-input"
@@ -207,7 +281,7 @@ export default function CreateSettlementBatchModal({ isOpen, onClose, onSuccess 
           </div>
 
           <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl text-[11px] text-amber-800 leading-relaxed">
-            <span className="font-bold">Quy chuẩn tài chính (§3.8 payment-wallet.md): </span>
+            <span className="font-bold">Quy chuẩn tài chính: </span>
             Lô quyết toán sẽ chuyển số dư chờ đối soát sang số dư khả dụng sau khi so khớp hoàn tất. Thao tác yêu cầu xác thực 2FA Step-Up.
           </div>
 

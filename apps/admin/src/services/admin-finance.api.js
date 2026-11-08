@@ -394,6 +394,43 @@ export const adminFinanceApi = {
         generated_at: new Date().toISOString()
       }
     };
+  },
+
+  /**
+   * Tạo lệnh hoàn tiền giao dịch: POST /payments/{paymentId}/refunds (#4, REQ-04)
+   * Quyền: ADMIN / FINANCE_OPS + 2FA (header X-MFA-Step-Up)
+   * @param {string} paymentId - Mã thanh toán cần hoàn tiền
+   * @param {Object} refundData - { amount, reason, order_id }
+   * @param {string} [stepUpToken] - Mã xác thực 2FA OTP
+   */
+  createRefund: async (paymentId, refundData, stepUpToken = '') => {
+    if (!paymentId) throw new Error('paymentId is required');
+    const headers = {};
+    if (stepUpToken) {
+      headers['X-MFA-Step-Up'] = stepUpToken;
+    }
+    if (!isMockMode()) {
+      try {
+        const response = await apiClient.post(`/payments/${paymentId}/refunds`, refundData, { headers });
+        return response?.data;
+      } catch (err) {
+        console.error(`API Gateway POST /payments/${paymentId}/refunds failed:`, err);
+        throw err;
+      }
+    }
+    return {
+      data: {
+        refund_id: `ref-${Date.now()}`,
+        payment_id: paymentId,
+        order_id: refundData.order_id || 'ord-sample',
+        amount: refundData.amount || 1094000,
+        currency: 'VND',
+        status: 'SUCCESS',
+        reason: refundData.reason || 'Khách hàng hủy đơn / hoàn hàng đối soát',
+        created_at: new Date().toISOString()
+      },
+      meta: { request_id: `req-ref-${Date.now()}` }
+    };
   }
 };
 

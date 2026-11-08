@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import { X, MessageSquare, Package, Check, CheckCircle2 } from 'lucide-react';
 import StatusBadge from '../../../components/common/StatusBadge';
@@ -18,11 +19,11 @@ export default function OrderDetailModal({ order, isOpen, onClose, onPrepare, on
     setTimeout(() => setCopied(false), 2000);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[760px] max-h-[90vh] flex flex-col overflow-hidden">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 py-6 sm:py-10 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-200">
+      <div className="relative my-auto bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[760px] max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Modal Header */}
-        <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+        <div className="px-6 py-4 sm:py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50 shrink-0">
           <div>
             <div className="flex items-center gap-3">
               <h2 className="text-[18px] font-bold text-slate-900 tracking-tight">
@@ -214,7 +215,8 @@ export default function OrderDetailModal({ order, isOpen, onClose, onPrepare, on
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
