@@ -23,7 +23,13 @@ const ProductCard = ({
   // Chuẩn hóa trường theo đặc tả API Product Catalog Service (§3.1)
   const actualId = product?.product_id || product?.id || id || 1;
   const actualName = product?.title || product?.name || title || name || 'Sản phẩm';
-  const actualImage = product?.cover_media?.url || product?.image || image || (product?.images && product.images[0]) || '';
+  const actualImage = product?.coverImage
+    || product?.cover_media?.url
+    || (Array.isArray(product?.media) ? (product.media.find(m => m.is_cover)?.url || product.media[0]?.url) : null)
+    || product?.image
+    || image
+    || (Array.isArray(product?.images) && product.images[0])
+    || '';
   
   // Xử lý đối tượng giá tiền theo cấu trúc { base_price, sale_price, currency: "VND" }
   const actualPrice = product?.price?.sale_price !== undefined

@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { LoaderCircle } from 'lucide-react';
 
 const Button = ({
   children,
@@ -7,9 +8,10 @@ const Button = ({
   type = 'button',
   className = '',
   disabled = false,
+  loading = false,
   ...props
 }) => {
-  const baseClasses = 'inline-flex items-center justify-center font-bold rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-taca-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseClasses = 'inline-flex items-center justify-center font-bold rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-taca-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
   
   const variants = {
     primary: 'bg-taca-primary text-white border-taca-primary hover:not-disabled:bg-taca-primary-hover',
@@ -28,14 +30,19 @@ const Button = ({
 
   const selectedVariant = variants[variant] || variants.primary;
   const selectedSize = sizes[size] || sizes.md;
+  const isDisabled = disabled || loading;
 
   return (
     <button
       type={type}
-      disabled={disabled}
+      disabled={isDisabled}
+      aria-busy={loading}
       className={`${baseClasses} ${selectedVariant} ${selectedSize} ${className}`.trim()}
       {...props}
     >
+      {loading && (
+        <LoaderCircle className="w-4 h-4 animate-spin shrink-0 mr-1.5" aria-hidden="true" />
+      )}
       {children}
     </button>
   );
@@ -48,6 +55,7 @@ Button.propTypes = {
   type: PropTypes.oneOf(['button', 'submit', 'reset']),
   className: PropTypes.string,
   disabled: PropTypes.bool,
+  loading: PropTypes.bool,
 };
 
 export default Button;

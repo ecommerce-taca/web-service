@@ -26,6 +26,7 @@ export default function AdminProductsPage() {
   // Filters & Pagination
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [flaggedOnly, setFlaggedOnly] = useState(false);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, total_pages: 1 });
   const [reloadTrigger, setReloadTrigger] = useState(0);
@@ -44,6 +45,7 @@ export default function AdminProductsPage() {
       size: 20,
       status: statusFilter,
       q: searchQuery.trim(),
+      flagged_only: flaggedOnly ? true : undefined,
     })
       .then((res) => {
         if (!isMounted) return;
@@ -63,7 +65,7 @@ export default function AdminProductsPage() {
     return () => {
       isMounted = false;
     };
-  }, [page, statusFilter, searchQuery, reloadTrigger]);
+  }, [page, statusFilter, searchQuery, flaggedOnly, reloadTrigger]);
 
   const handleRefresh = () => {
     setLoading(true);
@@ -103,6 +105,34 @@ export default function AdminProductsPage() {
     await adminCatalogApi.unblockProduct(productId, { version, reason });
     showToast(`Đã gỡ khóa thành công sản phẩm ${productId}. Sản phẩm được chuyển về trạng thái INACTIVE.`);
     handleRefresh();
+  };
+
+  const handleApprove = async (productId) => {
+    try {
+      const prod = products.find((p) => p.product_id === productId || p.id === productId);
+      await adminCatalogApi.approveProduct(productId, { version: prod?.version || 1 });
+      showToast(`Đã phê duyệt thành công sản phẩm ${productId}. Sản phẩm đã được kích hoạt ACTIVE.`);
+      handleRefresh();
+    } catch (err) {
+      alert(`Lỗi phê duyệt: ${err?.message || err}`);
+    }
+  };
+
+  const handleReject = async (productId) => {
+    const prod = products.find((p) => p.product_id === productId || p.id === productId);
+    const reason = window.prompt('Nhập lý do từ chối phê duyệt sản phẩm (tối thiểu 5 ký tự):');
+    if (!reason || !reason.trim()) return;
+    if (reason.trim().length < 5) {
+      alert('Lý do từ chối phải có ít nhất 5 ký tự!');
+      return;
+    }
+    try {
+      await adminCatalogApi.rejectProduct(productId, { version: prod?.version || 1, reason: reason.trim() });
+      showToast(`Đã từ chối duyệt sản phẩm ${productId}.`);
+      handleRefresh();
+    } catch (err) {
+      alert(`Lỗi từ chối: ${err?.message || err}`);
+    }
   };
 
   // Metrics computation
@@ -185,8 +215,10 @@ export default function AdminProductsPage() {
           <div className="flex items-center gap-1.5 p-1 bg-slate-100/80 rounded-xl w-full md:w-auto overflow-x-auto">
             {[
               { id: 'ALL', label: 'Tất cả' },
+              { id: 'PENDING_APPROVAL', label: 'Chờ duyệt' },
               { id: 'ACTIVE', label: 'Đang bán (ACTIVE)' },
               { id: 'INACTIVE', label: 'Tạm ẩn (INACTIVE)' },
+              { id: 'REJECTED', label: 'Bị từ chối' },
               { id: 'BLOCKED', label: 'Đã khóa (BLOCKED)' },
               { id: 'DRAFT', label: 'Bản nháp' },
             ].map((tab) => (
@@ -208,19 +240,39 @@ export default function AdminProductsPage() {
             ))}
           </div>
 
-          {/* Search Input */}
-          <div className="relative w-full md:w-80">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
+          {/* Right Toolbar: Flagged Toggle & Search Input */}
+          <div className="flex items-center gap-2.5 w-full md:w-auto">
+            <button
+              type="button"
+              onClick={() => {
+                setFlaggedOnly((prev) => !prev);
                 setPage(1);
               }}
-              placeholder="Tìm theo SPU, tên SP, shop..."
-              className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-[#0A68FF]/20 focus:border-[#0A68FF] transition-all"
-            />
+              className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 border shrink-0 ${
+                flaggedOnly
+                  ? 'bg-rose-50 text-rose-700 border-rose-300 shadow-xs ring-2 ring-rose-200'
+                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+              }`}
+              title="Lọc các sản phẩm bị hệ thống cảnh báo rủi ro"
+            >
+              <ShieldAlert className={`w-3.5 h-3.5 ${flaggedOnly ? 'text-rose-600' : 'text-slate-400'}`} />
+              <span>Chỉ xem cảnh báo</span>
+            </button>
+
+            {/* Search Input */}
+            <div className="relative w-full md:w-72">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Tìm theo SPU, tên SP, shop..."
+                className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-[#0A68FF]/20 focus:border-[#0A68FF] transition-all"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -365,9 +417,19 @@ export default function AdminProductsPage() {
                       </td>
 
                       <td className="px-6 py-4 text-center">
+                        {item.status === 'PENDING_APPROVAL' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            <Clock className="w-3 h-3" /> Chờ duyệt
+                          </span>
+                        )}
                         {item.status === 'ACTIVE' && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                             <CheckCircle2 className="w-3 h-3" /> Đang bán
+                          </span>
+                        )}
+                        {item.status === 'REJECTED' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                            <AlertTriangle className="w-3 h-3" /> Từ chối
                           </span>
                         )}
                         {item.status === 'BLOCKED' && (
@@ -376,7 +438,7 @@ export default function AdminProductsPage() {
                           </span>
                         )}
                         {item.status === 'INACTIVE' && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
                             <Clock className="w-3 h-3" /> Tạm ẩn
                           </span>
                         )}
@@ -398,7 +460,26 @@ export default function AdminProductsPage() {
                             <span>Xem</span>
                           </button>
 
-                          {isBlocked ? (
+                          {item.status === 'PENDING_APPROVAL' ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleApprove(item.product_id)}
+                                className="px-2.5 py-1 text-emerald-700 hover:text-white hover:bg-emerald-600 bg-emerald-50 border border-emerald-200 rounded-lg font-bold text-[11px] transition-colors cursor-pointer flex items-center gap-1"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Duyệt</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleReject(item.product_id)}
+                                className="px-2.5 py-1 text-rose-700 hover:text-white hover:bg-rose-600 bg-rose-50 border border-rose-200 rounded-lg font-bold text-[11px] transition-colors cursor-pointer flex items-center gap-1"
+                              >
+                                <Ban className="w-3.5 h-3.5" />
+                                <span>Từ chối</span>
+                              </button>
+                            </>
+                          ) : isBlocked ? (
                             <button
                               type="button"
                               onClick={() =>

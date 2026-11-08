@@ -302,10 +302,17 @@ export const sellerProductApi = {
    * 1. Lấy danh sách sản phẩm của Seller
    * @param {Object} params - { status, q, sort, page, size }
    */
-  getProducts: async ({ status, q, sort = 'newest', page = 1, size = 20 } = {}) => {
+  getProducts: async ({ status, q, sort = 'newest', page = 1, size = 20, signal } = {}) => {
     if (!isMockMode()) {
       return apiClient.get('/seller/products', {
-        params: { ...(status && { status }), ...(q && { q }), sort, page, size }
+        params: {
+          ...((status && status !== 'ALL' && status !== 'OUT_OF_STOCK') ? { status } : {}),
+          ...(q && q.trim() ? { q: q.trim() } : {}),
+          sort: ['newest', 'price_asc', 'price_desc'].includes(sort) ? sort : 'newest',
+          page: Number(page) || 1,
+          size: Number(size) || 20
+        },
+        signal
       });
     }
 
@@ -651,10 +658,33 @@ export const sellerProductApi = {
 
   getImportJobResultUrl: async (jobId) => {
     if (!isMockMode()) {
-      return apiClient.get(`/seller/products/import/jobs/${jobId}/result`);
+      return apiClient.get(`/seller/products/import/jobs/${jobId}/result`, {
+        responseType: 'blob',
+        headers: { Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/json' }
+      });
     }
     return { data: { result_file_url: '#mock-job-result' } };
-  }
+  },
+
+  deleteMedia: async (productId, mediaId) => {
+    if (!isMockMode()) {
+      return apiClient.delete(`/seller/products/${productId}/media/${mediaId}`);
+    }
+    return { data: { success: true, media_id: mediaId } };
+  },
+
+  submitProduct: async (productId, version = 1) => {
+    const ver = Math.max(1, Number(version) || 1);
+    if (!isMockMode()) {
+      return apiClient.post(`/seller/products/${productId}/submit`, { version: ver });
+    }
+    const item = MOCK_SELLER_PRODUCTS.find(p => p.id === productId);
+    if (item) {
+      item.status = 'PENDING_APPROVAL';
+      item.version = (item.version || ver) + 1;
+    }
+    return { data: { success: true, status: 'PENDING_APPROVAL', version: (item?.version || ver) + 1 } };
+  },
 };
 
 export default sellerProductApi;

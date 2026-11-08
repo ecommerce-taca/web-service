@@ -1,6 +1,55 @@
 import { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Layers, ShieldCheck } from 'lucide-react';
 import { getAuditLogs } from '../../../services/admin-kyc.api';
+import adminCatalogApi from '../../../services/admin-catalog.api';
+
+const DEFAULT_CATALOG_LOGS = [
+  {
+    id: 'aud-001',
+    actor_id: 'admin-001',
+    actor_name: 'Catalog Moderator',
+    actor_email: 'catalog-admin@taca.vn',
+    actor_role: 'CATALOG_ADMIN',
+    action: 'APPROVE',
+    target_type: 'PRODUCT',
+    target_id: 'prod-01912f31',
+    target_name: 'iPhone 15 Pro Max 256GB',
+    ip_address: '10.0.4.12',
+    status: 'SUCCESS',
+    details: 'Phê duyệt sản phẩm lên sàn (Chuyển trạng thái từ PENDING_APPROVAL sang PUBLISHED).',
+    created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'aud-002',
+    actor_id: 'admin-001',
+    actor_name: 'Catalog Moderator',
+    actor_email: 'catalog-admin@taca.vn',
+    actor_role: 'CATALOG_ADMIN',
+    action: 'BLOCK',
+    target_type: 'PRODUCT',
+    target_id: 'prod-01912f45',
+    target_name: 'Tai nghe Bluetooth Air-Pro',
+    ip_address: '10.0.4.12',
+    status: 'REJECTED',
+    details: 'Khóa sản phẩm vi phạm thương hiệu Apple theo phản ánh từ người tiêu dùng.',
+    created_at: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
+  },
+  {
+    id: 'aud-003',
+    actor_id: 'admin-002',
+    actor_name: 'Taxonomy Admin',
+    actor_email: 'taxonomy@taca.vn',
+    actor_role: 'CATALOG_ADMIN',
+    action: 'UPDATE_TAX_RATE',
+    target_type: 'CATEGORY',
+    target_id: 'cat-01912f20',
+    target_name: 'Điện tử & Công nghệ',
+    ip_address: '10.0.4.15',
+    status: 'SUCCESS',
+    details: 'Cập nhật thuế suất ngành hàng sang 1000 bps (10% VAT). Version: 3.',
+    created_at: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
+  },
+];
 
 const DEFAULT_DEMO_LOGS = [
   {
@@ -81,6 +130,7 @@ const DEFAULT_DEMO_LOGS = [
 ];
 
 export default function AdminAuditLogsPage() {
+  const [scope, setScope] = useState('CATALOG'); // 'CATALOG' | 'SYSTEM'
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -90,48 +140,108 @@ export default function AdminAuditLogsPage() {
 
   useEffect(() => {
     let isMounted = true;
-    const params = {
-      page,
-      size: 15,
-      action: actionFilter !== 'ALL' ? actionFilter : undefined,
-      search: search.trim() || undefined,
-    };
 
-    getAuditLogs(params)
-      .then((res) => {
-        if (!isMounted) return;
-        const list = res?.data || [];
-        if (list.length === 0) {
-          // Fallback demo mock logs
-          const filtered = DEFAULT_DEMO_LOGS.filter((log) => {
-            const matchAction = actionFilter === 'ALL' || log.action.includes(actionFilter);
-            const matchSearch =
-              !search.trim() ||
-              log.actor_email.toLowerCase().includes(search.toLowerCase()) ||
-              log.target_name.toLowerCase().includes(search.toLowerCase()) ||
-              log.details.toLowerCase().includes(search.toLowerCase());
-            return matchAction && matchSearch;
-          });
-          setLogs(filtered);
-          setTotal(filtered.length);
-        } else {
-          setLogs(list);
-          setTotal(res?.meta?.total || list.length);
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (!isMounted) return;
-        console.error('[AdminAuditLogsPage] fetch error:', err);
-        setLogs(DEFAULT_DEMO_LOGS);
-        setTotal(DEFAULT_DEMO_LOGS.length);
-        setLoading(false);
-      });
+    if (scope === 'CATALOG') {
+      const params = {
+        page,
+        size: 15,
+        entity_type: actionFilter !== 'ALL' ? actionFilter : undefined,
+      };
+
+      adminCatalogApi
+        .getCatalogAudits(params)
+        .then((res) => {
+          if (!isMounted) return;
+          const list = res?.data || [];
+          if (list.length === 0) {
+            const filtered = DEFAULT_CATALOG_LOGS.filter((log) => {
+              const matchAction = actionFilter === 'ALL' || log.target_type === actionFilter;
+              const matchSearch =
+                !search.trim() ||
+                log.actor_email.toLowerCase().includes(search.toLowerCase()) ||
+                log.target_name.toLowerCase().includes(search.toLowerCase()) ||
+                log.details.toLowerCase().includes(search.toLowerCase());
+              return matchAction && matchSearch;
+            });
+            setLogs(filtered);
+            setTotal(filtered.length);
+          } else {
+            const mapped = list.map((item, idx) => ({
+              id: item._id || item.audit_id || `aud-${idx}`,
+              actor_id: item.actor_id || 'admin-system',
+              actor_name: item.actor_name || item.actor_email || 'Catalog Admin',
+              actor_email: item.actor_email || item.actor_id || 'admin@taca.vn',
+              actor_role: item.actor_role || 'CATALOG_ADMIN',
+              action: item.action || 'CATALOG_UPDATE',
+              target_type: item.entity_type || 'PRODUCT',
+              target_id: item.entity_id || '',
+              target_name: item.entity_name || item.entity_id || 'Mục Catalog',
+              ip_address: item.ip_address || 'Gateway-Proxy',
+              status: item.action === 'BLOCK' || item.action === 'REJECT' ? 'REJECTED' : 'SUCCESS',
+              details:
+                typeof item.diff === 'object'
+                  ? JSON.stringify(item.diff)
+                  : typeof item.changes === 'object'
+                  ? JSON.stringify(item.changes)
+                  : item.details || 'Thay đổi cấu hình sản phẩm / danh mục',
+              created_at: item.created_at || new Date().toISOString(),
+            }));
+            setLogs(mapped);
+            setTotal(res?.meta?.total || mapped.length);
+          }
+          setLoading(false);
+        })
+        .catch((err) => {
+          if (!isMounted) return;
+          console.warn('[AdminAuditLogsPage] catalog audit fallback:', err);
+          setLogs(DEFAULT_CATALOG_LOGS);
+          setTotal(DEFAULT_CATALOG_LOGS.length);
+          setLoading(false);
+        });
+    } else {
+      const params = {
+        page,
+        size: 15,
+        action: actionFilter !== 'ALL' ? actionFilter : undefined,
+        search: search.trim() || undefined,
+      };
+
+      getAuditLogs(params)
+        .then((res) => {
+          if (!isMounted) return;
+          const list = res?.data || [];
+          if (list.length === 0) {
+            // Fallback demo mock logs
+            const filtered = DEFAULT_DEMO_LOGS.filter((log) => {
+              const matchAction = actionFilter === 'ALL' || log.action.includes(actionFilter);
+              const matchSearch =
+                !search.trim() ||
+                log.actor_email.toLowerCase().includes(search.toLowerCase()) ||
+                log.target_name.toLowerCase().includes(search.toLowerCase()) ||
+                log.details.toLowerCase().includes(search.toLowerCase());
+              return matchAction && matchSearch;
+            });
+            setLogs(filtered);
+            setTotal(filtered.length);
+          } else {
+            setLogs(list);
+            setTotal(res?.meta?.total || list.length);
+          }
+          setLoading(false);
+        })
+        .catch((err) => {
+          if (!isMounted) return;
+          console.error('[AdminAuditLogsPage] fetch error:', err);
+          setLogs(DEFAULT_DEMO_LOGS);
+          setTotal(DEFAULT_DEMO_LOGS.length);
+          setLoading(false);
+        });
+    }
 
     return () => {
       isMounted = false;
     };
-  }, [page, actionFilter, search]);
+  }, [scope, page, actionFilter, search]);
 
   const getActionBadge = (action, status) => {
     if (action.includes('APPROVED') || status === 'SUCCESS') {
@@ -215,13 +325,52 @@ export default function AdminAuditLogsPage() {
         </div>
       </div>
 
+      {/* Scope Selector Tabs */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+        <button
+          type="button"
+          onClick={() => {
+            setScope('CATALOG');
+            setActionFilter('ALL');
+            setPage(1);
+          }}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 border ${
+            scope === 'CATALOG'
+              ? 'bg-[#0A68FF] text-white border-[#0A68FF] shadow-xs'
+              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <Layers className="w-4 h-4" />
+          <span>Danh mục & Sản phẩm (GET /admin/catalog/audits)</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setScope('SYSTEM');
+            setActionFilter('ALL');
+            setPage(1);
+          }}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 border ${
+            scope === 'SYSTEM'
+              ? 'bg-[#0A68FF] text-white border-[#0A68FF] shadow-xs'
+              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4" />
+          <span>Hệ thống & KYC (GET /admin/audit-logs)</span>
+        </button>
+      </div>
+
       {/* Main Table Card */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
         {/* Table Controls */}
         <div className="p-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <h2 className="text-[16px] font-bold text-slate-900 m-0">
-              Nhật ký kiểm toán (#35 GET /admin/audit-logs)
+              {scope === 'CATALOG'
+                ? 'Nhật ký kiểm toán Catalog (#8.7 GET /admin/catalog/audits)'
+                : 'Nhật ký kiểm toán hệ thống (#35 GET /admin/audit-logs)'}
             </h2>
             <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-600">
               {total} bản ghi
@@ -229,7 +378,7 @@ export default function AdminAuditLogsPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {/* Action Filter */}
+            {/* Action / Entity Filter */}
             <select
               value={actionFilter}
               onChange={(e) => {
@@ -238,11 +387,22 @@ export default function AdminAuditLogsPage() {
               }}
               className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-medium text-slate-700 outline-none focus:border-[#0A68FF]"
             >
-              <option value="ALL">Tất cả hành động</option>
-              <option value="KYC">Kiểm duyệt KYC</option>
-              <option value="ROLE">Thay đổi vai trò (Role)</option>
-              <option value="USER_STATUS">Khóa / Mở tài khoản</option>
-              <option value="AUTH">Xác thực & 2FA</option>
+              {scope === 'CATALOG' ? (
+                <>
+                  <option value="ALL">Tất cả đối tượng</option>
+                  <option value="PRODUCT">Sản phẩm (PRODUCT)</option>
+                  <option value="CATEGORY">Danh mục (CATEGORY)</option>
+                  <option value="SKU">Biến thể (SKU)</option>
+                </>
+              ) : (
+                <>
+                  <option value="ALL">Tất cả hành động</option>
+                  <option value="KYC">Kiểm duyệt KYC</option>
+                  <option value="ROLE">Thay đổi vai trò (Role)</option>
+                  <option value="USER_STATUS">Khóa / Mở tài khoản</option>
+                  <option value="AUTH">Xác thực & 2FA</option>
+                </>
+              )}
             </select>
 
             {/* Search Input */}
@@ -254,7 +414,7 @@ export default function AdminAuditLogsPage() {
                   setSearch(e.target.value);
                   setPage(1);
                 }}
-                placeholder="Tìm email, shop, lý do..."
+                placeholder="Tìm email, đối tượng, lý do..."
                 className="pl-8 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[12px] text-slate-800 outline-none focus:border-[#0A68FF] w-[220px]"
               />
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
