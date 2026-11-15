@@ -115,7 +115,7 @@ export default function ProductsPage() {
 
   const handleOpenEditModal = async (product) => {
     try {
-      const productId = product.id || product.productId;
+      const productId = product.product_id || product.id || product.productId;
       const res = await sellerProductApi.getProductEditorDetail(productId);
       const detail = res?.data || product;
       setEditingProduct(detail);
@@ -129,13 +129,13 @@ export default function ProductsPage() {
 
   const handleTogglePublish = async (spu) => {
     try {
-      const productId = spu.id || spu.productId;
+      const productId = spu.product_id || spu.id || spu.productId;
       const currentVersion = spu.version || 1;
       if (spu.status === 'ACTIVE') {
         await sellerProductApi.unpublishProduct(productId, currentVersion);
       } else if (spu.status === 'DRAFT' || spu.status === 'REJECTED') {
-        await sellerProductApi.submitProduct(productId, currentVersion);
-        alert('Đã gửi yêu cầu phê duyệt sản phẩm thành công!');
+        await sellerProductApi.publishProduct(productId, currentVersion);
+        alert('Đã xuất bản sản phẩm thành công!');
       } else {
         await sellerProductApi.publishProduct(productId, currentVersion);
       }
@@ -149,7 +149,7 @@ export default function ProductsPage() {
     const isConfirmed = window.confirm(`Bạn có chắc chắn muốn chuyển sản phẩm "${spu.title || spu.name}" vào danh sách lưu trữ?`);
     if (!isConfirmed) return;
     try {
-      const productId = spu.id || spu.productId;
+      const productId = spu.product_id || spu.id || spu.productId;
       const currentVersion = spu.version || 1;
       await sellerProductApi.archiveProduct(productId, currentVersion);
       alert('Đã lưu trữ sản phẩm thành công!');
@@ -372,11 +372,12 @@ export default function ProductsPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {items.map((spu) => {
-                  const isExpanded = expandedSpuId === spu.id;
+                  const spuId = spu.product_id || spu.id || spu.productId;
+                  const isExpanded = expandedSpuId === spuId;
                   const isOutOfStock = (Number(spu.stock_display) || 0) === 0;
 
                   return (
-                    <Fragment key={spu.id || spu.productId}>
+                    <Fragment key={spuId}>
                       <tr className="group hover:bg-slate-50/40 transition-colors">
                         {/* SPU column */}
                         <td className="py-4 px-6">
@@ -385,7 +386,7 @@ export default function ProductsPage() {
                               {spu.title || spu.name}
                             </div>
                             <div className="text-[11px] font-mono text-slate-400 mt-0.5">
-                              {spu.spu_code || spu.code || `SPU-${spu.id}`}
+                              {spu.spu_code || spu.code || `SPU-${spuId}`}
                             </div>
                             {spu.status === 'BLOCKED' && spu.block_reason && (
                               <div className="text-[11px] text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded mt-1 font-medium inline-flex items-center gap-1">
@@ -490,7 +491,7 @@ export default function ProductsPage() {
                             {spu.skus && spu.skus.length > 0 && (
                               <button
                                 type="button"
-                                onClick={() => setExpandedSpuId(isExpanded ? null : spu.id)}
+                                onClick={() => setExpandedSpuId(isExpanded ? null : spuId)}
                                 className="shrink-0 whitespace-nowrap h-7 px-2.5 text-[11px] font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-2xs transition-all cursor-pointer inline-flex items-center justify-center gap-1"
                               >
                                 <span>{isExpanded ? 'Thu gọn' : 'Xem SKU'}</span>

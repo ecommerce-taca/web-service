@@ -65,9 +65,20 @@ export const sellerFinanceApi = {
    * @param {Object} params - { from, to, granularity: 'DAY' | 'WEEK' | 'MONTH' }
    */
   getRevenue: async (params = { granularity: 'MONTH' }) => {
+    const now = new Date();
+    const defaultTo = now.toISOString().slice(0, 10);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const defaultFrom = thirtyDaysAgo.toISOString().slice(0, 10);
+
+    const queryParams = {
+      from: params?.from || defaultFrom,
+      to: params?.to || defaultTo,
+      granularity: params?.granularity || 'MONTH'
+    };
+
     if (!isMockMode()) {
       try {
-        const response = await apiClient.get('/seller/revenue', { params });
+        const response = await apiClient.get('/seller/revenue', { params: queryParams });
         const data = unwrapApiResponse(response);
         return createResponseEnvelope(data);
       } catch (err) {
