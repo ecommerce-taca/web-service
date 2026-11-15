@@ -36,6 +36,8 @@ export default function BasicInfoStep({
   setSpuName,
   category,
   setCategory,
+  categories = [],
+  loadingCategories = false,
   brand,
   setBrand,
   spuCode,
@@ -84,29 +86,62 @@ export default function BasicInfoStep({
             <label className="block text-[11px] font-bold text-slate-700 uppercase">
               Danh mục chính (Category) *
             </label>
-            <span className="text-[10px] text-slate-400">Chọn 1-click</span>
+            <span className="text-[10px] text-slate-400">Chọn nhanh hoặc từ danh mục</span>
           </div>
           <div className="flex flex-wrap gap-1.5 mb-1.5">
-            {CATEGORY_PRESETS.map((cat) => {
-              const Icon = cat.icon;
-              const isSelected = category === cat.id;
+            {CATEGORY_PRESETS.map((preset) => {
+              const Icon = preset.icon;
+              const matchedCat = categories.find(
+                (c) =>
+                  c.slug === preset.id ||
+                  c.slug?.includes(preset.id) ||
+                  c.name?.toLowerCase().includes(preset.label.toLowerCase())
+              );
+              const isSelected = matchedCat && category === matchedCat.category_id;
               return (
                 <button
-                  key={cat.id}
+                  key={preset.id}
                   type="button"
-                  onClick={() => setCategory(cat.id)}
+                  onClick={() => {
+                    if (matchedCat) {
+                      setCategory(matchedCat.category_id);
+                    }
+                  }}
+                  disabled={!matchedCat}
+                  title={matchedCat ? matchedCat.label : 'Chưa có danh mục này trong cây danh mục hệ thống'}
                   className={`px-2 py-1 rounded-md border text-[11px] font-semibold flex items-center gap-1 transition-all cursor-pointer ${
                     isSelected
                       ? 'border-[#4F46E5] bg-indigo-50 text-[#4F46E5] ring-1 ring-[#4F46E5]'
-                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300'
+                      : matchedCat
+                      ? 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300'
+                      : 'border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed opacity-50'
                   }`}
                 >
                   <Icon className="w-3 h-3" aria-hidden="true" />
-                  <span>{cat.label}</span>
+                  <span>{preset.label}</span>
                 </button>
               );
             })}
           </div>
+
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5] text-xs font-medium bg-white"
+          >
+            <option value="">-- Chọn danh mục sản phẩm (bắt buộc) --</option>
+            {categories.map((c) => (
+              <option key={c.category_id} value={c.category_id}>
+                {c.label || c.name}
+              </option>
+            ))}
+          </select>
+          {loadingCategories && (
+            <p className="text-[10px] text-slate-400 mt-1">Đang tải danh mục từ máy chủ...</p>
+          )}
+          {!category && !loadingCategories && (
+            <p className="text-[10px] text-red-500 mt-1">Vui lòng chọn một danh mục chính để có thể xuất bản sản phẩm.</p>
+          )}
         </div>
 
         {/* Thương hiệu */}
@@ -382,6 +417,15 @@ BasicInfoStep.propTypes = {
   setSpuName: PropTypes.func.isRequired,
   category: PropTypes.string.isRequired,
   setCategory: PropTypes.func.isRequired,
+  categories: PropTypes.arrayOf(
+    PropTypes.shape({
+      category_id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      slug: PropTypes.string,
+      label: PropTypes.string,
+    })
+  ),
+  loadingCategories: PropTypes.bool,
   brand: PropTypes.string.isRequired,
   setBrand: PropTypes.func.isRequired,
   spuCode: PropTypes.string.isRequired,

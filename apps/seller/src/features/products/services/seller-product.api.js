@@ -304,7 +304,7 @@ export const sellerProductApi = {
    */
   getProducts: async ({ status, q, sort = 'newest', page = 1, size = 20, signal } = {}) => {
     if (!isMockMode()) {
-      return apiClient.get('/seller/products', {
+      const response = await apiClient.get('/seller/products', {
         params: {
           ...((status && status !== 'ALL' && status !== 'OUT_OF_STOCK') ? { status } : {}),
           ...(q && q.trim() ? { q: q.trim() } : {}),
@@ -314,6 +314,16 @@ export const sellerProductApi = {
         },
         signal
       });
+
+      if (response?.data?.items && Array.isArray(response.data.items)) {
+        response.data.items = response.data.items.map((item) => ({
+          ...item,
+          id: item.product_id || item.id || item.productId,
+          productId: item.product_id || item.productId || item.id,
+        }));
+      }
+
+      return response;
     }
 
     await new Promise(res => setTimeout(res, 150));
@@ -433,6 +443,51 @@ export const sellerProductApi = {
   },
 
   /**
+   * 4b. Lấy cây danh mục công khai từ Product Catalog Service (§3.1 GET /categories)
+   */
+  getCategories: async () => {
+    if (!isMockMode()) {
+      return apiClient.get('/categories');
+    }
+    return {
+      data: [
+        {
+          category_id: '01912f20-7a1b-7c12-9c55-8b1c34a6d921',
+          name: 'Điện thoại & Tablet',
+          slug: 'dien-thoai',
+          children: [
+            { category_id: '01912f20-7a1b-7c12-9c55-8b1c34a6d922', name: 'iPhone', slug: 'iphone' }
+          ]
+        },
+        {
+          category_id: '01912f30-7a1b-7c12-9c55-8b1c34a6d101',
+          name: 'Laptop & Máy tính',
+          slug: 'laptop',
+          children: []
+        },
+        {
+          category_id: '01912f40-7a1b-7c12-9c55-8b1c34a6d201',
+          name: 'Âm thanh',
+          slug: 'am-thanh',
+          children: []
+        },
+        {
+          category_id: '01912f50-7a1b-7c12-9c55-8b1c34a6d301',
+          name: 'Gia dụng',
+          slug: 'gia-dung',
+          children: []
+        },
+        {
+          category_id: '01912f60-7a1b-7c12-9c55-8b1c34a6d401',
+          name: 'Phụ kiện',
+          slug: 'phu-kien',
+          children: []
+        }
+      ]
+    };
+  },
+
+  /**
    * 5. Gán danh mục chính và danh mục phụ (kèm concurrency version theo đặc tả §3.2)
    */
   assignCategories: async (productId, { primary_category_id, secondary_category_ids = [], version = 1 }) => {
@@ -457,12 +512,85 @@ export const sellerProductApi = {
    * 6. Thay thế toàn bộ thuộc tính và ma trận SKU
    */
   replaceSkus: async (productId, { attribute_definitions, skus, version }) => {
+    const UUIDV7_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const cleanAttrDefs = (attribute_definitions || []).map((def, idx) => {
+      const cleanDef = {
+        key: String(def.key).trim(),
+        label: String(def.label || def.name || `attr_${idx + 1}`).trim(),
+        type: def.type || 'ENUM',
+        is_variant_dimension: Boolean(def.is_variant_dimension),
+      };
+      if (cleanDef.type === 'ENUM' || def.allowed_values || def.values) {
+        cleanDef.type = 'ENUM';
+        const vals = Array.isArray(def.allowed_values)
+          ? def.allowed_values
+          : (Array.isArray(def.values) ? def.values : []);
+        const uniqueVals = Array.from(new Set(vals.map(v => String(v).trim()).filter(Boolean)));
+        cleanDef.allowed_values = uniqueVals.length > 0 ? uniqueVals : ['Default'];
+      }
+      if (def.unit) cleanDef.unit = String(def.unit).trim();
+      if (def.display_as) {
+        cleanDef.display_as = ['PLAIN', 'COLOR_SWATCH', 'IMAGE_THUMB'].includes(def.display_as)
+          ? def.display_as
+          : 'PLAIN';
+      }
+      if (def.value_meta && typeof def.value_meta === 'object') {
+        cleanDef.value_meta = def.value_meta;
+      }
+      if (typeof def.sort_order === 'number') {
+        cleanDef.sort_order = def.sort_order;
+      }
+      return cleanDef;
+    });
+
+    const cleanSkus = (skus || []).map((s, idx) => {
+      const item = {
+        seller_sku: String(s.seller_sku || s.sku_code || s.code || `SKU-${idx + 1}`).trim(),
+        attributes: {},
+      };
+      if (s.sku_id && UUIDV7_REGEX.test(s.sku_id)) {
+        item.sku_id = s.sku_id;
+      }
+      if (s.attributes && typeof s.attributes === 'object') {
+        Object.entries(s.attributes).forEach(([k, v]) => {
+          const matched = cleanAttrDefs.find(d => d.key === k || d.label === k);
+          const finalKey = matched ? matched.key : k;
+          if (cleanAttrDefs.some(d => d.key === finalKey)) {
+            item.attributes[finalKey] = String(v).trim();
+          }
+        });
+      }
+      if (s.price_override !== undefined && s.price_override !== null) {
+        const p = Math.round(Number(s.price_override));
+        if (p > 0) item.price_override = p;
+      } else if (s.price !== undefined && s.price !== null) {
+        const rawP = typeof s.price === 'object'
+          ? (s.price.sale_price || s.price.base_price)
+          : Number(String(s.price).replace(/\D/g, ''));
+        const p = Math.round(Number(rawP));
+        if (p > 0) item.price_override = p;
+      }
+      if (s.status && ['ACTIVE', 'INACTIVE', 'ARCHIVED'].includes(s.status)) {
+        item.status = s.status;
+      } else {
+        item.status = s.enabled === false ? 'INACTIVE' : 'ACTIVE';
+      }
+      if (Array.isArray(s.media_ids)) {
+        item.media_ids = s.media_ids;
+      }
+      return item;
+    });
+
+    const body = {
+      attribute_definitions: cleanAttrDefs,
+      skus: cleanSkus,
+    };
+    if (version !== undefined && version !== null) {
+      body.version = Number(version);
+    }
+
     if (!isMockMode()) {
-      return apiClient.put(`/seller/products/${productId}/skus`, {
-        attribute_definitions,
-        skus,
-        version
-      });
+      return apiClient.put(`/seller/products/${productId}/skus`, body);
     }
 
     await new Promise(res => setTimeout(res, 200));
@@ -676,14 +804,14 @@ export const sellerProductApi = {
   submitProduct: async (productId, version = 1) => {
     const ver = Math.max(1, Number(version) || 1);
     if (!isMockMode()) {
-      return apiClient.post(`/seller/products/${productId}/submit`, { version: ver });
+      return apiClient.post(`/seller/products/${productId}/publish`, { version: ver });
     }
-    const item = MOCK_SELLER_PRODUCTS.find(p => p.id === productId);
+    const item = MOCK_SELLER_PRODUCTS.find(p => p.id === productId || p.product_id === productId);
     if (item) {
-      item.status = 'PENDING_APPROVAL';
+      item.status = 'ACTIVE';
       item.version = (item.version || ver) + 1;
     }
-    return { data: { success: true, status: 'PENDING_APPROVAL', version: (item?.version || ver) + 1 } };
+    return { data: { success: true, status: 'ACTIVE', version: (item?.version || ver) + 1 } };
   },
 };
 
