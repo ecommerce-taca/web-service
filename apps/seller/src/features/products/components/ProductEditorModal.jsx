@@ -76,12 +76,7 @@ function ProductEditorForm({ product, onClose, onSave }) {
     return flattenCategoryTree(categoriesList);
   }, [categoriesList]);
 
-  const [category, setCategory] = useState(() => {
-    if (product?.primary_category_id && UUID_REGEX.test(product.primary_category_id)) {
-      return product.primary_category_id;
-    }
-    return '';
-  });
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -106,20 +101,60 @@ function ProductEditorForm({ product, onClose, onSave }) {
     };
   }, []);
 
-  useEffect(() => {
-    if (flattenedCategories.length === 0) return;
-    if (!category || !UUID_REGEX.test(category)) {
-      const searchKey = product?.category_name || product?.primary_category_id || '';
-      const match = flattenedCategories.find(
-        (c) => c.category_id === searchKey || c.slug === searchKey || c.slug === 'dien-thoai'
-      );
-      if (match) {
-        setCategory(match.category_id);
-      } else if (flattenedCategories.length > 0 && !category) {
-        setCategory(flattenedCategories[0].category_id);
+  const defaultCategory = useMemo(() => {
+    // 1. Khi sửa sản phẩm:
+    if (product) {
+      const initialCatId = product.primary_category_id || product.category_id;
+      // Nếu đã có primary_category_id là UUID hợp lệ, giữ nguyên
+      if (initialCatId && UUID_REGEX.test(initialCatId)) {
+        return initialCatId;
+      }
+      // Nếu có primary_category_id (dạng slug) hoặc category_name, đối chiếu trong cây danh mục
+      if (flattenedCategories.length > 0) {
+        const searchKey = initialCatId || '';
+        const match = flattenedCategories.find(
+          (c) =>
+            (searchKey && (c.category_id === searchKey || c.slug === searchKey)) ||
+            (product.category_name && (c.name === product.category_name || c.label === product.category_name || c.label?.includes(product.category_name)))
+        );
+        if (match && UUID_REGEX.test(match.category_id)) {
+          return match.category_id;
+        }
       }
     }
-  }, [flattenedCategories, category, product]);
+
+    // 2. Khi tạo sản phẩm mới hoặc chưa khớp danh mục sản phẩm:
+    if (flattenedCategories.length > 0) {
+      const defaultMatch = flattenedCategories.find(
+        (c) => c.slug === 'dien-thoai' && UUID_REGEX.test(c.category_id)
+      );
+      if (defaultMatch) {
+        return defaultMatch.category_id;
+      }
+      const firstValid = flattenedCategories.find((c) => UUID_REGEX.test(c.category_id));
+      if (firstValid) {
+        return firstValid.category_id;
+      }
+    }
+
+    return '';
+  }, [flattenedCategories, product]);
+
+  // Derived state: ưu tiên lựa chọn chủ động của người dùng (kể cả khi người dùng chủ động chọn rỗng),
+  // ngược lại dùng category mặc định đã được suy diễn
+  const category = selectedCategory !== null ? selectedCategory : defaultCategory;
+
+  const setCategory = useCallback((newCategory) => {
+    if (!newCategory || UUID_REGEX.test(newCategory)) {
+      setSelectedCategory(newCategory);
+      return;
+    }
+    // Đảm bảo không lưu slug, luôn phân giải về category_id UUID
+    const matched = flattenedCategories.find((c) => c.slug === newCategory || c.category_id === newCategory);
+    if (matched && UUID_REGEX.test(matched.category_id)) {
+      setSelectedCategory(matched.category_id);
+    }
+  }, [flattenedCategories]);
 
   const [brand, setBrand] = useState(product ? (product.brand || '') : '');
   const [spuCode, setSpuCode] = useState(product ? (product.spu_code || product.code || '') : 'SPU-NEW');
