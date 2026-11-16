@@ -130,14 +130,22 @@ export default function ProductsPage() {
   const handleTogglePublish = async (spu) => {
     try {
       const productId = spu.product_id || spu.id || spu.productId;
-      const currentVersion = spu.version || 1;
+      let currentVersion = spu.version;
+      if (currentVersion === undefined || currentVersion === null) {
+        try {
+          const detailRes = await sellerProductApi.getProductEditorDetail(productId);
+          const detail = detailRes?.data || detailRes;
+          currentVersion = Number(detail?.version) || 1;
+        } catch {
+          currentVersion = 1;
+        }
+      }
       if (spu.status === 'ACTIVE') {
         await sellerProductApi.unpublishProduct(productId, currentVersion);
-      } else if (spu.status === 'DRAFT' || spu.status === 'REJECTED') {
-        await sellerProductApi.publishProduct(productId, currentVersion);
-        alert('Đã xuất bản sản phẩm thành công!');
+        alert('Đã tạm ngừng bán sản phẩm!');
       } else {
         await sellerProductApi.publishProduct(productId, currentVersion);
+        alert('Đã xuất bản sản phẩm thành công!');
       }
       loadProducts();
     } catch (err) {
@@ -150,7 +158,16 @@ export default function ProductsPage() {
     if (!isConfirmed) return;
     try {
       const productId = spu.product_id || spu.id || spu.productId;
-      const currentVersion = spu.version || 1;
+      let currentVersion = spu.version;
+      if (currentVersion === undefined || currentVersion === null) {
+        try {
+          const detailRes = await sellerProductApi.getProductEditorDetail(productId);
+          const detail = detailRes?.data || detailRes;
+          currentVersion = Number(detail?.version) || 1;
+        } catch {
+          currentVersion = 1;
+        }
+      }
       await sellerProductApi.archiveProduct(productId, currentVersion);
       alert('Đã lưu trữ sản phẩm thành công!');
       loadProducts();
