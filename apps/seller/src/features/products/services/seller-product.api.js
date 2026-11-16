@@ -719,6 +719,59 @@ export const sellerProductApi = {
   },
 
   /**
+   * 8b. Upload trọn vẹn tệp media lên S3 và xác nhận hoàn tất với Backend
+   */
+  uploadProductMedia: async (productId, file, { is_cover = false, scope = 'SPU', sku_id = null } = {}) => {
+    const fileHash = await calculateFileSha256(file);
+    const contentType = file.type || 'image/jpeg';
+    const sizeBytes = file.size;
+
+    // 1. Lấy presigned S3 upload URL từ Catalog Backend (§3.2 #15)
+    const presignPayload = {
+      scope,
+      content_type: contentType,
+      size_bytes: sizeBytes,
+      sha256: fileHash,
+      is_cover
+    };
+    if (sku_id) {
+      presignPayload.sku_id = sku_id;
+    }
+    const presignRes = await sellerProductApi.getMediaUploadUrl(productId, presignPayload);
+    const mediaData = presignRes?.data || presignRes;
+    const uploadUrl = mediaData?.upload_url;
+
+    // 2. Tải binary thực tế lên S3/MinIO
+    if (uploadUrl && !isMockMode()) {
+      const s3Res = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': contentType
+        },
+        body: file
+      });
+      if (!s3Res.ok) {
+        throw new Error(`Tải tệp lên bộ lưu trữ S3 thất bại (HTTP ${s3Res.status})`);
+      }
+    }
+
+    // 3. Xác nhận hoàn tất tải lên qua Backend (§3.2 #16)
+    const completeRes = await sellerProductApi.completeMediaUpload(productId, {
+      media_id: mediaData.media_id,
+      object_key: mediaData.object_key || mediaData.file_key,
+      sha256: fileHash
+    });
+    const completeData = completeRes?.data || completeRes;
+
+    return {
+      media_id: mediaData.media_id,
+      public_url: completeData?.url || completeData?.public_url || mediaData.public_url || uploadUrl,
+      object_key: mediaData.object_key,
+      is_cover
+    };
+  },
+
+  /**
    * 9. Excel Import / Export Async Job
    */
   exportProductsExcelUrl: async (params = {}) => {

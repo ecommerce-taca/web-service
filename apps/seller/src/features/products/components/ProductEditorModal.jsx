@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import { X, CheckCircle2 } from 'lucide-react';
-import sellerProductApi, { calculateFileSha256 } from '../services/seller-product.api';
+import sellerProductApi from '../services/seller-product.api';
 
 // Subcomponents & Utilities
 import { generateCartesianCombinations, generateSkusFromCombos, generateSkuCode, hasCombinationsChanged } from './editor/utils/skuGenerator';
@@ -13,6 +13,18 @@ import ShippingStep from './editor/steps/ShippingStep';
 import AddAttributeModal from './editor/components/AddAttributeModal';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function generateSafeSlug(text) {
+  if (!text || typeof text !== 'string') return `spu-${Date.now()}`;
+  const slug = text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return slug || `spu-${Date.now()}`;
+}
 
 function flattenCategoryTree(nodes, prefix = '') {
   let result = [];
@@ -175,16 +187,26 @@ function ProductEditorForm({ product, onClose, onSave }) {
   const [singleSkuStock, setSingleSkuStock] = useState(
     product?.skus?.[0]?.stock_display ?? 50
   );
+  const [currentProduct, setCurrentProduct] = useState(product);
+  const [currentVersion, setCurrentVersion] = useState(() => Number(product?.version) || 1);
   const [description, setDescription] = useState(product ? (product.description || '') : '');
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
 
   // Quản lý ảnh sản phẩm và S3 Presigned URL (#15, #16)
-  const [images, setImages] = useState(
-    product?.images && product.images.length > 0
-      ? product.images
-      : ['https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=300&q=80']
-  );
+  const [images, setImages] = useState(() => {
+    if (product?.media && Array.isArray(product.media) && product.media.length > 0) {
+      return product.media
+        .map(m => m.url || m.public_url)
+        .filter(Boolean);
+    }
+    if (product?.images && Array.isArray(product.images)) {
+      return product.images
+        .map(img => typeof img === 'string' ? img : (img.url || img.public_url))
+        .filter(img => Boolean(img) && !img.includes('unsplash.com'));
+    }
+    return [];
+  });
   const [uploadingImage, setUploadingImage] = useState(false);
   const imageInputRef = useRef(null);
 
@@ -421,48 +443,6 @@ function ProductEditorForm({ product, onClose, onSave }) {
   };
 
 
-  const handleUploadImage = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      setUploadingImage(true);
-      const targetId = product?.product_id || product?.id || product?.productId || 'spu-draft';
-      const fileHash = await calculateFileSha256(file);
-      const isFirstImage = images.length === 0;
-
-      // 1. Xin presigned upload URL từ S3 qua Service API (§3.2 #15)
-      const res = await sellerProductApi.getMediaUploadUrl(targetId, {
-        scope: 'SPU',
-        sku_id: null,
-        file_name: file.name,
-        content_type: file.type || 'image/jpeg',
-        size_bytes: file.size,
-        sha256: fileHash,
-        is_cover: isFirstImage
-      });
-      const mediaData = res?.data || {};
-
-      // 2. Xác nhận tải lên thành công qua Service API (§3.2 #16)
-      await sellerProductApi.completeMediaUpload(targetId, {
-        media_id: mediaData.media_id,
-        object_key: mediaData.object_key || mediaData.file_key,
-        sha256: fileHash
-      });
-
-      // Tạo preview hiển thị ngay trên UI
-      const previewUrl = URL.createObjectURL(file);
-      setImages(prev => [...prev, previewUrl]);
-    } catch (err) {
-      alert(`Không thể tải ảnh: ${err.message}`);
-    } finally {
-      setUploadingImage(false);
-    }
-  };
-
-  const handleRemoveImage = (indexToRemove) => {
-    setImages(images.filter((_, idx) => idx !== indexToRemove));
-  };
-
   /**
    * Chuẩn hóa ma trận SKU và Attribute Definitions theo đúng DTO và schema của Backend
    */
@@ -534,7 +514,8 @@ function ProductEditorForm({ product, onClose, onSave }) {
 
       // Chỉ gửi sku_id khi cập nhật sản phẩm đã tồn tại và ID là UUIDv7 hợp lệ
       const rawId = s.sku_id || s.id;
-      if (product && rawId && UUID_REGEX.test(rawId)) {
+      const activeProd = currentProduct || product;
+      if (activeProd && rawId && UUID_REGEX.test(rawId)) {
         item.sku_id = rawId;
       }
 
@@ -542,6 +523,99 @@ function ProductEditorForm({ product, onClose, onSave }) {
     });
 
     return { attrDefs, formattedSkus };
+  };
+
+  /**
+   * Đảm bảo SPU Draft đã tồn tại trên Backend trước khi upload media.
+   * Backend Catalog yêu cầu product phải tồn tại trong DB mới cấp presigned upload URL (§3.2 #15).
+   */
+  const ensureProductDraft = async () => {
+    const activeProd = currentProduct || product;
+    const existingId = activeProd?.product_id || activeProd?.id || activeProd?.productId;
+    if (existingId && UUID_REGEX.test(existingId)) {
+      return { productId: existingId, version: currentVersion };
+    }
+
+    if (!spuName.trim()) {
+      throw new Error('Vui lòng nhập Tên sản phẩm (SPU) ở Bước 1 trước khi tải ảnh lên.');
+    }
+
+    const activeSkus = skus.filter(s => s.enabled !== false);
+    const prices = (activeSkus.length > 0 ? activeSkus : skus)
+      .map(s => Math.round(Number(String(s.price).replace(/\D/g, '')) || 0))
+      .filter(p => p > 0);
+    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+    const safeBasePrice = minPrice > 0 ? minPrice : 10000;
+    const priceSummary = {
+      base_price: safeBasePrice,
+      ...(minPrice > 0 ? { sale_price: minPrice } : {}),
+      currency: 'VND'
+    };
+
+    const createRes = await sellerProductApi.createProductDraft({
+      title: spuName.trim(),
+      slug: generateSafeSlug(spuCode || spuName),
+      brand: brand.trim(),
+      description: description.trim(),
+      price_summary: priceSummary
+    });
+
+    const createdProduct = createRes?.data || createRes;
+    const newId = createdProduct?.product_id || createdProduct?.id || createdProduct?.productId;
+    let nextVersion = Number(createdProduct?.version) || 1;
+
+    if (category && UUID_REGEX.test(category)) {
+      const assignRes = await sellerProductApi.assignCategories(newId, {
+        primary_category_id: category,
+        secondary_category_ids: [],
+        version: nextVersion
+      });
+      const assignData = assignRes?.data || assignRes;
+      nextVersion = Number(assignData?.version) || (nextVersion + 1);
+    }
+
+    setCurrentProduct(createdProduct);
+    setCurrentVersion(nextVersion);
+    if (onSave) onSave();
+
+    return { productId: newId, version: nextVersion };
+  };
+
+  const handleUploadImage = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingImage(true);
+      const { productId } = await ensureProductDraft();
+      const isFirstImage = images.length === 0;
+
+      // Upload binary lên S3 qua presigned URL và hoàn tất với Backend (§3.2 #15, #16)
+      const mediaResult = await sellerProductApi.uploadProductMedia(productId, file, {
+        is_cover: isFirstImage,
+        scope: 'SPU'
+      });
+
+      const displayUrl = mediaResult.public_url || URL.createObjectURL(file);
+      setImages(prev => [...prev, displayUrl]);
+      setNotification('Tải ảnh sản phẩm thành công!');
+      setTimeout(() => setNotification(null), 2500);
+    } catch (err) {
+      if (err?.response?.status === 401) {
+        window.dispatchEvent(new Event('auth:required'));
+        alert('Phiên đăng nhập chưa được xác thực (401 Unauthorized). Vui lòng đăng nhập tài khoản Người bán!');
+      } else {
+        alert(`Không thể tải ảnh: ${err?.response?.data?.message || err.message}`);
+      }
+    } finally {
+      setUploadingImage(false);
+      if (imageInputRef.current) {
+        imageInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveImage = (indexToRemove) => {
+    setImages(images.filter((_, idx) => idx !== indexToRemove));
   };
 
   const handleSaveDraft = async () => {
@@ -558,7 +632,8 @@ function ProductEditorForm({ product, onClose, onSave }) {
 
     try {
       setLoading(true);
-      const targetId = product?.product_id || product?.id || product?.productId || `spu-${Date.now()}`;
+      const activeProd = currentProduct || product;
+      const targetId = activeProd?.product_id || activeProd?.id || activeProd?.productId;
 
       const { attrDefs, formattedSkus } = buildSkuPayload();
 
@@ -574,42 +649,44 @@ function ProductEditorForm({ product, onClose, onSave }) {
         currency: 'VND'
       };
 
-      if (product) {
+      if (targetId && UUID_REGEX.test(targetId)) {
         // Cập nhật SPU cơ bản theo DTO (§3.2 PATCH /seller/products/{id})
-        let currentVersion = Number(product.version) || 1;
+        let ver = currentVersion;
         const updateRes = await sellerProductApi.updateProduct(targetId, {
-          version: currentVersion,
+          version: ver,
           title: spuName.trim(),
-          slug: spuCode.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          slug: generateSafeSlug(spuCode || spuName),
           brand: brand.trim(),
           description: description.trim(),
           price_summary: priceSummary
         });
         const updateData = updateRes?.data || updateRes;
-        currentVersion = Number(updateData?.version) || (currentVersion + 1);
+        ver = Number(updateData?.version) || (ver + 1);
 
         // Gán danh mục (§3.2 PUT /seller/products/{id}/categories)
         if (category) {
           const assignRes = await sellerProductApi.assignCategories(targetId, {
             primary_category_id: category,
             secondary_category_ids: [],
-            version: currentVersion
+            version: ver
           });
           const assignData = assignRes?.data || assignRes;
-          currentVersion = Number(assignData?.version) || (currentVersion + 1);
+          ver = Number(assignData?.version) || (ver + 1);
         }
 
         // Cập nhật ma trận SKU (§3.2 PUT /seller/products/{id}/skus)
         await sellerProductApi.replaceSkus(targetId, {
           attribute_definitions: attrDefs,
           skus: formattedSkus,
-          version: currentVersion
+          version: ver
         });
+        ver = ver + 1;
+        setCurrentVersion(ver);
       } else {
         // Tạo mới SPU Draft theo DTO thuần túy BE (§3.2 POST /seller/products)
         const createRes = await sellerProductApi.createProductDraft({
           title: spuName.trim(),
-          slug: (spuCode || spuName).toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          slug: generateSafeSlug(spuCode || spuName),
           brand: brand.trim(),
           description: description.trim(),
           price_summary: priceSummary
@@ -617,23 +694,26 @@ function ProductEditorForm({ product, onClose, onSave }) {
 
         const createdProduct = createRes?.data || createRes;
         const newId = createdProduct?.product_id || createdProduct?.id || createdProduct?.productId;
-        let currentVersion = Number(createdProduct?.version) || 1;
+        let ver = Number(createdProduct?.version) || 1;
         if (newId) {
           if (category) {
             const assignRes = await sellerProductApi.assignCategories(newId, {
               primary_category_id: category,
               secondary_category_ids: [],
-              version: currentVersion
+              version: ver
             });
             const assignData = assignRes?.data || assignRes;
-            currentVersion = Number(assignData?.version) || (currentVersion + 1);
+            ver = Number(assignData?.version) || (ver + 1);
           }
 
           await sellerProductApi.replaceSkus(newId, {
             attribute_definitions: attrDefs,
             skus: formattedSkus,
-            version: currentVersion
+            version: ver
           });
+          ver = ver + 1;
+          setCurrentProduct(createdProduct);
+          setCurrentVersion(ver);
         }
       }
       setNotification('Đã lưu bản nháp thành công!');
@@ -665,9 +745,16 @@ function ProductEditorForm({ product, onClose, onSave }) {
       return;
     }
 
+    if (images.length === 0) {
+      alert('Vui lòng tải lên ít nhất một ảnh bìa sản phẩm (bước 1) trước khi xuất bản!');
+      setStep(1);
+      return;
+    }
+
     try {
       setLoading(true);
-      const targetId = product?.product_id || product?.id || product?.productId || `spu-${Date.now()}`;
+      const activeProd = currentProduct || product;
+      const targetId = activeProd?.product_id || activeProd?.id || activeProd?.productId;
 
       const { attrDefs, formattedSkus } = buildSkuPayload();
 
@@ -683,47 +770,48 @@ function ProductEditorForm({ product, onClose, onSave }) {
         currency: 'VND'
       };
 
-      if (product) {
+      if (targetId && UUID_REGEX.test(targetId)) {
         // Cập nhật SPU cơ bản theo DTO (§3.2 PATCH /seller/products/{id})
-        let currentVersion = Number(product.version) || 1;
+        let ver = currentVersion;
         const updateRes = await sellerProductApi.updateProduct(targetId, {
-          version: currentVersion,
+          version: ver,
           title: spuName.trim(),
-          slug: spuCode.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          slug: generateSafeSlug(spuCode || spuName),
           brand: brand.trim(),
           description: description.trim(),
           price_summary: priceSummary
         });
         const updateData = updateRes?.data || updateRes;
-        currentVersion = Number(updateData?.version) || (currentVersion + 1);
+        ver = Number(updateData?.version) || (ver + 1);
 
         // Gán danh mục (§3.2 PUT /seller/products/{id}/categories)
         if (category) {
           const assignRes = await sellerProductApi.assignCategories(targetId, {
             primary_category_id: category,
             secondary_category_ids: [],
-            version: currentVersion
+            version: ver
           });
           const assignData = assignRes?.data || assignRes;
-          currentVersion = Number(assignData?.version) || (currentVersion + 1);
+          ver = Number(assignData?.version) || (ver + 1);
         }
 
         // Cập nhật ma trận SKU (§3.2 PUT /seller/products/{id}/skus)
         await sellerProductApi.replaceSkus(targetId, {
           attribute_definitions: attrDefs,
           skus: formattedSkus,
-          version: currentVersion
+          version: ver
         });
         // replaceSkus thực hiện atomicCasUpdate nên product version tăng thêm 1
-        currentVersion = currentVersion + 1;
+        ver = ver + 1;
+        setCurrentVersion(ver);
 
         // Xuất bản sản phẩm (§3.2 POST /seller/products/{id}/publish)
-        await sellerProductApi.publishProduct(targetId, currentVersion);
+        await sellerProductApi.publishProduct(targetId, ver);
       } else {
         // Tạo mới SPU Draft theo DTO thuần túy BE (§3.2 POST /seller/products)
         const createRes = await sellerProductApi.createProductDraft({
           title: spuName.trim(),
-          slug: (spuCode || spuName).toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          slug: generateSafeSlug(spuCode || spuName),
           brand: brand.trim(),
           description: description.trim(),
           price_summary: priceSummary
@@ -731,26 +819,28 @@ function ProductEditorForm({ product, onClose, onSave }) {
 
         const createdProduct = createRes?.data || createRes;
         const newId = createdProduct?.product_id || createdProduct?.id || createdProduct?.productId;
-        let currentVersion = Number(createdProduct?.version) || 1;
+        let ver = Number(createdProduct?.version) || 1;
         if (newId) {
           if (category) {
             const assignRes = await sellerProductApi.assignCategories(newId, {
               primary_category_id: category,
               secondary_category_ids: [],
-              version: currentVersion
+              version: ver
             });
             const assignData = assignRes?.data || assignRes;
-            currentVersion = Number(assignData?.version) || (currentVersion + 1);
+            ver = Number(assignData?.version) || (ver + 1);
           }
 
           await sellerProductApi.replaceSkus(newId, {
             attribute_definitions: attrDefs,
             skus: formattedSkus,
-            version: currentVersion
+            version: ver
           });
-          currentVersion = currentVersion + 1;
+          ver = ver + 1;
+          setCurrentProduct(createdProduct);
+          setCurrentVersion(ver);
 
-          await sellerProductApi.publishProduct(newId, currentVersion);
+          await sellerProductApi.publishProduct(newId, ver);
         }
       }
 
