@@ -11,6 +11,7 @@ const ProductReviews = ({ productId, rating, reviewCount }) => {
     distribution: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 }
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [selectedRating, setSelectedRating] = useState(null); // null = all, 1..5
   const [withMediaOnly, setWithMediaOnly] = useState(false);
   const [page, setPage] = useState(1);
@@ -19,6 +20,7 @@ const ProductReviews = ({ productId, rating, reviewCount }) => {
   const fetchReviews = useCallback(async () => {
     if (!productId) return;
     setLoading(true);
+    setError(null);
     try {
       const res = await reviewApi.getProductReviews(productId, {
         rating: selectedRating,
@@ -41,6 +43,7 @@ const ProductReviews = ({ productId, rating, reviewCount }) => {
     } catch (err) {
       console.error('Failed to load reviews for product', productId, err);
       setReviews([]);
+      setError(err?.message || 'Không thể tải danh sách đánh giá.');
     } finally {
       setLoading(false);
     }
@@ -177,6 +180,17 @@ const ProductReviews = ({ productId, rating, reviewCount }) => {
       <div className="flex flex-col gap-6 pt-2">
         {loading ? (
           <div className="text-center py-12 text-slate-400">Đang tải đánh giá sản phẩm...</div>
+        ) : error ? (
+          <div className="text-center py-8 space-y-2.5 bg-rose-50/50 rounded-xl border border-rose-200">
+            <div className="text-[13px] font-semibold text-rose-700">{error}</div>
+            <button
+              type="button"
+              onClick={fetchReviews}
+              className="px-4 py-1.5 bg-taca-primary hover:bg-taca-primary-hover text-white text-[12px] font-bold rounded-lg transition-colors cursor-pointer"
+            >
+              Thử lại
+            </button>
+          </div>
         ) : reviews.length > 0 ? (
           reviews.map((review) => (
             <div key={review.review_id || review.id} className="flex flex-col gap-3 pb-6 border-b border-slate-100 last:border-0">

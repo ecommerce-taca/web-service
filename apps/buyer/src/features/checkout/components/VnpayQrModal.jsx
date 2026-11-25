@@ -106,21 +106,35 @@ export default function VnpayQrModal({
     }
   }, [paymentId, orderId, paymentStatus, onPaymentSuccess]);
 
-  // Tự động Polling có Exponential Backoff (BUG-MED-005): 2.5s (2 phút đầu), 5s (phút 2-5), 10s (sau 5 phút)
+  // Tự động Polling có Exponential Backoff: 2.5s (2 phút đầu), 5s (phút 2-5), 10s (sau 5 phút)
   useEffect(() => {
     if (!isOpen || !paymentId || paymentStatus !== 'PENDING') return;
 
-    const elapsedSeconds = 15 * 60 - timeLeft;
-    const intervalMs = elapsedSeconds < 120 ? 2500 : elapsedSeconds < 300 ? 5000 : 10000;
+    let cancelled = false;
+    const startedAt = Date.now();
 
-    pollingRef.current = setInterval(() => {
-      checkStatus(false);
-    }, intervalMs);
+    const scheduleNext = () => {
+      if (cancelled) return;
+      const elapsedSeconds = Math.floor((Date.now() - startedAt) / 1000);
+      const intervalMs = elapsedSeconds < 120 ? 2500 : elapsedSeconds < 300 ? 5000 : 10000;
+
+      pollingRef.current = setTimeout(async () => {
+        if (cancelled) return;
+        await checkStatus(false);
+        scheduleNext();
+      }, intervalMs);
+    };
+
+    scheduleNext();
 
     return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
+      cancelled = true;
+      if (pollingRef.current) {
+        clearTimeout(pollingRef.current);
+        clearInterval(pollingRef.current);
+      }
     };
-  }, [isOpen, paymentId, paymentStatus, checkStatus, timeLeft]);
+  }, [isOpen, paymentId, paymentStatus, checkStatus]);
 
   // Hỗ trợ phím tắt Enter để kiểm tra thanh toán nhanh (BUG-LOW-008)
   useEffect(() => {

@@ -1,17 +1,31 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import { X, Download, FileSpreadsheet, UploadCloud, AlertTriangle } from 'lucide-react';
 import sellerProductApi from '../services/seller-product.api';
+
+const MAX_IMPORT_FILE_BYTES = 2 * 1024 * 1024; // 2MB (khớp SellerImportController)
+const POLL_INTERVAL_MS = 1200;
+const MAX_POLL_ATTEMPTS = 60;
 
 export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [downloadingTemplate, setDownloadingTemplate] = useState(false);
-  const [jobStatus, setJobStatus] = useState(null); // null | { job_id, status, progress, total_rows, success_rows, failed_rows }
+  const [jobStatus, setJobStatus] = useState(null);
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
+  const pollTimerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (pollTimerRef.current) {
+        clearTimeout(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    };
+  }, []);
 
   if (!isOpen) return null;
 
@@ -44,14 +58,12 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
   const validateAndSetFile = (selected) => {
     if (!selected) return;
     setError(null);
-    const validExtensions = ['.xlsx', '.xls'];
-    const hasValidExt = validExtensions.some(ext => selected.name.toLowerCase().endsWith(ext));
-    if (!hasValidExt) {
-      setError('Vui lòng chỉ chọn tệp Excel có đuôi .xlsx hoặc .xls');
+    if (!selected.name.toLowerCase().endsWith('.xlsx')) {
+      setError('Vui lòng chỉ chọn tệp Excel có đuôi .xlsx');
       return;
     }
-    if (selected.size > 15 * 1024 * 1024) {
-      setError('Dung lượng tệp không được vượt quá 15MB');
+    if (selected.size > MAX_IMPORT_FILE_BYTES) {
+      setError('Dung lượng tệp không được vượt quá 2MB');
       return;
     }
     setFile(selected);
@@ -73,6 +85,55 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
     validateAndSetFile(dropped);
   };
 
+  const pollJobStatus = async (jobId, attempt = 0) => {
+    if (attempt >= MAX_POLL_ATTEMPTS) {
+      setLoading(false);
+      setError('Quá thời gian chờ xử lý tác vụ import. Vui lòng thử kiểm tra lại sau.');
+      return;
+    }
+    try {
+      const statusRes = await sellerProductApi.getImportJobStatus(jobId);
+      const data = statusRes?.data || {};
+      const status = data.status || 'PROCESSING';
+      const totalRows = Number(data.total_rows ?? 0);
+      const processedRows = Number(data.processed_rows ?? 0);
+      const successCount = Number(data.success_count ?? 0);
+      const errorCount = Number(data.error_count ?? 0);
+      const progress =
+        status === 'COMPLETED' || status === 'FAILED'
+          ? 100
+          : totalRows > 0
+          ? Math.min(95, Math.max(15, Math.round((processedRows / totalRows) * 100)))
+          : Math.min(90, 20 + attempt * 5);
+
+      setJobStatus({
+        job_id: jobId,
+        status,
+        progress,
+        total_rows: totalRows,
+        processed_rows: processedRows,
+        success_count: successCount,
+        error_count: errorCount,
+        error_summary: Array.isArray(data.error_summary) ? data.error_summary : [],
+      });
+
+      if (status === 'COMPLETED' || status === 'FAILED') {
+        setLoading(false);
+        if (status === 'COMPLETED' && successCount > 0 && onSuccess) {
+          onSuccess();
+        }
+        return;
+      }
+
+      pollTimerRef.current = setTimeout(() => {
+        pollJobStatus(jobId, attempt + 1);
+      }, POLL_INTERVAL_MS);
+    } catch (pollErr) {
+      setLoading(false);
+      setError(`Lỗi kiểm tra tiến độ: ${pollErr?.response?.data?.message || pollErr.message}`);
+    }
+  };
+
   const handleSubmitImport = async () => {
     if (!file) return;
 
@@ -80,43 +141,25 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
       setLoading(true);
       setError(null);
       const res = await sellerProductApi.submitImportExcel(file);
-      const jobId = res?.data?.job_id || `job-${Date.now()}`;
+      const jobId = res?.data?.job_id;
+      if (!jobId) {
+        throw new Error('Không nhận được job_id từ hệ thống');
+      }
 
-      // Mô phỏng / Polling tiến độ xử lý Job
       setJobStatus({
         job_id: jobId,
-        status: 'PROCESSING',
-        progress: 25,
-        total_rows: 0,
-        success_rows: 0,
-        failed_rows: 0
+        status: res?.data?.status || 'PENDING',
+        progress: 15,
+        total_rows: Number(res?.data?.total_rows ?? 0),
+        processed_rows: 0,
+        success_count: 0,
+        error_count: 0,
+        error_summary: [],
       });
 
-      // Polling bước 1
-      setTimeout(async () => {
-        setJobStatus(prev => ({ ...prev, progress: 65 }));
-
-        // Polling bước 2 (Hoàn tất)
-        setTimeout(async () => {
-          try {
-            const finalStatusRes = await sellerProductApi.getImportJobStatus(jobId);
-            const data = finalStatusRes?.data || {};
-            setJobStatus({
-              job_id: jobId,
-              status: data.status || 'COMPLETED',
-              progress: 100,
-              total_rows: data.total_rows || 24,
-              success_rows: data.success_rows || 24,
-              failed_rows: data.failed_rows || 0
-            });
-            if (onSuccess) onSuccess();
-          } catch (pollErr) {
-            setError(`Lỗi kiểm tra tiến độ: ${pollErr.message}`);
-          } finally {
-            setLoading(false);
-          }
-        }, 800);
-      }, 700);
+      pollTimerRef.current = setTimeout(() => {
+        pollJobStatus(jobId, 0);
+      }, 600);
     } catch (err) {
       setLoading(false);
       setError(`Không thể gửi tệp nhập dữ liệu: ${err?.response?.data?.message || err.message}`);
@@ -128,7 +171,7 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
     try {
       const res = await sellerProductApi.getImportJobResultUrl(jobStatus.job_id);
       if (res?.data?.result_file_url) {
-        window.open(res.data.result_file_url, '_blank');
+        window.open(res.data.result_file_url, '_blank', 'noopener,noreferrer');
       } else if (res?.data) {
         const blob = res.data instanceof Blob ? res.data : new Blob([res.data], {
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -148,6 +191,10 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
   };
 
   const resetAll = () => {
+    if (pollTimerRef.current) {
+      clearTimeout(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
     setFile(null);
     setJobStatus(null);
     setError(null);
@@ -216,7 +263,7 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".xlsx, .xls"
+                  accept=".xlsx"
                   onChange={handleFileSelect}
                   className="hidden"
                 />
@@ -240,7 +287,7 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
                       Kéo thả tệp Excel vào đây, hoặc <span className="text-[#4F46E5] underline">chọn tệp từ máy tính</span>
                     </div>
                     <div className="text-[12px] text-slate-400">
-                      Hỗ trợ định dạng .xlsx, .xls (Dung lượng tối đa 15MB)
+                      Chỉ hỗ trợ định dạng .xlsx (Dung lượng tối đa 2MB)
                     </div>
                   </div>
                 )}
@@ -258,7 +305,11 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
             <div className="space-y-4 p-5 bg-slate-50 rounded-xl border border-slate-200">
               <div className="flex items-center justify-between">
                 <span className="text-[13px] font-bold text-slate-800">
-                  {jobStatus.status === 'COMPLETED' ? 'Nhập dữ liệu hoàn tất' : 'Đang xử lý tệp Excel...'}
+                  {jobStatus.status === 'COMPLETED'
+                    ? 'Nhập dữ liệu hoàn tất'
+                    : jobStatus.status === 'FAILED'
+                    ? 'Tác vụ nhập dữ liệu thất bại'
+                    : 'Đang xử lý tệp Excel...'}
                 </span>
                 <span className="text-[12px] font-mono font-bold text-[#4F46E5]">
                   {jobStatus.progress}%
@@ -269,13 +320,17 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
               <div className="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
                 <div
                   className={`h-full transition-all duration-500 ${
-                    jobStatus.status === 'COMPLETED' ? 'bg-emerald-500' : 'bg-[#4F46E5]'
+                    jobStatus.status === 'COMPLETED'
+                      ? 'bg-emerald-500'
+                      : jobStatus.status === 'FAILED'
+                      ? 'bg-rose-500'
+                      : 'bg-[#4F46E5]'
                   }`}
                   style={{ width: `${jobStatus.progress}%` }}
                 />
               </div>
 
-              {jobStatus.status === 'COMPLETED' && (
+              {(jobStatus.status === 'COMPLETED' || jobStatus.status === 'FAILED') && (
                 <div className="space-y-3 pt-2">
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div className="p-3 bg-white border border-slate-200 rounded-lg">
@@ -287,18 +342,29 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
                     <div className="p-3 bg-white border border-emerald-200 rounded-lg">
                       <div className="text-[11px] text-emerald-600 font-semibold">THÀNH CÔNG</div>
                       <div className="text-[18px] font-extrabold text-emerald-600 mt-1">
-                        {jobStatus.success_rows}
+                        {jobStatus.success_count}
                       </div>
                     </div>
                     <div className="p-3 bg-white border border-slate-200 rounded-lg">
                       <div className="text-[11px] text-rose-500 font-semibold">LỖI</div>
                       <div className="text-[18px] font-extrabold text-rose-600 mt-1">
-                        {jobStatus.failed_rows}
+                        {jobStatus.error_count}
                       </div>
                     </div>
                   </div>
 
-                  {jobStatus.failed_rows > 0 && (
+                  {jobStatus.error_summary && jobStatus.error_summary.length > 0 && (
+                    <div className="max-h-36 overflow-y-auto rounded-lg border border-rose-200 bg-white p-2.5 space-y-1 text-[11px] text-rose-700">
+                      {jobStatus.error_summary.slice(0, 10).map((errItem, idx) => (
+                        <div key={idx} className="flex items-start gap-2">
+                          <span className="font-mono font-bold shrink-0">Dòng {errItem.row_index}:</span>
+                          <span>{errItem.error_message}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {jobStatus.error_count > 0 && (
                     <button
                       type="button"
                       onClick={handleDownloadResultReport}
@@ -321,7 +387,7 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
             onClick={resetAll}
             className="px-4 py-2 text-slate-600 hover:text-slate-800 text-[13px] font-semibold cursor-pointer"
           >
-            {jobStatus?.status === 'COMPLETED' ? 'Đóng' : 'Hủy bỏ'}
+            {jobStatus?.status === 'COMPLETED' || jobStatus?.status === 'FAILED' ? 'Đóng' : 'Hủy bỏ'}
           </button>
 
           {!jobStatus ? (
@@ -333,7 +399,7 @@ export default function ProductImportModal({ isOpen, onClose, onSuccess }) {
             >
               {loading ? 'Đang gửi tệp...' : 'Bắt đầu nhập dữ liệu'}
             </button>
-          ) : jobStatus.status === 'COMPLETED' ? (
+          ) : jobStatus.status === 'COMPLETED' || jobStatus.status === 'FAILED' ? (
             <button
               type="button"
               onClick={resetAll}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Layers,
   Search,
@@ -62,6 +62,8 @@ export default function AdminCategoriesPage() {
     setShowArchivePrompt(false);
   }, []);
 
+  const pendingSelectIdRef = useRef(null);
+
   useEffect(() => {
     let isMounted = true;
     adminCatalogApi.getAdminCategories()
@@ -72,7 +74,10 @@ export default function AdminCategoriesPage() {
         const allParentIds = new Set(list.filter((c) => !c.parent_id).map((c) => c.category_id));
         setExpandedKeys(allParentIds);
         if (list.length > 0) {
-          selectCategory(list[0]);
+          const targetId = pendingSelectIdRef.current;
+          pendingSelectIdRef.current = null;
+          const matched = targetId ? list.find((c) => c.category_id === targetId) : null;
+          selectCategory(matched || list[0]);
         }
         setLoading(false);
       })
@@ -172,6 +177,7 @@ export default function AdminCategoriesPage() {
       });
 
       showToast(`Đã lưu cập nhật cho danh mục "${formData.name}".`);
+      pendingSelectIdRef.current = res?.data?.category_id || selectedCategory.category_id;
       handleRefresh();
       if (res?.data) {
         selectCategory(res.data);
@@ -207,6 +213,9 @@ export default function AdminCategoriesPage() {
   const handleCreateSuccess = async (payload) => {
     const res = await adminCatalogApi.createCategory(payload);
     showToast(`Đã tạo thành công danh mục "${payload.name}".`);
+    if (res?.data?.category_id) {
+      pendingSelectIdRef.current = res.data.category_id;
+    }
     handleRefresh();
     if (res?.data) {
       selectCategory(res.data);

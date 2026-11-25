@@ -33,6 +33,8 @@ const SearchPage = () => {
   const [products, setProducts] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Favorites hook integration
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -40,7 +42,6 @@ const SearchPage = () => {
   // Fetch products whenever search params change
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
 
     const priceBounds = PRICE_MAP[priceRange] || {};
     const params = {
@@ -59,6 +60,7 @@ const SearchPage = () => {
         const items = res.data?.items || [];
         setProducts(items);
         setTotalCount(res.data?.total || items.length);
+        setError(null);
         setLoading(false);
       })
       .catch(err => {
@@ -68,13 +70,14 @@ const SearchPage = () => {
         console.error('Failed to search products', err);
         setProducts([]);
         setTotalCount(0);
+        setError(err?.message || 'Không thể tìm kiếm sản phẩm. Vui lòng thử lại.');
         setLoading(false);
       });
 
     return () => {
       controller.abort();
     };
-  }, [query, category, brand, priceRange, sort, isOfficial, minRating]);
+  }, [query, category, brand, priceRange, sort, isOfficial, minRating, retryCount]);
 
   // Helper to update specific param while keeping other params intact
   const updateParam = (key, value) => {
@@ -224,6 +227,21 @@ const SearchPage = () => {
                   <div className="h-4 bg-taca-surface rounded w-1/2"></div>
                 </div>
               ))}
+            </div>
+          ) : error ? (
+            <div className="bg-white border border-rose-200 rounded-[16px] px-4 py-10 sm:p-12 text-center flex flex-col items-center justify-center my-2 space-y-3">
+              <p className="text-[14px] font-bold text-rose-700 m-0">{error}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setLoading(true);
+                  setError(null);
+                  setRetryCount((v) => v + 1);
+                }}
+                className="px-5 py-2 bg-taca-primary hover:bg-taca-primary-hover text-white font-bold text-[13px] rounded-control transition-colors cursor-pointer"
+              >
+                Thử lại
+              </button>
             </div>
           ) : products.length > 0 ? (
             /* Products Grid */

@@ -368,10 +368,14 @@ export const adminCatalogApi = {
 
     if (!isMockMode()) {
       try {
-        const response = await apiClient.get('/admin/catalog/products', {
-          params: { page, size, status, shop_id, category_id, q, updated_from, updated_to },
-        });
-        return response?.data;
+        const query = { page, size };
+        if (status && status !== 'ALL') query.status = status;
+        if (shop_id) query.shop_id = shop_id;
+        if (category_id) query.category_id = category_id;
+        if (q && q.trim()) query.q = q.trim();
+        if (updated_from) query.updated_from = updated_from;
+        if (updated_to) query.updated_to = updated_to;
+        return await apiClient.get('/admin/catalog/products', { params: query });
       } catch (err) {
         console.error('API Gateway GET /admin/catalog/products failed:', err);
         throw err;
@@ -425,8 +429,7 @@ export const adminCatalogApi = {
   getAdminProductById: async (productId) => {
     if (!isMockMode()) {
       try {
-        const response = await apiClient.get(`/admin/catalog/products/${productId}`);
-        return response?.data;
+        return await apiClient.get(`/admin/catalog/products/${productId}`);
       } catch (err) {
         console.error(`API Gateway GET /admin/catalog/products/${productId} failed:`, err);
         throw err;
@@ -460,11 +463,10 @@ export const adminCatalogApi = {
 
     if (!isMockMode()) {
       try {
-        const response = await apiClient.post(`/admin/catalog/products/${productId}/block`, {
+        return await apiClient.post(`/admin/catalog/products/${productId}/block`, {
           version: Number(version),
           reason: reason.trim(),
         });
-        return response?.data;
       } catch (err) {
         console.error(`API Gateway POST /admin/catalog/products/${productId}/block failed:`, err);
         throw err;
@@ -511,11 +513,10 @@ export const adminCatalogApi = {
   unblockProduct: async (productId, { version = 1, reason = '' } = {}) => {
     if (!isMockMode()) {
       try {
-        const response = await apiClient.post(`/admin/catalog/products/${productId}/unblock`, {
+        return await apiClient.post(`/admin/catalog/products/${productId}/unblock`, {
           version: Number(version),
           reason: reason ? reason.trim() : 'Đã xác minh khắc phục vi phạm',
         });
-        return response?.data;
       } catch (err) {
         console.error(`API Gateway POST /admin/catalog/products/${productId}/unblock failed:`, err);
         throw err;
@@ -567,10 +568,10 @@ export const adminCatalogApi = {
 
     if (!isMockMode()) {
       try {
-        const response = await apiClient.get('/admin/catalog/categories', {
-          params: { status, parent_id, page, size },
-        });
-        return response?.data;
+        const query = { page, size };
+        if (status && status !== 'ALL') query.status = status;
+        if (parent_id) query.parent_id = parent_id;
+        return await apiClient.get('/admin/catalog/categories', { params: query });
       } catch (err) {
         console.error('API Gateway GET /admin/catalog/categories failed:', err);
         throw err;
@@ -616,7 +617,7 @@ export const adminCatalogApi = {
 
     if (!isMockMode()) {
       try {
-        const response = await apiClient.post('/admin/catalog/categories', {
+        return await apiClient.post('/admin/catalog/categories', {
           parent_id: payload.parent_id || null,
           name: payload.name.trim(),
           slug: payload.slug?.trim() || payload.name.trim().toLowerCase().replace(/\s+/g, '-'),
@@ -625,7 +626,6 @@ export const adminCatalogApi = {
             ? Number(payload.tax_rate_bps)
             : null,
         });
-        return response?.data;
       } catch (err) {
         console.error('API Gateway POST /admin/catalog/categories failed:', err);
         throw err;
@@ -678,8 +678,7 @@ export const adminCatalogApi = {
   updateCategory: async (categoryId, payload) => {
     if (!isMockMode()) {
       try {
-        const response = await apiClient.patch(`/admin/catalog/categories/${categoryId}`, payload);
-        return response?.data;
+        return await apiClient.patch(`/admin/catalog/categories/${categoryId}`, payload);
       } catch (err) {
         console.error(`API Gateway PATCH /admin/catalog/categories/${categoryId} failed:`, err);
         throw err;
@@ -722,11 +721,10 @@ export const adminCatalogApi = {
   archiveCategory: async (categoryId, { version = 1, reason = '' } = {}) => {
     if (!isMockMode()) {
       try {
-        const response = await apiClient.post(`/admin/catalog/categories/${categoryId}/archive`, {
+        return await apiClient.post(`/admin/catalog/categories/${categoryId}/archive`, {
           version: Number(version),
           reason: reason ? reason.trim() : 'Taxonomy mới',
         });
-        return response?.data;
       } catch (err) {
         console.error(`API Gateway POST /admin/catalog/categories/${categoryId}/archive failed:`, err);
         throw err;
@@ -755,62 +753,21 @@ export const adminCatalogApi = {
     };
   },
   /**
-   * STT 22a: Phê duyệt sản phẩm (Approve Product)
-   * POST /admin/catalog/products/{productId}/approve
-   * @param {string} productId
-   * @param {Object} payload - { version: number }
-   */
-  approveProduct: async (productId, { version = 1 } = {}) => {
-    const ver = Math.max(1, Number(version) || 1);
-    if (!isMockMode()) {
-      return apiClient.post(`/admin/catalog/products/${productId}/approve`, { version: ver });
-    }
-    await new Promise((res) => setTimeout(res, 100));
-    const target = localProducts.find((p) => p.product_id === productId);
-    if (target) {
-      target.status = 'ACTIVE';
-      target.version = (target.version || ver) + 1;
-    }
-    return { data: { product_id: productId, status: 'ACTIVE', version: ver + 1 } };
-  },
-
-  /**
-   * STT 23a: Từ chối sản phẩm (Reject Product with Reason)
-   * POST /admin/catalog/products/{productId}/reject
-   * @param {string} productId
-   * @param {Object} payload - { version: number, reason: string }
-   */
-  rejectProduct: async (productId, { version = 1, reason } = {}) => {
-    const ver = Math.max(1, Number(version) || 1);
-    const trimmedReason = (reason || '').trim();
-    if (!trimmedReason || trimmedReason.length < 5) {
-      throw new Error('Lý do từ chối sản phẩm phải có ít nhất 5 ký tự.');
-    }
-    if (!isMockMode()) {
-      return apiClient.post(`/admin/catalog/products/${productId}/reject`, {
-        version: ver,
-        reason: trimmedReason,
-      });
-    }
-    await new Promise((res) => setTimeout(res, 100));
-    const target = localProducts.find((p) => p.product_id === productId);
-    if (target) {
-      target.status = 'REJECTED';
-      target.rejection_reason = trimmedReason;
-      target.version = (target.version || ver) + 1;
-    }
-    return { data: { product_id: productId, status: 'REJECTED', rejection_reason: trimmedReason, version: ver + 1 } };
-  },
-
-  /**
-   * STT 24a: Xem lịch sử kiểm toán danh mục (Catalog Audit Logs)
+   * Xem lịch sử kiểm toán danh mục (Catalog Audit Logs)
    * GET /admin/catalog/audits
    */
   getCatalogAudits: async (params = {}) => {
+    const query = {};
+    if (params.target_id) query.target_id = String(params.target_id);
+    if (params.target_type) query.target_type = String(params.target_type);
+    if (params.actor_user_id) query.actor_user_id = String(params.actor_user_id);
+    if (params.action) query.action = String(params.action);
+    if (params.page !== undefined) query.page = Number(params.page) || 1;
+    if (params.size !== undefined) query.size = Number(params.size) || 20;
+
     if (!isMockMode()) {
       try {
-        const response = await apiClient.get('/admin/catalog/audits', { params });
-        return response?.data;
+        return await apiClient.get('/admin/catalog/audits', { params: query });
       } catch (err) {
         console.error('API Gateway GET /admin/catalog/audits failed:', err);
         throw err;
@@ -820,16 +777,17 @@ export const adminCatalogApi = {
     return {
       data: [
         {
-          audit_id: 'aud-001',
-          product_id: 'prod-01912f31',
-          action: 'APPROVE',
-          actor_id: 'admin-001',
-          actor_email: 'admin@taca.vn',
-          changes: { status: { from: 'PENDING_APPROVAL', to: 'ACTIVE' } },
-          created_at: new Date().toISOString()
+          _id: 'aud-001',
+          actor_user_id: 'admin-001',
+          action: 'PUBLISH',
+          target_type: 'PRODUCT',
+          target_id: 'prod-01912f31',
+          changes: { status: { from: 'DRAFT', to: 'ACTIVE' } },
+          reason: null,
+          occurred_at: new Date().toISOString()
         }
       ],
-      meta: { page: 1, size: 20, total: 1 }
+      meta: { page: 1, size: 20, total: 1, total_pages: 1 }
     };
   },
 };

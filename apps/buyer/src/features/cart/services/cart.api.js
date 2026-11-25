@@ -291,6 +291,13 @@ export const cartApi = {
   clearCart: async () => {
     saveStoredLocalCart([]);
     saveStoredCartId(null);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(META_CACHE_KEY);
+      } catch {
+        // ignore storage errors
+      }
+    }
     return { data: { success: true } };
   },
 };

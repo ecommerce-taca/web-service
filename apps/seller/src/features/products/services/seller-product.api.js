@@ -315,7 +315,13 @@ export const sellerProductApi = {
         signal
       });
 
-      if (response?.data?.items && Array.isArray(response.data.items)) {
+      if (Array.isArray(response?.data)) {
+        response.data = response.data.map((item) => ({
+          ...item,
+          id: item.product_id || item.id || item.productId,
+          productId: item.product_id || item.productId || item.id,
+        }));
+      } else if (response?.data?.items && Array.isArray(response.data.items)) {
         response.data.items = response.data.items.map((item) => ({
           ...item,
           id: item.product_id || item.id || item.productId,
@@ -800,7 +806,10 @@ export const sellerProductApi = {
     };
 
     if (!isMockMode()) {
-      return apiClient.post('/seller/products/import/template', payload, { responseType: 'blob' });
+      return apiClient.post('/seller/products/import/template', payload, {
+        responseType: 'blob',
+        headers: { Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+      });
     }
     return { data: new Blob(['mock-excel-content'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }) };
   },
@@ -831,8 +840,10 @@ export const sellerProductApi = {
         job_id: jobId,
         status: 'COMPLETED',
         total_rows: 24,
-        success_rows: 24,
-        failed_rows: 0
+        processed_rows: 24,
+        success_count: 24,
+        error_count: 0,
+        error_summary: []
       }
     };
   },
@@ -841,7 +852,7 @@ export const sellerProductApi = {
     if (!isMockMode()) {
       return apiClient.get(`/seller/products/import/jobs/${jobId}/result`, {
         responseType: 'blob',
-        headers: { Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/json' }
+        headers: { Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
       });
     }
     return { data: { result_file_url: '#mock-job-result' } };
@@ -852,19 +863,6 @@ export const sellerProductApi = {
       return apiClient.delete(`/seller/products/${productId}/media/${mediaId}`);
     }
     return { data: { success: true, media_id: mediaId } };
-  },
-
-  submitProduct: async (productId, version = 1) => {
-    const ver = Math.max(1, Number(version) || 1);
-    if (!isMockMode()) {
-      return apiClient.post(`/seller/products/${productId}/publish`, { version: ver });
-    }
-    const item = MOCK_SELLER_PRODUCTS.find(p => p.id === productId || p.product_id === productId);
-    if (item) {
-      item.status = 'ACTIVE';
-      item.version = (item.version || ver) + 1;
-    }
-    return { data: { success: true, status: 'ACTIVE', version: (item?.version || ver) + 1 } };
   },
 };
 

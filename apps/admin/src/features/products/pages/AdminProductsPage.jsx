@@ -26,6 +26,7 @@ export default function AdminProductsPage() {
   // Filters & Pagination
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [flaggedOnly, setFlaggedOnly] = useState(false);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, total_pages: 1 });
@@ -39,13 +40,19 @@ export default function AdminProductsPage() {
   const [toastMessage, setToastMessage] = useState(null);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
     let isMounted = true;
     adminCatalogApi.getAdminProducts({
       page,
       size: 20,
       status: statusFilter,
-      q: searchQuery.trim(),
-      flagged_only: flaggedOnly ? true : undefined,
+      q: debouncedSearch,
     })
       .then((res) => {
         if (!isMounted) return;
@@ -65,7 +72,7 @@ export default function AdminProductsPage() {
     return () => {
       isMounted = false;
     };
-  }, [page, statusFilter, searchQuery, flaggedOnly, reloadTrigger]);
+  }, [page, statusFilter, debouncedSearch, reloadTrigger]);
 
   const handleRefresh = () => {
     setLoading(true);
@@ -107,33 +114,14 @@ export default function AdminProductsPage() {
     handleRefresh();
   };
 
-  const handleApprove = async (productId) => {
-    try {
-      const prod = products.find((p) => p.product_id === productId || p.id === productId);
-      await adminCatalogApi.approveProduct(productId, { version: prod?.version || 1 });
-      showToast(`Đã phê duyệt thành công sản phẩm ${productId}. Sản phẩm đã được kích hoạt ACTIVE.`);
-      handleRefresh();
-    } catch (err) {
-      alert(`Lỗi phê duyệt: ${err?.message || err}`);
-    }
-  };
-
-  const handleReject = async (productId) => {
-    const prod = products.find((p) => p.product_id === productId || p.id === productId);
-    const reason = window.prompt('Nhập lý do từ chối phê duyệt sản phẩm (tối thiểu 5 ký tự):');
-    if (!reason || !reason.trim()) return;
-    if (reason.trim().length < 5) {
-      alert('Lý do từ chối phải có ít nhất 5 ký tự!');
-      return;
-    }
-    try {
-      await adminCatalogApi.rejectProduct(productId, { version: prod?.version || 1, reason: reason.trim() });
-      showToast(`Đã từ chối duyệt sản phẩm ${productId}.`);
-      handleRefresh();
-    } catch (err) {
-      alert(`Lỗi từ chối: ${err?.message || err}`);
-    }
-  };
+  const displayedProducts = flaggedOnly
+    ? products.filter(
+        (item) =>
+          item.risk_level === 'HIGH' ||
+          item.risk_level === 'MEDIUM' ||
+          (Array.isArray(item.risk_signals) && item.risk_signals.length > 0)
+      )
+    : products;
 
   // Metrics computation
   const activeCount = products.filter((p) => p.status === 'ACTIVE').length;
@@ -215,12 +203,11 @@ export default function AdminProductsPage() {
           <div className="flex items-center gap-1.5 p-1 bg-slate-100/80 rounded-xl w-full md:w-auto overflow-x-auto">
             {[
               { id: 'ALL', label: 'Tất cả' },
-              { id: 'PENDING_APPROVAL', label: 'Chờ duyệt' },
               { id: 'ACTIVE', label: 'Đang bán (ACTIVE)' },
               { id: 'INACTIVE', label: 'Tạm ẩn (INACTIVE)' },
-              { id: 'REJECTED', label: 'Bị từ chối' },
               { id: 'BLOCKED', label: 'Đã khóa (BLOCKED)' },
               { id: 'DRAFT', label: 'Bản nháp' },
+              { id: 'ARCHIVED', label: 'Đã lưu trữ' },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -308,7 +295,7 @@ export default function AdminProductsPage() {
               Thử lại
             </button>
           </div>
-        ) : products.length === 0 ? (
+        ) : displayedProducts.length === 0 ? (
           <div className="p-12 text-center space-y-3">
             <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
               <Package className="w-6 h-6" />
@@ -332,7 +319,7 @@ export default function AdminProductsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {products.map((item) => {
+                {displayedProducts.map((item) => {
                   const isBlocked = item.status === 'BLOCKED';
                   return (
                     <tr key={item.product_id} className="hover:bg-slate-50/70 transition-colors">
@@ -417,19 +404,9 @@ export default function AdminProductsPage() {
                       </td>
 
                       <td className="px-6 py-4 text-center">
-                        {item.status === 'PENDING_APPROVAL' && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                            <Clock className="w-3 h-3" /> Chờ duyệt
-                          </span>
-                        )}
                         {item.status === 'ACTIVE' && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                             <CheckCircle2 className="w-3 h-3" /> Đang bán
-                          </span>
-                        )}
-                        {item.status === 'REJECTED' && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                            <AlertTriangle className="w-3 h-3" /> Từ chối
                           </span>
                         )}
                         {item.status === 'BLOCKED' && (
@@ -447,6 +424,11 @@ export default function AdminProductsPage() {
                             Nháp
                           </span>
                         )}
+                        {item.status === 'ARCHIVED' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                            Đã lưu trữ
+                          </span>
+                        )}
                       </td>
 
                       <td className="px-6 py-4 text-right">
@@ -460,26 +442,7 @@ export default function AdminProductsPage() {
                             <span>Xem</span>
                           </button>
 
-                          {item.status === 'PENDING_APPROVAL' ? (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => handleApprove(item.product_id)}
-                                className="px-2.5 py-1 text-emerald-700 hover:text-white hover:bg-emerald-600 bg-emerald-50 border border-emerald-200 rounded-lg font-bold text-[11px] transition-colors cursor-pointer flex items-center gap-1"
-                              >
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Duyệt</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleReject(item.product_id)}
-                                className="px-2.5 py-1 text-rose-700 hover:text-white hover:bg-rose-600 bg-rose-50 border border-rose-200 rounded-lg font-bold text-[11px] transition-colors cursor-pointer flex items-center gap-1"
-                              >
-                                <Ban className="w-3.5 h-3.5" />
-                                <span>Từ chối</span>
-                              </button>
-                            </>
-                          ) : isBlocked ? (
+                          {isBlocked ? (
                             <button
                               type="button"
                               onClick={() =>
@@ -510,6 +473,33 @@ export default function AdminProductsPage() {
                 })}
               </tbody>
             </table>
+
+            {/* Pagination */}
+            {meta.total_pages > 1 && (
+              <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
+                <span>
+                  Trang <strong className="text-slate-900">{page}</strong> / {meta.total_pages} ({meta.total} sản phẩm)
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 font-semibold disabled:opacity-40 cursor-pointer"
+                  >
+                    Trước
+                  </button>
+                  <button
+                    type="button"
+                    disabled={page >= meta.total_pages}
+                    onClick={() => setPage((p) => Math.min(meta.total_pages, p + 1))}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 font-semibold disabled:opacity-40 cursor-pointer"
+                  >
+                    Sau
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
