@@ -190,6 +190,7 @@ function ProductEditorForm({ product, onClose, onSave }) {
   const [currentProduct, setCurrentProduct] = useState(product);
   const [currentVersion, setCurrentVersion] = useState(() => Number(product?.version) || 1);
   const [description, setDescription] = useState(product ? (product.description || '') : '');
+  const [descriptionError, setDescriptionError] = useState('');
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
 
@@ -745,6 +746,19 @@ function ProductEditorForm({ product, onClose, onSave }) {
       return;
     }
 
+    if (!description || !description.trim()) {
+      setDescriptionError('Vui lòng nhập mô tả sản phẩm.');
+      setStep(1);
+      setTimeout(() => {
+        const descEl = document.getElementById('product-description');
+        if (descEl) {
+          descEl.focus();
+          descEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 50);
+      return;
+    }
+
     if (images.length === 0) {
       alert('Vui lòng tải lên ít nhất một ảnh bìa sản phẩm (bước 1) trước khi xuất bản!');
       setStep(1);
@@ -925,6 +939,8 @@ function ProductEditorForm({ product, onClose, onSave }) {
             setSpuCode={setSpuCode}
             description={description}
             setDescription={setDescription}
+            descriptionError={descriptionError}
+            setDescriptionError={setDescriptionError}
             images={images}
             uploadingImage={uploadingImage}
             imageInputRef={imageInputRef}
