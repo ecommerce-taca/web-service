@@ -25,19 +25,23 @@ const OrderCard = ({ order }) => {
     if (callback) callback();
   };
 
-  const handleReorder = () => {
+  const handleReorder = async () => {
     if (!order.items || order.items.length === 0) return;
-    order.items.forEach(item => {
-      addToCart({
-        id: item.id || `prod_${item.name}`,
-        name: item.name,
-        price: item.price,
-        image: item.image,
-        variant: item.variant,
-        quantity: item.quantity,
-        selected: true
-      });
-    });
+    // Tuần tự để tránh CAS version conflict trên MongoDB Cart document khi thêm nhiều SKU
+    for (const item of order.items) {
+      await addToCart(
+        {
+          id: item.product_id || item.productId || item.id,
+          product_id: item.product_id || item.productId || item.id,
+          sku_id: item.sku_id || item.skuId || item.sku || item.id,
+          name: item.name,
+          price: item.price,
+          image: item.image,
+          variant: item.variant,
+        },
+        item.quantity || 1
+      );
+    }
     navigate('/cart');
   };
 

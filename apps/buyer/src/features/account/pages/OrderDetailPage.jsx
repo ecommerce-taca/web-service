@@ -73,15 +73,18 @@ const OrderDetailPage = () => {
     setReordering(true);
     try {
       for (const item of order.order_items) {
-        addToCart({
-          id: item.product_id || `prod_${item.product_name}`,
-          name: item.product_name,
-          price: item.unit_price,
-          image: item.product_image,
-          variant: item.variant_name,
-          quantity: item.quantity,
-          selected: true
-        });
+        await addToCart(
+          {
+            id: item.product_id || item.productId,
+            product_id: item.product_id || item.productId,
+            sku_id: item.sku_id || item.skuId || item.sku,
+            name: item.product_name,
+            price: item.unit_price,
+            image: item.product_image,
+            variant: item.variant_name,
+          },
+          item.quantity || 1
+        );
       }
       navigate('/cart');
     } catch (e) {
