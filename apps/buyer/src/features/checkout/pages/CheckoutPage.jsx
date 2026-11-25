@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../cart/hooks/useCart';
 import { useAuth } from '../../auth/hooks/useAuth';
@@ -14,11 +14,10 @@ import { Check, AlertTriangle } from 'lucide-react';
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  // KHÔNG gọi clearCart sau khi mua hàng để giữ nguyên giỏ hàng theo yêu cầu
-  const { cartId, selectedItems, items: cartItems } = useCart();
+  const { cartId, selectedItems } = useCart();
 
-  // Danh sách sản phẩm thanh toán
-  const items = selectedItems.length > 0 ? selectedItems : cartItems;
+  // Danh sách sản phẩm thanh toán: chỉ lấy các sản phẩm được chọn và còn khả dụng
+  const items = selectedItems.filter((item) => item.available !== false);
 
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [addresses, setAddresses] = useState([]);
@@ -77,7 +76,7 @@ export default function CheckoutPage() {
   });
 
   // Tải danh sách địa chỉ đã lưu trong account (gọi ngay khi mount)
-  const fetchAddresses = useCallback(async () => {
+  const fetchAddresses = async () => {
     try {
       const res = await addressApi.getAddresses();
       const list = res.data?.data || res.data || [];
@@ -88,11 +87,26 @@ export default function CheckoutPage() {
     } catch (e) {
       console.error('Failed to load saved addresses', e);
     }
-  }, []);
+  };
 
   useEffect(() => {
-    fetchAddresses();
-  }, [fetchAddresses]);
+    let isMounted = true;
+    addressApi.getAddresses()
+      .then((res) => {
+        if (!isMounted) return;
+        const list = res.data?.data || res.data || [];
+        setAddresses(list);
+        if (list.length > 0) {
+          setSelectedAddress(prev => prev || list.find(a => a.is_default) || list[0]);
+        }
+      })
+      .catch((e) => {
+        console.error('Failed to load saved addresses', e);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Giảm giá tính động dựa trên voucher đang được chọn thực tế (tối đa 3 slots)
   const shopDiscount = selectedShopVoucher ? (selectedShopVoucher.discount_amount || 0) : 0;
@@ -105,12 +119,16 @@ export default function CheckoutPage() {
 
   const [pendingPayment, setPendingPayment] = useState(null);
   const [checkoutError, setCheckoutError] = useState('');
+  const [previewSummary, setPreviewSummary] = useState(null);
 
   // Tích hợp POST /checkout/preview để backend thẩm định giá và cảnh báo tồn kho trước khi submit (P2)
   useEffect(() => {
     let isMounted = true;
     const runPreview = async () => {
-      if (items.length === 0) return;
+      if (items.length === 0) {
+        setPreviewSummary(null);
+        return;
+      }
       try {
         const voucherCodes = [selectedShopVoucher?.code, selectedTacaVoucher?.code, selectedFreeshipVoucher?.code].filter(Boolean);
         const res = await orderApi.previewCheckout({
@@ -123,7 +141,10 @@ export default function CheckoutPage() {
           total
         });
         if (!isMounted) return;
-        const previewData = res?.data?.data;
+        const previewData = res?.data?.data || res?.data;
+        if (previewData && typeof previewData === 'object') {
+          setPreviewSummary(previewData);
+        }
         if (previewData?.warnings && previewData.warnings.length > 0) {
           const warningMsgs = previewData.warnings.map(w => typeof w === 'string' ? w : (w.message || w.code));
           setCheckoutError(warningMsgs.join('. '));
@@ -429,7 +450,9 @@ export default function CheckoutPage() {
               <div className="flex justify-between items-center">
                 <span className="text-[14px] font-extrabold text-taca-text-main">Tổng thanh toán</span>
                 <span className="text-[20px] font-extrabold text-taca-sale">
-                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}
+                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+                    previewSummary?.total ?? previewSummary?.grand_total ?? total
+                  )}
                 </span>
               </div>
             </div>

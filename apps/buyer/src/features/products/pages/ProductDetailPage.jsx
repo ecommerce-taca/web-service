@@ -105,7 +105,9 @@ const ProductDetailPage = () => {
         {/* Content Tabs */}
         <ProductContentTabs 
           description={product.description} 
-          reviewCount={product.reviewCount} 
+          reviewCount={product.reviewCount}
+          brand={product.brand}
+          attributes={product.attribute_definitions}
         />
 
         {/* Ratings & Comments */}

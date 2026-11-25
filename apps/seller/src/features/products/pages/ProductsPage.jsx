@@ -7,6 +7,7 @@ import ProductImportModal from '../components/ProductImportModal';
 import SellerLoginModal from '../../../components/common/SellerLoginModal';
 import { quickDemoLogin } from '../../../services/seller-auth.api';
 import sellerProductApi from '../services/seller-product.api';
+import { sanitizeExcelCell } from '../../../../../../shared/utils/security';
 
 export default function ProductsPage() {
   const [items, setItems] = useState([]);
@@ -24,8 +25,6 @@ export default function ProductsPage() {
   const tabs = [
     { id: 'ALL', label: 'Tất cả' },
     { id: 'ACTIVE', label: 'Đang bán' },
-    { id: 'PENDING_APPROVAL', label: 'Chờ duyệt' },
-    { id: 'REJECTED', label: 'Bị từ chối' },
     { id: 'DRAFT', label: 'Bản nháp' },
     { id: 'OUT_OF_STOCK', label: 'Hết hàng' },
     { id: 'INACTIVE', label: 'Tạm ẩn' },
@@ -107,6 +106,10 @@ export default function ProductsPage() {
     { id: 'active', label: 'Đang bán', value: activeCount.toLocaleString('vi-VN'), trend: `${Math.round((activeCount / (totalSpu || 1)) * 100)}% danh mục`, isPositive: true },
     { id: 'warning', label: 'Cảnh báo tồn kho', value: lowStockCount.toLocaleString('vi-VN'), trend: 'Cần nhập hàng', isWarning: lowStockCount > 0 },
   ];
+
+  const displayedItems = activeTab === 'OUT_OF_STOCK'
+    ? items.filter((spu) => (Number(spu.stock_display) || 0) === 0)
+    : items;
 
   const handleOpenCreateModal = () => {
     setEditingProduct(null);
@@ -203,7 +206,7 @@ export default function ProductsPage() {
               p.status || 'DRAFT'
             ])
           ];
-          const csvContent = '\uFEFF' + csvRows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',')).join('\n');
+          const csvContent = '\uFEFF' + csvRows.map(row => row.map(val => `"${String(sanitizeExcelCell(val)).replace(/"/g, '""')}"`).join(',')).join('\n');
           const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
@@ -351,7 +354,7 @@ export default function ProductsPage() {
               </div>
             )}
           </div>
-        ) : items.length === 0 ? (
+        ) : displayedItems.length === 0 ? (
           <div className="py-16 text-center flex flex-col items-center justify-center gap-3">
             <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
               <FileSpreadsheet className="w-7 h-7" aria-hidden="true" />
@@ -388,7 +391,7 @@ export default function ProductsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {items.map((spu) => {
+                {displayedItems.map((spu) => {
                   const spuId = spu.product_id || spu.id || spu.productId;
                   const isExpanded = expandedSpuId === spuId;
                   const isOutOfStock = (Number(spu.stock_display) || 0) === 0;

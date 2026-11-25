@@ -194,6 +194,17 @@ function ProductEditorForm({ product, onClose, onSave }) {
   const [notification, setNotification] = useState(null);
 
   // Quản lý ảnh sản phẩm và S3 Presigned URL (#15, #16)
+  const mediaIdMapRef = useRef(() => {
+    const map = {};
+    if (product?.media && Array.isArray(product.media)) {
+      product.media.forEach((m) => {
+        const u = m.url || m.public_url;
+        const mid = m.media_id || m._id || m.id;
+        if (u && mid) map[u] = String(mid);
+      });
+    }
+    return map;
+  });
   const [images, setImages] = useState(() => {
     if (product?.media && Array.isArray(product.media) && product.media.length > 0) {
       return product.media
@@ -596,6 +607,12 @@ function ProductEditorForm({ product, onClose, onSave }) {
       });
 
       const displayUrl = mediaResult.public_url || URL.createObjectURL(file);
+      if (typeof mediaIdMapRef.current === 'function') {
+        mediaIdMapRef.current = mediaIdMapRef.current();
+      }
+      if (mediaResult.media_id && displayUrl) {
+        mediaIdMapRef.current[displayUrl] = String(mediaResult.media_id);
+      }
       setImages(prev => [...prev, displayUrl]);
       setNotification('Tải ảnh sản phẩm thành công!');
       setTimeout(() => setNotification(null), 2500);
@@ -614,8 +631,24 @@ function ProductEditorForm({ product, onClose, onSave }) {
     }
   };
 
-  const handleRemoveImage = (indexToRemove) => {
-    setImages(images.filter((_, idx) => idx !== indexToRemove));
+  const handleRemoveImage = async (indexToRemove) => {
+    const removedUrl = images[indexToRemove];
+    if (typeof mediaIdMapRef.current === 'function') {
+      mediaIdMapRef.current = mediaIdMapRef.current();
+    }
+    const mediaId = removedUrl ? mediaIdMapRef.current[removedUrl] : null;
+    const activeProd = currentProduct || product;
+    const targetId = activeProd?.product_id || activeProd?.id || activeProd?.productId;
+
+    if (targetId && UUID_REGEX.test(targetId) && mediaId) {
+      try {
+        await sellerProductApi.deleteMedia(targetId, mediaId);
+      } catch (err) {
+        console.warn('Không thể xóa media trên BE:', err);
+      }
+      delete mediaIdMapRef.current[removedUrl];
+    }
+    setImages(prev => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
   const handleSaveDraft = async () => {
@@ -675,12 +708,12 @@ function ProductEditorForm({ product, onClose, onSave }) {
         }
 
         // Cập nhật ma trận SKU (§3.2 PUT /seller/products/{id}/skus)
-        await sellerProductApi.replaceSkus(targetId, {
+        const skuRes = await sellerProductApi.replaceSkus(targetId, {
           attribute_definitions: attrDefs,
           skus: formattedSkus,
           version: ver
         });
-        ver = ver + 1;
+        ver = Number(skuRes?.data?.version ?? skuRes?.version) || (ver + 1);
         setCurrentVersion(ver);
       } else {
         // Tạo mới SPU Draft theo DTO thuần túy BE (§3.2 POST /seller/products)
@@ -706,12 +739,12 @@ function ProductEditorForm({ product, onClose, onSave }) {
             ver = Number(assignData?.version) || (ver + 1);
           }
 
-          await sellerProductApi.replaceSkus(newId, {
+          const skuRes = await sellerProductApi.replaceSkus(newId, {
             attribute_definitions: attrDefs,
             skus: formattedSkus,
             version: ver
           });
-          ver = ver + 1;
+          ver = Number(skuRes?.data?.version ?? skuRes?.version) || (ver + 1);
           setCurrentProduct(createdProduct);
           setCurrentVersion(ver);
         }
@@ -831,12 +864,12 @@ function ProductEditorForm({ product, onClose, onSave }) {
             ver = Number(assignData?.version) || (ver + 1);
           }
 
-          await sellerProductApi.replaceSkus(newId, {
+          const skuRes = await sellerProductApi.replaceSkus(newId, {
             attribute_definitions: attrDefs,
             skus: formattedSkus,
             version: ver
           });
-          ver = ver + 1;
+          ver = Number(skuRes?.data?.version ?? skuRes?.version) || (ver + 1);
           setCurrentProduct(createdProduct);
           setCurrentVersion(ver);
 

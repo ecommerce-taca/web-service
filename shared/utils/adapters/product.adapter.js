@@ -8,23 +8,17 @@
 
 export const PRODUCT_STATUS = {
   DRAFT: 'DRAFT',
-  PENDING_APPROVAL: 'PENDING_APPROVAL',
-  PUBLISHED: 'PUBLISHED',
-  UNPUBLISHED: 'UNPUBLISHED',
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
   BLOCKED: 'BLOCKED',
-  REJECTED: 'REJECTED',
   ARCHIVED: 'ARCHIVED',
 };
 
 export const PRODUCT_STATUS_LABELS = {
   DRAFT: 'Bản nháp',
-  PENDING_APPROVAL: 'Chờ duyệt',
-  PUBLISHED: 'Đang bán',
   ACTIVE: 'Đang bán',
-  UNPUBLISHED: 'Tạm dừng bán',
   INACTIVE: 'Tạm dừng bán',
   BLOCKED: 'Đã bị khóa',
-  REJECTED: 'Bị từ chối',
   ARCHIVED: 'Đã lưu trữ',
 };
 
@@ -36,9 +30,10 @@ export const PRODUCT_STATUS_LABELS = {
 export const normalizeProduct = (raw = {}) => {
   if (!raw) return null;
   const mediaList = raw.media || [];
-  const coverMedia = mediaList.find(m => m.is_cover)?.url 
-    || mediaList[0]?.url 
-    || raw.image 
+  const coverMedia = raw.cover_media?.url
+    || mediaList.find(m => m.is_cover)?.url
+    || mediaList[0]?.url
+    || raw.image
     || (Array.isArray(raw.images) ? raw.images[0] : null);
 
   const rawPriceSummary = raw.price_summary || {};
@@ -71,18 +66,26 @@ export const normalizeProduct = (raw = {}) => {
     category_id: raw.category_id || raw.categoryId || raw.primary_category_id || raw.category || '',
     category: raw.category || raw.primary_category_id || '',
     secondary_category_ids: raw.secondary_category_ids || [],
-    rating: Number(raw.rating_summary?.avg || raw.rating || 0),
-    ratingCount: Number(raw.rating_summary?.count || raw.reviewCount || 0),
-    reviewCount: Number(raw.rating_summary?.count || raw.reviewCount || 0),
+    rating: Number(raw.rating_summary?.avg ?? raw.rating_summary?.average_rating ?? raw.rating ?? 0),
+    ratingCount: Number(raw.rating_summary?.count ?? raw.rating_summary?.review_count ?? raw.reviewCount ?? 0),
+    reviewCount: Number(raw.rating_summary?.count ?? raw.rating_summary?.review_count ?? raw.reviewCount ?? 0),
     soldCount: Number(raw.sold_count || raw.soldCount || 0),
     status: raw.status || 'DRAFT',
     version: Number(raw.version || 1),
-    rejection_reason: raw.rejection_reason || raw.rejected_reason || raw.reject_reason || '',
+    block_reason: raw.block_reason || '',
     skus: (raw.skus || []).map((sku, index) => {
+      const skuId = String(sku.sku_id || sku._id || sku.id || `sku-${index}`);
       const skuPrice = Number(sku.price_override || sku.price?.sale_price || sku.price?.base_price || sku.price || salePrice);
+      const rawStock = sku.stock_display;
+      const parsedStock =
+        typeof rawStock === 'object' && rawStock !== null
+          ? Number(rawStock.available_qty_snapshot ?? 0)
+          : Number(rawStock ?? sku.stock ?? sku.available_quantity ?? 0);
+      const safeStock = Number.isNaN(parsedStock) ? 0 : parsedStock;
       return {
-        id: String(sku.sku_id || sku._id || sku.id || `sku-${index}`),
-        skuId: String(sku.sku_id || sku._id || sku.id || `sku-${index}`),
+        id: skuId,
+        skuId,
+        sku_id: skuId,
         sku_code: sku.sku_code || sku.seller_sku || `SKU-${index}`,
         seller_sku: sku.seller_sku || sku.sku_code || `SKU-${index}`,
         name: sku.name || sku.sku_code || sku.seller_sku || `Biến thể ${index + 1}`,
@@ -90,8 +93,9 @@ export const normalizeProduct = (raw = {}) => {
         price: skuPrice,
         price_override: Number(sku.price_override || skuPrice),
         originalPrice: Number(sku.price?.base_price || basePrice),
-        stock: Number(sku.stock_display ?? sku.stock ?? sku.available_quantity ?? 0),
-        stock_display: Number(sku.stock_display ?? sku.stock ?? sku.available_quantity ?? 0),
+        stock: safeStock,
+        stock_display: safeStock,
+        stock_display_status: typeof rawStock === 'object' && rawStock !== null ? (rawStock.status || '') : '',
         barcode: sku.barcode || '',
         status: sku.status || 'ACTIVE'
       };

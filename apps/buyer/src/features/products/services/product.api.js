@@ -593,6 +593,46 @@ let categoriesCache = null;
 let categoriesCacheTimestamp = 0;
 const CATEGORIES_CACHE_TTL = 15 * 60 * 1000; // 15 phút
 
+const CATALOG_SORT_MAP = {
+  newest: 'newest',
+  price_asc: 'price_asc',
+  'price-asc': 'price_asc',
+  price_desc: 'price_desc',
+  'price-desc': 'price_desc',
+};
+
+const sanitizeCatalogQueryParams = (params = {}) => {
+  const query = {};
+  if (params.page !== undefined && params.page !== null) {
+    query.page = Math.max(1, Math.trunc(Number(params.page) || 1));
+  }
+  if (params.size !== undefined && params.size !== null) {
+    query.size = Math.max(1, Math.min(100, Math.trunc(Number(params.size) || 20)));
+  }
+  const categoryId = params.category_id || params.categoryId || (params.category && params.category !== 'all' ? params.category : undefined);
+  if (categoryId) query.category_id = String(categoryId);
+  if (params.shop_id) query.shop_id = String(params.shop_id);
+
+  const minPrice = params.min_price !== undefined ? params.min_price : params.minPrice;
+  if (minPrice !== undefined && minPrice !== null && minPrice !== '') {
+    query.min_price = Math.max(0, Math.trunc(Number(minPrice) || 0));
+  }
+  const maxPrice = params.max_price !== undefined ? params.max_price : params.maxPrice;
+  if (maxPrice !== undefined && maxPrice !== null && maxPrice !== '') {
+    query.max_price = Math.max(0, Math.trunc(Number(maxPrice) || 0));
+  }
+  if (params.sort && CATALOG_SORT_MAP[params.sort]) {
+    query.sort = CATALOG_SORT_MAP[params.sort];
+  }
+  const rawProductIds = params.product_ids || params.productIds;
+  if (Array.isArray(rawProductIds) && rawProductIds.length > 0) {
+    query.product_ids = rawProductIds.slice(0, 100).join(',');
+  } else if (typeof rawProductIds === 'string' && rawProductIds.trim()) {
+    query.product_ids = rawProductIds.trim();
+  }
+  return query;
+};
+
 export const productApi = {
   /**
    * Tìm kiếm sản phẩm qua Search Service: GET /products/search
@@ -638,32 +678,9 @@ export const productApi = {
   getProducts: async (params = {}, options = {}) => {
     const signal = options.signal || params.signal;
 
-    // 1. Chế độ LIVE Backend (dành cho Tester)
+    // 1. Chế độ LIVE Backend (whitelist đúng 8 params trong QueryProductsDto để tránh 400 forbidNonWhitelisted)
     if (!isMockMode()) {
-      const normalizedParams = { ...params };
-      delete normalizedParams.signal;
-
-      if (Array.isArray(params.product_ids)) {
-        normalizedParams.product_ids = params.product_ids.join(',');
-      } else if (Array.isArray(params.productIds)) {
-        normalizedParams.product_ids = params.productIds.join(',');
-        delete normalizedParams.productIds;
-      }
-      if (params.categoryId && !normalizedParams.category_id) {
-        normalizedParams.category_id = params.categoryId;
-        delete normalizedParams.categoryId;
-      }
-      if (params.category && !normalizedParams.category_id && params.category !== 'all') {
-        normalizedParams.category_id = params.category;
-      }
-      if (params.minPrice !== undefined && normalizedParams.min_price === undefined) {
-        normalizedParams.min_price = params.minPrice;
-        delete normalizedParams.minPrice;
-      }
-      if (params.maxPrice !== undefined && normalizedParams.max_price === undefined) {
-        normalizedParams.max_price = params.maxPrice;
-        delete normalizedParams.maxPrice;
-      }
+      const normalizedParams = sanitizeCatalogQueryParams(params);
       return apiClient.get('/products', { params: normalizedParams, signal });
     }
 
@@ -851,34 +868,12 @@ export const productApi = {
    */
   getShopProducts: async (shopId, params = {}) => {
     if (!isMockMode()) {
-      return apiClient.get(`/shops/${shopId}/products`, { params });
+      return apiClient.get(`/shops/${shopId}/products`, {
+        params: sanitizeCatalogQueryParams(params),
+      });
     }
     return productApi.getProducts({ ...params, shop_id: shopId });
   },
-
-  /**
-   * Lấy sản phẩm nổi bật / Flash Sale theo chuẩn NestJS Product Catalog
-   */
-  getFlashSaleProducts: async (params = {}) => {
-    if (!isMockMode()) {
-      const res = await apiClient.get('/products', {
-        params: {
-          size: params.size || params.limit || 8,
-          page: 1,
-          sort: 'newest'
-        }
-      });
-      const products = res?.data?.data || res?.data || [];
-      const discounted = Array.isArray(products) ? products.filter(p => {
-        const sale = p.price?.sale_price || p.sale_price;
-        const base = p.price?.base_price || p.price;
-        return sale && base && Number(sale) < Number(base);
-      }) : [];
-      return { data: discounted.length > 0 ? discounted : (Array.isArray(products) ? products.slice(0, 8) : []) };
-    }
-    const flashItems = PRODUCTS_CATALOG.filter(p => p.isFlashSale);
-    return { data: flashItems.length > 0 ? flashItems : PRODUCTS_CATALOG.slice(0, 4) };
-  }
 };
 
 export default productApi;

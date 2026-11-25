@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Layers, ShieldCheck } from 'lucide-react';
 import { getAuditLogs } from '../../../services/admin-kyc.api';
 import adminCatalogApi from '../../../services/admin-catalog.api';
+import { isMockMode } from '../../../../../../shared/utils/api-client';
 
 const DEFAULT_CATALOG_LOGS = [
   {
@@ -10,13 +11,13 @@ const DEFAULT_CATALOG_LOGS = [
     actor_name: 'Catalog Moderator',
     actor_email: 'catalog-admin@taca.vn',
     actor_role: 'CATALOG_ADMIN',
-    action: 'APPROVE',
+    action: 'PUBLISH',
     target_type: 'PRODUCT',
     target_id: 'prod-01912f31',
     target_name: 'iPhone 15 Pro Max 256GB',
     ip_address: '10.0.4.12',
     status: 'SUCCESS',
-    details: 'Phê duyệt sản phẩm lên sàn (Chuyển trạng thái từ PENDING_APPROVAL sang PUBLISHED).',
+    details: 'Xuất bản sản phẩm lên sàn (DRAFT -> ACTIVE).',
     created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
   },
   {
@@ -40,7 +41,7 @@ const DEFAULT_CATALOG_LOGS = [
     actor_name: 'Taxonomy Admin',
     actor_email: 'taxonomy@taca.vn',
     actor_role: 'CATALOG_ADMIN',
-    action: 'UPDATE_TAX_RATE',
+    action: 'UPDATE',
     target_type: 'CATEGORY',
     target_id: 'cat-01912f20',
     target_name: 'Điện tử & Công nghệ',
@@ -133,10 +134,20 @@ export default function AdminAuditLogsPage() {
   const [scope, setScope] = useState('CATALOG'); // 'CATALOG' | 'SYSTEM'
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState('ALL');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+
+  const effectiveSystemSearch = scope === 'SYSTEM' ? search.trim() : '';
+
+  const triggerReload = () => {
+    setLoading(true);
+    setError(null);
+    setReloadTrigger((v) => v + 1);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -145,57 +156,48 @@ export default function AdminAuditLogsPage() {
       const params = {
         page,
         size: 15,
-        entity_type: actionFilter !== 'ALL' ? actionFilter : undefined,
+        target_type: actionFilter !== 'ALL' ? actionFilter : undefined,
       };
 
       adminCatalogApi
         .getCatalogAudits(params)
         .then((res) => {
           if (!isMounted) return;
-          const list = res?.data || [];
-          if (list.length === 0) {
-            const filtered = DEFAULT_CATALOG_LOGS.filter((log) => {
-              const matchAction = actionFilter === 'ALL' || log.target_type === actionFilter;
-              const matchSearch =
-                !search.trim() ||
-                log.actor_email.toLowerCase().includes(search.toLowerCase()) ||
-                log.target_name.toLowerCase().includes(search.toLowerCase()) ||
-                log.details.toLowerCase().includes(search.toLowerCase());
-              return matchAction && matchSearch;
-            });
-            setLogs(filtered);
-            setTotal(filtered.length);
-          } else {
-            const mapped = list.map((item, idx) => ({
-              id: item._id || item.audit_id || `aud-${idx}`,
-              actor_id: item.actor_id || 'admin-system',
-              actor_name: item.actor_name || item.actor_email || 'Catalog Admin',
-              actor_email: item.actor_email || item.actor_id || 'admin@taca.vn',
-              actor_role: item.actor_role || 'CATALOG_ADMIN',
-              action: item.action || 'CATALOG_UPDATE',
-              target_type: item.entity_type || 'PRODUCT',
-              target_id: item.entity_id || '',
-              target_name: item.entity_name || item.entity_id || 'Mục Catalog',
-              ip_address: item.ip_address || 'Gateway-Proxy',
-              status: item.action === 'BLOCK' || item.action === 'REJECT' ? 'REJECTED' : 'SUCCESS',
-              details:
-                typeof item.diff === 'object'
-                  ? JSON.stringify(item.diff)
-                  : typeof item.changes === 'object'
-                  ? JSON.stringify(item.changes)
-                  : item.details || 'Thay đổi cấu hình sản phẩm / danh mục',
-              created_at: item.created_at || new Date().toISOString(),
-            }));
-            setLogs(mapped);
-            setTotal(res?.meta?.total || mapped.length);
-          }
+          const list = Array.isArray(res?.data) ? res.data : [];
+          const mapped = list.map((item, idx) => ({
+            id: item._id || item.audit_id || `aud-${idx}`,
+            actor_id: item.actor_user_id || item.actor_id || 'admin-system',
+            actor_name: item.actor_name || item.actor_email || item.actor_user_id || 'Catalog Admin',
+            actor_email: item.actor_email || item.actor_user_id || 'admin@taca.vn',
+            actor_role: item.actor_role || 'CATALOG_ADMIN',
+            action: item.action || 'UPDATE',
+            target_type: item.target_type || item.entity_type || 'PRODUCT',
+            target_id: item.target_id || item.entity_id || '',
+            target_name: item.target_name || item.target_id || item.entity_id || 'Mục Catalog',
+            ip_address: item.ip_address || 'Gateway-Proxy',
+            status: item.action === 'BLOCK' ? 'REJECTED' : 'SUCCESS',
+            details:
+              item.reason ||
+              (typeof item.changes === 'object' && item.changes !== null
+                ? JSON.stringify(item.changes)
+                : item.details || 'Thay đổi cấu hình sản phẩm / danh mục'),
+            created_at: item.occurred_at || item.created_at || new Date().toISOString(),
+          }));
+          setLogs(mapped);
+          setTotal(res?.meta?.total ?? mapped.length);
           setLoading(false);
         })
         .catch((err) => {
           if (!isMounted) return;
-          console.warn('[AdminAuditLogsPage] catalog audit fallback:', err);
-          setLogs(DEFAULT_CATALOG_LOGS);
-          setTotal(DEFAULT_CATALOG_LOGS.length);
+          console.warn('[AdminAuditLogsPage] catalog audit error:', err);
+          if (isMockMode()) {
+            setLogs(DEFAULT_CATALOG_LOGS);
+            setTotal(DEFAULT_CATALOG_LOGS.length);
+          } else {
+            setLogs([]);
+            setTotal(0);
+            setError(err?.message || 'Không thể tải nhật ký kiểm toán Catalog.');
+          }
           setLoading(false);
         });
     } else {
@@ -203,22 +205,23 @@ export default function AdminAuditLogsPage() {
         page,
         size: 15,
         action: actionFilter !== 'ALL' ? actionFilter : undefined,
-        search: search.trim() || undefined,
+        search: effectiveSystemSearch || undefined,
       };
 
       getAuditLogs(params)
         .then((res) => {
           if (!isMounted) return;
           const list = res?.data || [];
-          if (list.length === 0) {
+          if (list.length === 0 && isMockMode()) {
             // Fallback demo mock logs
             const filtered = DEFAULT_DEMO_LOGS.filter((log) => {
               const matchAction = actionFilter === 'ALL' || log.action.includes(actionFilter);
+              const qLower = effectiveSystemSearch.toLowerCase();
               const matchSearch =
-                !search.trim() ||
-                log.actor_email.toLowerCase().includes(search.toLowerCase()) ||
-                log.target_name.toLowerCase().includes(search.toLowerCase()) ||
-                log.details.toLowerCase().includes(search.toLowerCase());
+                !effectiveSystemSearch ||
+                log.actor_email.toLowerCase().includes(qLower) ||
+                log.target_name.toLowerCase().includes(qLower) ||
+                log.details.toLowerCase().includes(qLower);
               return matchAction && matchSearch;
             });
             setLogs(filtered);
@@ -232,8 +235,14 @@ export default function AdminAuditLogsPage() {
         .catch((err) => {
           if (!isMounted) return;
           console.error('[AdminAuditLogsPage] fetch error:', err);
-          setLogs(DEFAULT_DEMO_LOGS);
-          setTotal(DEFAULT_DEMO_LOGS.length);
+          if (isMockMode()) {
+            setLogs(DEFAULT_DEMO_LOGS);
+            setTotal(DEFAULT_DEMO_LOGS.length);
+          } else {
+            setLogs([]);
+            setTotal(0);
+            setError(err?.message || 'Không thể tải nhật ký kiểm toán hệ thống.');
+          }
           setLoading(false);
         });
     }
@@ -241,7 +250,21 @@ export default function AdminAuditLogsPage() {
     return () => {
       isMounted = false;
     };
-  }, [scope, page, actionFilter, search]);
+  }, [scope, page, actionFilter, reloadTrigger, effectiveSystemSearch]);
+
+  const displayedLogs =
+    scope === 'CATALOG' && search.trim()
+      ? logs.filter((log) => {
+          const q = search.trim().toLowerCase();
+          return (
+            String(log.actor_email || '').toLowerCase().includes(q) ||
+            String(log.target_name || '').toLowerCase().includes(q) ||
+            String(log.target_id || '').toLowerCase().includes(q) ||
+            String(log.action || '').toLowerCase().includes(q) ||
+            String(log.details || '').toLowerCase().includes(q)
+          );
+        })
+      : logs;
 
   const getActionBadge = (action, status) => {
     if (action.includes('APPROVED') || status === 'SUCCESS') {
@@ -445,14 +468,27 @@ export default function AdminAuditLogsPage() {
                     <div>Đang tải dữ liệu kiểm toán...</div>
                   </td>
                 </tr>
-              ) : logs.length === 0 ? (
+              ) : error ? (
+                <tr>
+                  <td colSpan="6" className="py-12 text-center space-y-2">
+                    <div className="text-rose-600 font-semibold">{error}</div>
+                    <button
+                      type="button"
+                      onClick={triggerReload}
+                      className="px-3.5 py-1.5 rounded-lg bg-[#0A68FF] text-white text-xs font-bold hover:bg-blue-700 cursor-pointer"
+                    >
+                      Thử lại
+                    </button>
+                  </td>
+                </tr>
+              ) : displayedLogs.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="py-12 text-center text-slate-400">
                     Không tìm thấy bản ghi kiểm toán nào phù hợp với bộ lọc.
                   </td>
                 </tr>
               ) : (
-                logs.map((log) => {
+                displayedLogs.map((log) => {
                   const date = new Date(log.created_at);
                   const formattedTime = date.toLocaleTimeString('vi-VN', {
                     hour: '2-digit',

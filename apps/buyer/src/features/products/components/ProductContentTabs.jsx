@@ -1,8 +1,24 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 
-const ProductContentTabs = ({ description, reviewCount }) => {
+const ProductContentTabs = ({ description, reviewCount, brand, attributes = [] }) => {
   const [activeTab, setActiveTab] = useState('description');
+
+  const specRows = [
+    ...(brand ? [{ label: 'Thương hiệu', value: brand }] : []),
+    ...(Array.isArray(attributes)
+      ? attributes
+          .map((attr) => ({
+            label: attr.label || attr.key,
+            value: Array.isArray(attr.values)
+              ? attr.values.join(', ')
+              : Array.isArray(attr.allowed_values)
+              ? attr.allowed_values.join(', ')
+              : attr.value,
+          }))
+          .filter((row) => row.label && row.value)
+      : []),
+  ];
 
   return (
     <div className="bg-white rounded-card border border-taca-border overflow-hidden shadow-brand">
@@ -50,19 +66,18 @@ const ProductContentTabs = ({ description, reviewCount }) => {
         
         {activeTab === 'specs' && (
           <div className="flex flex-col gap-2 text-taca-text-muted">
-            {/* Giả lập phần thông số kỹ thuật */}
-            <div className="grid grid-cols-3 border-b border-taca-border py-3">
-              <span className="font-semibold text-taca-text-main">Thương hiệu</span>
-              <span className="col-span-2">Apple</span>
-            </div>
-            <div className="grid grid-cols-3 border-b border-taca-border py-3">
-              <span className="font-semibold text-taca-text-main">Xuất xứ</span>
-              <span className="col-span-2">Mỹ</span>
-            </div>
-            <div className="grid grid-cols-3 border-b border-taca-border py-3">
-              <span className="font-semibold text-taca-text-main">Bảo hành</span>
-              <span className="col-span-2">12 tháng chính hãng</span>
-            </div>
+            {specRows.length > 0 ? (
+              specRows.map((row, idx) => (
+                <div key={idx} className="grid grid-cols-3 border-b border-taca-border py-3">
+                  <span className="font-semibold text-taca-text-main">{row.label}</span>
+                  <span className="col-span-2">{row.value}</span>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-taca-text-muted py-6 font-medium">
+                Chưa có thông số kỹ thuật chi tiết cho sản phẩm này.
+              </div>
+            )}
           </div>
         )}
 
@@ -78,7 +93,9 @@ const ProductContentTabs = ({ description, reviewCount }) => {
 
 ProductContentTabs.propTypes = {
   description: PropTypes.string,
-  reviewCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+  reviewCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  brand: PropTypes.string,
+  attributes: PropTypes.arrayOf(PropTypes.object),
 };
 
 export default ProductContentTabs;

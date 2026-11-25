@@ -79,6 +79,11 @@ export default function ProductDetailModal({
                   Bản nháp (DRAFT)
                 </span>
               )}
+              {product.status === 'ARCHIVED' && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 border border-slate-200">
+                  Đã lưu trữ (ARCHIVED)
+                </span>
+              )}
             </div>
           </div>
           <button

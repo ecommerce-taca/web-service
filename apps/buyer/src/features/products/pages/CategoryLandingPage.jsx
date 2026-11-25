@@ -89,6 +89,8 @@ const CategoryLandingPage = () => {
   const [products, setProducts] = useState([]);
   const [categoryInfo, setCategoryInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
   const [activeChip, setActiveChip] = useState('popular');
 
   const updateParam = (key, value) => {
@@ -142,7 +144,6 @@ const CategoryLandingPage = () => {
 
   useEffect(() => {
     let isMounted = true;
-    setLoading(true);
 
     const priceBounds = PRICE_MAP[priceRange] || {};
     const targetCatId = subCategorySlug || categorySlug || 'dien-thoai';
@@ -159,7 +160,9 @@ const CategoryLandingPage = () => {
     })
       .then(res => {
         if (isMounted) {
-          setProducts(res.data?.items || []);
+          const list = Array.isArray(res?.data) ? res.data : (res?.data?.items || []);
+          setProducts(list);
+          setError(null);
           setLoading(false);
         }
       })
@@ -167,6 +170,7 @@ const CategoryLandingPage = () => {
         if (isMounted) {
           console.error('Failed to load category products', err);
           setProducts([]);
+          setError(err?.message || 'Không thể tải danh sách sản phẩm trong danh mục.');
           setLoading(false);
         }
       });
@@ -174,10 +178,23 @@ const CategoryLandingPage = () => {
     return () => {
       isMounted = false;
     };
-  }, [categorySlug, subCategorySlug, brand, priceRange, isOfficial, minRating, activeChip]);
+  }, [categorySlug, subCategorySlug, brand, priceRange, isOfficial, minRating, activeChip, retryCount]);
   
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const { isFavorite, toggleFavorite } = useFavorites();
+
+  const filteredProducts = products.filter((product) => {
+    if (brand && String(product.brand || '').toLowerCase() !== brand.toLowerCase()) {
+      return false;
+    }
+    if (isOfficial && !product.isOfficial) {
+      return false;
+    }
+    if (minRating > 0 && Number(product.rating || 0) < minRating) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <div className="py-4 sm:py-6 flex flex-col gap-brand-6">
@@ -300,7 +317,7 @@ const CategoryLandingPage = () => {
             <div className="bg-white p-3 sm:p-4 rounded-card border border-taca-border shadow-brand flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center justify-between">
                 <span className="text-[15px] font-extrabold text-taca-text-main">
-                  Sản phẩm trong ngành ({products.length})
+                  Sản phẩm trong ngành ({filteredProducts.length})
                 </span>
                 <button
                   type="button"
@@ -392,9 +409,24 @@ const CategoryLandingPage = () => {
                   </div>
                 ))}
               </div>
-            ) : products.length > 0 ? (
+            ) : error ? (
+              <div className="text-center py-12 bg-white rounded-card border border-rose-200 space-y-3">
+                <p className="text-[14px] font-bold text-rose-700 m-0">{error}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoading(true);
+                    setError(null);
+                    setRetryCount((v) => v + 1);
+                  }}
+                  className="px-5 py-2 bg-taca-primary hover:bg-taca-primary-hover text-white font-bold text-[13px] rounded-control transition-colors cursor-pointer"
+                >
+                  Thử lại
+                </button>
+              </div>
+            ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {products.map(product => (
+                {filteredProducts.map(product => (
                   <ProductCard 
                     key={product.id}
                     id={product.id}
