@@ -2,15 +2,20 @@ import { useContext } from 'react';
 import { CartContext } from '../contexts/CartContext';
 
 const DEFAULT_CART_VALUE = {
+  cartId: null,
   items: [],
+  loading: false,
+  error: null,
   cartCount: 0,
   selectedIds: [],
   selectedItems: [],
   selectedSubtotal: 0,
-  addToCart: () => false,
+  addToCart: async () => false,
   updateQuantity: () => {},
-  removeFromCart: () => {},
+  removeFromCart: async () => {},
   clearCart: () => {},
+  refreshCart: async () => {},
+  clearError: () => {},
   toggleSelectItem: () => {},
   selectAll: () => {},
   deselectAll: () => {},

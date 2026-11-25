@@ -107,33 +107,41 @@ const ProductPurchase = ({ product, isFavorite = false, onToggleFavorite }) => {
     }));
   };
 
-  const handleAddToCart = () => {
-    addToCart(
+  const handleAddToCart = async () => {
+    const ok = await addToCart(
       {
         ...product,
+        product_id: product.product_id || product.id,
         sku_id: targetSkuId,
         price: currentPrice,
-        sku: currentSkuCode
+        sku: currentSkuCode,
+        shop_id: product.shop?.id || product.shop_id
       },
       1,
       { sku: currentSkuCode, sku_id: targetSkuId, selectedAttributes }
     );
-    setAddedToast(true);
-    setTimeout(() => setAddedToast(false), 2500);
+    if (ok !== false) {
+      setAddedToast(true);
+      setTimeout(() => setAddedToast(false), 2500);
+    }
   };
 
-  const handleBuyNow = () => {
-    addToCart(
+  const handleBuyNow = async () => {
+    const ok = await addToCart(
       {
         ...product,
+        product_id: product.product_id || product.id,
         sku_id: targetSkuId,
         price: currentPrice,
-        sku: currentSkuCode
+        sku: currentSkuCode,
+        shop_id: product.shop?.id || product.shop_id
       },
       1,
       { sku: currentSkuCode, sku_id: targetSkuId, selectedAttributes }
     );
-    navigate('/checkout');
+    if (ok !== false) {
+      navigate('/checkout');
+    }
   };
 
   const galleryImages = (product.images && product.images.length > 0)

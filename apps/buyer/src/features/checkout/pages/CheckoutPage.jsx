@@ -15,7 +15,7 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   // KHÔNG gọi clearCart sau khi mua hàng để giữ nguyên giỏ hàng theo yêu cầu
-  const { selectedItems, items: cartItems } = useCart();
+  const { cartId, selectedItems, items: cartItems } = useCart();
 
   // Danh sách sản phẩm thanh toán
   const items = selectedItems.length > 0 ? selectedItems : cartItems;
@@ -161,7 +161,7 @@ export default function CheckoutPage() {
       ].filter(Boolean);
 
       const res = await orderApi.createOrder({
-        cart_id: (typeof window !== 'undefined' ? localStorage.getItem('taca_cart_id') : null) || 'cart-default',
+        cart_id: cartId || (typeof window !== 'undefined' ? localStorage.getItem('taca_cart_id') : null) || 'cart-default',
         items,
         total,
         shipping_fee: effectiveShippingFee,

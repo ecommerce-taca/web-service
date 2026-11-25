@@ -8,16 +8,12 @@
 
 ## 1. Quản Lý Giỏ Hàng (Cart Management)
 
-### 1.1 `GET /cart`
-- **Quyền:** Authenticated (hoặc Guest Cart lưu ở Client)
-- **Response 200:** Danh sách mặt hàng trong giỏ, tự động phân nhóm theo từng Cửa hàng (`shop_id`), hiển thị trạng thái tồn kho và cờ chọn mua (`is_selected`).
+> **Lưu ý kiến trúc:** Nghiệp vụ Giỏ hàng đã được tách ra microservice `cart-service` độc lập. Vui lòng xem tài liệu chi tiết tại [Cart Service API Specification](file:///d:/di_hoc/taca_ecommerce/docs/api/services/cart.md).
 
-### 1.2 `POST /cart/items`
-- **Body:** `{ skuId, quantity }`
-- **Response 201:** Trả về giỏ hàng mới nhất đã cộng dồn số lượng.
-
-### 1.3 `PUT /cart/items/{itemId}` & `DELETE /cart/items/{itemId}`
-- Cập nhật số lượng hoặc xóa sản phẩm khỏi giỏ hàng.
+- `GET /api/v1/cart`
+- `POST /api/v1/cart/items`
+- `PUT /api/v1/cart/items/{itemId}`
+- `DELETE /api/v1/cart/items/{itemId}`
 
 ---
 
