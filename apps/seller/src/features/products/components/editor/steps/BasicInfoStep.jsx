@@ -44,6 +44,8 @@ export default function BasicInfoStep({
   setSpuCode,
   description,
   setDescription,
+  descriptionError = '',
+  setDescriptionError = () => {},
   images,
   uploadingImage,
   imageInputRef,
@@ -337,16 +339,29 @@ export default function BasicInfoStep({
       </div>
 
       <div>
-        <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-          Mô tả chi tiết sản phẩm
+        <label htmlFor="product-description" className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+          Mô tả chi tiết sản phẩm *
         </label>
         <textarea
+          id="product-description"
           rows={3}
           value={description}
           placeholder="Mô tả công năng, thông số kỹ thuật, chế độ bảo hành..."
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#4F46E5]"
+          onChange={(e) => {
+            setDescription(e.target.value);
+            if (descriptionError && e.target.value.trim()) {
+              setDescriptionError('');
+            }
+          }}
+          className={`w-full px-3 py-2 border rounded-lg text-slate-900 focus:outline-none transition-colors ${
+            descriptionError
+              ? 'border-red-500 focus:border-red-500 ring-1 ring-red-500 bg-red-50/10'
+              : 'border-slate-300 focus:border-[#4F46E5]'
+          }`}
         />
+        {descriptionError && (
+          <p className="text-[10px] text-red-500 mt-1 font-medium">{descriptionError}</p>
+        )}
       </div>
 
       {/* Media Upload Section (#15, #16 S3 Presigned URL) */}
@@ -432,6 +447,8 @@ BasicInfoStep.propTypes = {
   setSpuCode: PropTypes.func.isRequired,
   description: PropTypes.string.isRequired,
   setDescription: PropTypes.func.isRequired,
+  descriptionError: PropTypes.string,
+  setDescriptionError: PropTypes.func,
   images: PropTypes.arrayOf(PropTypes.string).isRequired,
   uploadingImage: PropTypes.bool.isRequired,
   imageInputRef: PropTypes.object.isRequired,
